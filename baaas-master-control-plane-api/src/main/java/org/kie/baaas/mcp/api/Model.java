@@ -18,6 +18,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import org.kie.baaas.mcp.validator.xml.BasicXML;
+
+import javax.validation.Valid;
+import javax.validation.constraints.Pattern;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -29,10 +33,15 @@ public class Model {
 
     @JsonProperty("dmn")
     // Validate XML
+    @Valid
+    @BasicXML
     private String dmn;
 
+    // For now a very simplistic url validator
+    @Valid
     @JsonProperty("url")
-    // @Pattern to validate URL
+    // just a simplistic validation for now, only https
+    @Pattern(regexp = "https://.*\\.dmn")
     private String url;
 
     @JsonProperty("sha256")

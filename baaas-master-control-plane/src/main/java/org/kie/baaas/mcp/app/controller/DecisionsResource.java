@@ -49,7 +49,7 @@ public class DecisionsResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response process(Decisions decisions) throws JsonProcessingException {
+    public Response process(Decisions decisions) {
 
         DecisionsResponse decisionsResponse = copyFields(decisions);
         decisionsResponse.setSubmittedAt(LocalDateTime.now().toString());
@@ -70,7 +70,7 @@ public class DecisionsResource {
             LOGGER.info("Decision {} received for processing is not valid, check response.", decisionsResponse.getName());
 
             decisionsResponse.setViolations(violations.stream()
-                    .map(violation -> "Field: 'Decisions." + violation.getPropertyPath() + "' -> Provided value [" + violation.getInvalidValue() + "], " + violation.getMessage())
+                    .map(violation -> "Field: 'Decisions." + violation.getPropertyPath() + "' -> Provided value seems not to be valid, explanation: " + violation.getMessage())
                     .collect(Collectors.joining("| ")));
 
             return Response.status(Response.Status.BAD_REQUEST).entity(decisionsResponse).build();
@@ -79,6 +79,7 @@ public class DecisionsResource {
 
     /**
      * Copy common fields from @{link Decisions} to {@link DecisionsResponse}
+     *
      * @param @{link Decisions} decisions
      * @return @link DecisionsResponse} decisionsResponse
      */

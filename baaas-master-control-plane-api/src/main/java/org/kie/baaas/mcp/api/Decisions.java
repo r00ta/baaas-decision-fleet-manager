@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
@@ -42,23 +43,29 @@ public class Decisions {
     private String kind;
 
     @JsonProperty("name")
-    @NotBlank(message = "Name cannot be empty")
+    @NotBlank(message = "cannot be empty")
     private String name;
 
     @JsonProperty("description")
+    @NotBlank(message = "cannot be empty")
     private String description;
 
+    @Valid
     @JsonProperty("model")
     private Model model;
 
+    @Valid
     @JsonProperty("eventing")
     private Eventing eventing;
 
+    @Valid
     @JsonProperty("configuration")
     private Configuration configuration;
 
+    @Valid
     @JsonProperty("tags")
     private Tags tags;
+
 
 
     @JsonProperty("kind")
@@ -98,6 +105,7 @@ public class Decisions {
 
     @JsonProperty("model")
     public void setModel(Model model) {
+
         this.model = model;
     }
 
