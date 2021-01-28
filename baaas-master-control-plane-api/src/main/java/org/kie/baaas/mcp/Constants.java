@@ -18,5 +18,4 @@ public class Constants {
 
     // href: "/api/baaas/v1/decision/{version}/version/{version}"
     public static String BAAAS_API_V1 = "/api/baaas/v1/decision/%s/version/%s";
-
 }

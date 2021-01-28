@@ -15,14 +15,15 @@
 
 package org.kie.baaas.mcp.app;
 
+import java.lang.invoke.MethodHandles;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Observes;
+
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Observes;
-import java.lang.invoke.MethodHandles;
 
 @ApplicationScoped
 public class AppLifecycle {
@@ -37,6 +38,5 @@ public class AppLifecycle {
     void onStop(@Observes ShutdownEvent ev) {
         LOGGER.info("{} is stopping, requests will be no longer processed.", componentName);
     }
-
 }
 

@@ -14,14 +14,14 @@
  */
 package org.kie.baaas.mcp.api;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Pattern;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.kie.baaas.mcp.validator.xml.BasicXML;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Pattern;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({

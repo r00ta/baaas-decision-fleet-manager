@@ -16,16 +16,10 @@
 
 package org.kie.baaas.mcp.api;
 
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-
-import javax.validation.ConstraintViolation;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -44,6 +38,7 @@ import java.util.Set;
 })
 @RegisterForReflection
 public class DecisionsResponse {
+
     @JsonProperty("kind")
     private String kind;
 
@@ -193,7 +188,5 @@ public class DecisionsResponse {
                 ", violations=" + violations +
                 '}';
     }
-
-
 }
 

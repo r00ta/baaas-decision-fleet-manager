@@ -14,13 +14,10 @@
  */
 package org.kie.baaas.mcp.app.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.kie.baaas.mcp.api.Decisions;
-import org.kie.baaas.mcp.api.DecisionsResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.lang.invoke.MethodHandles;
+import java.time.LocalDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -32,10 +29,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.lang.invoke.MethodHandles;
-import java.time.LocalDateTime;
-import java.util.Set;
-import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.kie.baaas.mcp.api.Decisions;
+import org.kie.baaas.mcp.api.DecisionsResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Path("/decisions")
 @ApplicationScoped
@@ -62,7 +63,6 @@ public class DecisionsResource {
             // further process
 
             return Response.ok().build();
-
         } else {
 
             decisionsResponse.setSubmittedAt(LocalDateTime.now().toString());
@@ -70,8 +70,8 @@ public class DecisionsResource {
             LOGGER.info("Decision {} received for processing is not valid, check response.", decisionsResponse.getName());
 
             decisionsResponse.setViolations(violations.stream()
-                    .map(violation -> "Field: 'Decisions." + violation.getPropertyPath() + "' -> Provided value seems not to be valid, explanation: " + violation.getMessage())
-                    .collect(Collectors.joining("| ")));
+                                                    .map(violation -> "Field: 'Decisions." + violation.getPropertyPath() + "' -> Provided value seems not to be valid, explanation: " + violation.getMessage())
+                                                    .collect(Collectors.joining("| ")));
 
             return Response.status(Response.Status.BAD_REQUEST).entity(decisionsResponse).build();
         }
@@ -93,7 +93,6 @@ public class DecisionsResource {
             return new DecisionsResponse();
         }
     }
-
 }
 
 

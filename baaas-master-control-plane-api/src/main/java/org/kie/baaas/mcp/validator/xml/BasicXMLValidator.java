@@ -14,15 +14,16 @@
  */
 package org.kie.baaas.mcp.validator.xml;
 
-import org.xml.sax.helpers.DefaultHandler;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+
+import org.xml.sax.helpers.DefaultHandler;
 
 public class BasicXMLValidator implements ConstraintValidator<BasicXML, String> {
 
@@ -49,7 +50,6 @@ public class BasicXMLValidator implements ConstraintValidator<BasicXML, String> 
             InputStream is = new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
             // try to parse
             parser.parse(is, handler);
-
         } catch (final Exception e) {
             // in case of any exception, fail it.
             constraintValidatorContext.disableDefaultConstraintViolation();
