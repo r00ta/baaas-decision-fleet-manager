@@ -14,7 +14,6 @@
  */
 package org.kie.baaas.mcp.app.controller;
 
-import java.lang.invoke.MethodHandles;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,7 +41,7 @@ import org.slf4j.LoggerFactory;
 @ApplicationScoped
 public class DecisionsResource {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getName());
+    private final Logger LOGGER = LoggerFactory.getLogger(DecisionsResource.class);
 
     @Inject
     Validator validator;

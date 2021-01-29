@@ -16,12 +16,15 @@
 package org.kie.baaas.mcp.app;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Objects;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
+import javax.inject.Inject;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
+import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +34,17 @@ public class AppLifecycle {
     private final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getName());
     private final String componentName = "Master Control Plane";
 
+    private final ClusterControlPlaneDAO controlPlaneDAO;
+
+    @Inject
+    public AppLifecycle(ClusterControlPlaneDAO controlPlaneDAO) {
+        Objects.requireNonNull(controlPlaneDAO, "controlPlaneDAO cannot be null");
+        this.controlPlaneDAO = controlPlaneDAO;
+    }
+
     void onStart(@Observes StartupEvent ev) {
         LOGGER.info("{} is starting and will be ready to process requests.", componentName);
+        controlPlaneDAO.init();
     }
 
     void onStop(@Observes ShutdownEvent ev) {

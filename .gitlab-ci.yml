@@ -72,7 +72,7 @@ build-and-push-container:
   before_script:
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login quay.io --username $CONTAINER_REGISTRY_USER --password-stdin
   script:
-    - "docker build -f cluster-control-plane-operator/src/main/docker/Dockerfile.native -t $OUTPUT_CONTAINER_NAME cluster-control-plane-operator/"
+    - "docker build -f baaas-master-control-plane/src/main/docker/Dockerfile.native -t $OUTPUT_CONTAINER_NAME baaas-master-control-plane/"
     - "docker push $OUTPUT_CONTAINER_NAME"
   after_script:
     - "docker image rm -f $OUTPUT_CONTAINER_NAME"
