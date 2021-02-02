@@ -13,29 +13,17 @@
  *
  */
 
-package org.kie.baaas.mcp.app;
+package org.kie.baaas.mcp.app.resolvers;
 
-import javax.inject.Inject;
-
-import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
-import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-@QuarkusTest
-public class DBMigrationTest {
-
-    @Inject
-    ClusterControlPlaneDAO controlPlaneDAO;
+public class CustomerIdResolverTest {
 
     @Test
-    public void flyway_migrate() {
-
-        ClusterControlPlane clusterControlPlane = controlPlaneDAO.findOne();
-        assertThat(clusterControlPlane.getDmnJitUrl(), equalTo("https://baaas-dmn-jit-baaas-dmn-jit-demo.apps.kogito-cloud.automation.rhmw.io/jitdmn"));
-        assertThat(clusterControlPlane.getKubernetesApiUrl(), equalTo("https://kubernetes.default"));
+    public void getCustomerId() {
+        assertThat(new CustomerIdResolver().getCustomerId(), equalTo("1"));
     }
 }

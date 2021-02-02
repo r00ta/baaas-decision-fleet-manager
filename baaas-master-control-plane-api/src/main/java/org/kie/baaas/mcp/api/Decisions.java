@@ -28,6 +28,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 @JsonPropertyOrder({
         "kind",
         "name",
+        "version",
         "description",
         "model",
         "eventing",
@@ -45,6 +46,9 @@ public class Decisions {
     @JsonProperty("name")
     @NotBlank(message = "cannot be empty")
     private String name;
+
+    @JsonProperty("version")
+    private long version;
 
     @JsonProperty("description")
     @NotBlank(message = "cannot be empty")
@@ -105,6 +109,14 @@ public class Decisions {
     public void setModel(Model model) {
 
         this.model = model;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
     }
 
     @JsonProperty("eventing")
