@@ -23,8 +23,12 @@ import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -34,6 +38,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.kie.baaas.mcp.api.Decisions;
 import org.kie.baaas.mcp.api.DecisionsResponse;
+import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +51,77 @@ public class DecisionsResource {
 
     @Inject
     Validator validator;
+
+    @Inject
+    private CustomerIdResolver customerIdResolver;
+
+    @Inject
+    private DecisionManager decisionManager;
+
+    @PUT
+    @Path("{id}/versions/{version}")
+    public Response rollbackToDecisionVersion(String id, long version) {
+        //TODO - invoke the DecisionManager to rollback to the specified version
+        //TODO - marshall the response back to our DTOs
+        return null;
+    }
+
+    @DELETE
+    @Path("{id}")
+    public Response deleteDecision(String id) {
+        //TODO - invoke DecisionManager to delete the Decision
+        //TODO - marshall the response back into our DTOs
+        return null;
+    }
+
+    @DELETE
+    @Path("{id}/versions/{version}")
+    public Response deleteDecisionVersion(@PathParam("id") String id, @PathParam("version") long version) {
+        //TODO - invoke DecisionManager to delete decision version
+        //TODO - Marshall into our DTOs
+        return null;
+    }
+
+    @GET
+    @Path("{id}/versions/{version}/dmn")
+    public Response getDecisionVersionDMN(@PathParam("id") String id, @PathParam("version") long version) {
+        //TODO - invoke the DecisionManager to retrieve the DMN for this specific version
+        //TODO - marshall into our DTOs
+        return null;
+    }
+
+    @GET
+    @Path("{id}/versions/{version}")
+    public Response getDecisionVersion(@PathParam("id") String id, @PathParam("version") long version) {
+        // TODO - invoke the DecisionManager to find details of the specific Decision Version
+        // TODO - marshall response back into our DTOs
+        return null;
+    }
+
+    @GET
+    @Path("{id}")
+    public Response getDecision(@PathParam("id") String id) {
+
+        //TODO - invoke the DecisionManager to find details of the specific Decision
+        //TODO - marshall response from DecisionManager into our DTOs
+        return null;
+    }
+
+    @GET
+    @Path("{id}/versions")
+    public Response listDecisionVersions(@PathParam("id") String id) {
+        // TODO - invoke the DecisionManager to get a list of all versions for this Decision
+        // TODO - marshall returned list from DecisionManager into our DTOs
+        // TODO - should id be either the internal DB id _or_ the decision name?
+        return null;
+    }
+
+    @GET
+    public Response listDecisions() {
+        //TODO - invoke the DecisionManager to get a list of decisions
+        //TODO - marshall the returned list into our DTOs
+        return null;
+    }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

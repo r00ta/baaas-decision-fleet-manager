@@ -31,6 +31,7 @@ import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
 import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
+import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,12 +49,15 @@ public class DecisionManager {
 
     private final DecisionVersionDAO decisionVersionDAO;
 
+    private final DecisionDMNStorage decisionDMNStorage;
+
     @Inject
-    public DecisionManager(DecisionDAO decisionDAO, DecisionVersionDAO decisionVersionDAO) {
+    public DecisionManager(DecisionDAO decisionDAO, DecisionVersionDAO decisionVersionDAO, DecisionDMNStorage decisionDMNStorage) {
         Objects.requireNonNull(decisionDAO, "decisionDAO cannot be null");
         Objects.requireNonNull(decisionDAO, "decisionVersionDAO cannot be null");
         this.decisionDAO = decisionDAO;
         this.decisionVersionDAO = decisionVersionDAO;
+        this.decisionDMNStorage = decisionDMNStorage;
     }
 
     /*
@@ -86,6 +90,8 @@ public class DecisionManager {
 
         DecisionVersion decisionVersion = new DecisionVersion();
         //TODO - handle DMN hash generatiouploading and path resolution
+        // decisionDMNStorage.writeDMN(customerId, decisions);
+
         decisionVersion.setDmnMd5(decisions.getModel().getMd5());
         decisionVersion.setDmnLocation("s3://some.dmn.location");
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);

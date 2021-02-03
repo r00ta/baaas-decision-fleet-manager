@@ -9,11 +9,16 @@ services:
       BAAAS_MCP_DB_USERNAME: mcp
       BAAAS_MCP_DB_PASSWORD: mcp
       BAAAS_MCP_DB_HOST: db
-      BAAAS_CCP_DMN_JIT_URL: https://baaas-dmn-jit-baaas-dmn-jit-demo.apps.kogito-cloud.automation.rhmw.io/jitdmn
+      BAAAS_CCP_DMN_JIT_URL: http://localhost:9000/jitdmn
     ports:
       - "8080:8080"
     depends_on:
       - db
+
+  jit:
+    image: quay.io/kiegroup/kogito-jit-runner-nightly:1.2.x-2021-02-03
+    ports:
+      - "9000:8080"
 
   db:
     image: library/postgres:13.1
