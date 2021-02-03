@@ -15,6 +15,15 @@ Note: Creation of a Decision is a long-running process. The user should poll/wat
 of the Decision Resource. When it enters the READY state, then the user knows that their Decision Service is ready to be
 consumed.
 
+## **Status Codes**
+
+- 201 - Request was accepted and is being processed
+- 400 - Bad Request if:
+  - The payload is missing required parameters
+  - The model is not a valid XML document
+  - We are already in the process of deploying or rolling back a Version of this Decision
+
+
 The supported schema for registering a new decision is:
 
 **Schemas**:
@@ -24,6 +33,8 @@ The supported schema for registering a new decision is:
 | [json schema](#json-payload) | [yaml schema](#yaml-payload)
 
 
+## **Schema**:
+
 ### JSON payload
 
 ```json
@@ -32,7 +43,7 @@ The supported schema for registering a new decision is:
   "name": "my-brilliant-decision",
   "description": "A human readable description of my decision",
   "model": {
-    "dmn" : "<xml></xml>"
+    "dmn" : "plain text xml properly escaped"
   },
   "eventing" : {
     "kafka": {
@@ -49,22 +60,15 @@ The supported schema for registering a new decision is:
 }
 ```
 
-### Yaml payload
+### Responses
 
-```yaml
-kind: Decision
-name: my-brilliant-decision
-description: A human readable description of my decision
-model:
-  dmn : "<xml></xml>"
-eventing : 
-  kafka: 
-    source: Some Kafka Endpoint
-    sink: Some Kafka Endpoint
-configuration: 
-  key: value
-tags: 
-  key: value
+If the request payload contains anything wrong, a bad request would be returned and the explanation will be described
+as the example below:
+
+```json
+[
+  "Field: 'decisionsRequest.model.dmn' -> Provided value seems not to be valid, explanation: The element type \"dmn:definitions\" must be terminated by the matching end-tag \"</dmn:definitions>\"."
+]
 ```
 
 ## Database

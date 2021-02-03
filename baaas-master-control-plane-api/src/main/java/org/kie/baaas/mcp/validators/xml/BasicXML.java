@@ -12,7 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.baaas.mcp.validator.xml;
+
+package org.kie.baaas.mcp.validators.xml;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

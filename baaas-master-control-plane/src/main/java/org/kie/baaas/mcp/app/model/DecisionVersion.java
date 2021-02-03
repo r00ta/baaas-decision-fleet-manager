@@ -203,6 +203,22 @@ public class DecisionVersion {
         this.dmnMd5 = dmnMd5;
     }
 
+    public Map<String, String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Map<String, String> tags) {
+        this.tags = tags;
+    }
+
+    public Map<String, String> getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(Map<String, String> configuration) {
+        this.configuration = configuration;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

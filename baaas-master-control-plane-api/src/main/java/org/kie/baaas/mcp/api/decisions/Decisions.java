@@ -13,50 +13,35 @@
  * limitations under the License.
  */
 
-package org.kie.baaas.mcp.api;
+package org.kie.baaas.mcp.api.decisions;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import org.kie.baaas.mcp.api.eventing.Eventing;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-        "kind",
-        "name",
-        "version",
-        "description",
-        "model",
-        "eventing",
-        "configuration",
-        "tags"
-})
 @RegisterForReflection
 public class Decisions {
 
     @JsonProperty("kind")
-    @NotBlank(message = "Kind cannot be blank")
+    @NotEmpty(message = "Kind cannot be blank")
     @Pattern(regexp = "Decision")
     private String kind;
 
+    @NotEmpty
     @JsonProperty("name")
-    @NotBlank(message = "cannot be empty")
     private String name;
 
-    @JsonProperty("version")
-    private long version;
-
+    @NotEmpty
     @JsonProperty("description")
-    @NotBlank(message = "cannot be empty")
     private String description;
-
-    @Valid
-    @JsonProperty("model")
-    private Model model;
 
     @Valid
     @JsonProperty("eventing")
@@ -64,88 +49,57 @@ public class Decisions {
 
     @Valid
     @JsonProperty("configuration")
-    private Configuration configuration;
+    private Map<String, String> configuration = new HashMap<>();
 
     @Valid
     @JsonProperty("tags")
-    private Tags tags;
+    private Map<String, String> tags = new HashMap<>();
 
-    @JsonProperty("kind")
     public String getKind() {
         return kind;
     }
 
-    @JsonProperty("kind")
     public void setKind(String kind) {
         this.kind = kind;
     }
 
-    @JsonProperty("name")
     public String getName() {
         return name;
     }
 
-    @JsonProperty("name")
     public void setName(String name) {
         this.name = name;
     }
 
-    @JsonProperty("description")
     public String getDescription() {
         return description;
     }
 
-    @JsonProperty("description")
     public void setDescription(String description) {
         this.description = description;
     }
 
-    @JsonProperty("model")
-    public Model getModel() {
-        return model;
-    }
-
-    @JsonProperty("model")
-    public void setModel(Model model) {
-
-        this.model = model;
-    }
-
-    public long getVersion() {
-        return version;
-    }
-
-    public void setVersion(long version) {
-        this.version = version;
-    }
-
-    @JsonProperty("eventing")
     public Eventing getEventing() {
         return eventing;
     }
 
-    @JsonProperty("eventing")
     public void setEventing(Eventing eventing) {
         this.eventing = eventing;
     }
 
-    @JsonProperty("configuration")
-    public Configuration getConfiguration() {
+    public Map<String, String> getConfiguration() {
         return configuration;
     }
 
-    @JsonProperty("configuration")
-    public void setConfiguration(Configuration configuration) {
+    public void setConfiguration(Map<String, String> configuration) {
         this.configuration = configuration;
     }
 
-    @JsonProperty("tags")
-    public Tags getTags() {
+    public Map<String, String> getTags() {
         return tags;
     }
 
-    @JsonProperty("tags")
-    public void setTags(Tags tags) {
+    public void setTags(Map<String, String> tags) {
         this.tags = tags;
     }
 
@@ -155,7 +109,6 @@ public class Decisions {
                 "kind='" + kind + '\'' +
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
-                ", model=" + model +
                 ", eventing=" + eventing +
                 ", configuration=" + configuration +
                 ", tags=" + tags +

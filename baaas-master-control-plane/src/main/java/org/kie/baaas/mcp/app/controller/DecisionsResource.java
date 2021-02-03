@@ -14,9 +14,7 @@
  */
 package org.kie.baaas.mcp.app.controller;
 
-import java.time.LocalDateTime;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -36,9 +34,10 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.kie.baaas.mcp.api.Decisions;
-import org.kie.baaas.mcp.api.DecisionsResponse;
+import org.kie.baaas.mcp.api.decisions.DecisionsRequest;
+import org.kie.baaas.mcp.api.decisions.DecisionsResponse;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,43 +125,46 @@ public class DecisionsResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response process(Decisions decisions) {
+    public Response process(DecisionsRequest decisionsRequest) {
 
-        DecisionsResponse decisionsResponse = copyFields(decisions);
-        decisionsResponse.setSubmittedAt(LocalDateTime.now().toString());
-
-        Set<ConstraintViolation<Decisions>> violations = validator.validate(decisions);
+        Set<ConstraintViolation<DecisionsRequest>> violations = validator.validate(decisionsRequest);
 
         if (violations.isEmpty()) {
 
-            LOGGER.info("Decision {} received for processing...", decisions.getName());
-            // further process
+            LOGGER.info("Decision {} received for processing...", decisionsRequest.getName());
+            DecisionsResponse decisionsResponse = copyFields(decisionsRequest);
 
-            return Response.ok().build();
+            // TODO persist on S3 while saving decision on database
+            decisionsResponse.getResponseModel().setMd5("test");
+            Decision d = decisionManager.createOrUpdateVersion("customer-1", decisionsResponse);
+
+            decisionsResponse.setId(d.getId());
+            decisionsResponse.setSubmittedAt(d.getCurrentVersion().getSubmittedAt());
+            decisionsResponse.setVersion(d.getCurrentVersion().getVersion());
+
+            // TODO deploy on ccp
+
+            return Response.status(Response.Status.CREATED).entity(decisionsResponse).build();
         } else {
 
-            decisionsResponse.setSubmittedAt(LocalDateTime.now().toString());
-
-            LOGGER.info("Decision {} received for processing is not valid, check response.", decisionsResponse.getName());
-
-            decisionsResponse.setViolations(violations.stream()
-                                                    .map(violation -> "Field: 'Decisions." + violation.getPropertyPath() + "' -> Provided value seems not to be valid, explanation: " + violation.getMessage())
-                                                    .collect(Collectors.joining("| ")));
-
-            return Response.status(Response.Status.BAD_REQUEST).entity(decisionsResponse).build();
+            LOGGER.info("Decision {} received for processing is not valid, check response.", decisionsRequest.getName());
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(violations.stream().map(violation -> "Field: 'decisionsRequest." +
+                            violation.getPropertyPath() + "' -> Provided value seems not to be valid, explanation: " +
+                            violation.getMessage())).build();
         }
     }
 
     /**
-     * Copy common fields from @{link Decisions} to {@link DecisionsResponse}
+     * Copy common fields from @{link DecisionsRequest} to {@link DecisionsResponse}
      *
-     * @param @{link Decisions} decisions
+     * @param @{link DecisionsRequest} decisionsRequest
      * @return @link DecisionsResponse} decisionsResponse
      */
-    private DecisionsResponse copyFields(Decisions decisions) {
+    private DecisionsResponse copyFields(DecisionsRequest decisionsRequest) {
         ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try {
-            DecisionsResponse copy = mapper.readValue(mapper.writeValueAsString(decisions), DecisionsResponse.class);
+            DecisionsResponse copy = mapper.readValue(mapper.writeValueAsString(decisionsRequest), DecisionsResponse.class);
             return copy;
         } catch (JsonProcessingException e) {
             e.printStackTrace();

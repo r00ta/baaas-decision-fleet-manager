@@ -15,11 +15,11 @@
 
 package org.kie.baaas.mcp.app.storage;
 
-import org.kie.baaas.mcp.api.Decisions;
+import org.kie.baaas.mcp.api.decisions.DecisionsRequest;
 
 public interface DecisionDMNStorage {
 
-    public void writeDMN(String customerId, Decisions decisions);
+    public void writeDMN(String customerId, DecisionsRequest decisions);
 
     public void deleteDMN(String customerId, String decisionName);
 

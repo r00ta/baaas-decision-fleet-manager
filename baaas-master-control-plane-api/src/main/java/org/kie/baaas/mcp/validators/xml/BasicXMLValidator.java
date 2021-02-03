@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.baaas.mcp.validator.xml;
+package org.kie.baaas.mcp.validators.xml;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -51,7 +51,7 @@ public class BasicXMLValidator implements ConstraintValidator<BasicXML, String> 
             // try to parse
             parser.parse(is, handler);
         } catch (final Exception e) {
-            // in case of any exception, fail it.
+            // return the violations to the requester
             constraintValidatorContext.disableDefaultConstraintViolation();
             constraintValidatorContext.buildConstraintViolationWithTemplate(e.getMessage()).addConstraintViolation();
             return false;

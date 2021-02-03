@@ -12,43 +12,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.baaas.mcp.api;
+package org.kie.baaas.mcp.api.decisions;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Pattern;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import org.kie.baaas.mcp.validator.xml.BasicXML;
+import org.kie.baaas.mcp.validators.xml.BasicXML;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "dmn",
-        "url"
+        "dmn"
 })
 @RegisterForReflection
 public class Model {
 
     @JsonProperty("dmn")
-    // Validate XML
-    @Valid
     @BasicXML
     private String dmn;
-
-    // For now a very simplistic url validator
-    @Valid
-    @JsonProperty("url")
-    // just a simplistic validation for now, only https
-    @Pattern(regexp = "https://.*\\.dmn")
-    private String url;
-
-    @JsonProperty("sha256")
-    private String sha256;
-
-    @JsonProperty("md5")
-    private String md5;
 
     public String getDmn() {
         return dmn;
@@ -58,27 +41,27 @@ public class Model {
         this.dmn = dmn;
     }
 
-    public String getUrl() {
-        return url;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Model model = (Model) o;
+        return Objects.equals(dmn, model.dmn);
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    @Override
+    public int hashCode() {
+        return Objects.hash(dmn);
     }
 
-    public String getSha256() {
-        return sha256;
-    }
-
-    public void setSha256(String sha256) {
-        this.sha256 = sha256;
-    }
-
-    public String getMd5() {
-        return md5;
-    }
-
-    public void setMd5(String md5) {
-        this.md5 = md5;
+    @Override
+    public String toString() {
+        return "Model{" +
+                "dmn='" + dmn + '\'' +
+                '}';
     }
 }

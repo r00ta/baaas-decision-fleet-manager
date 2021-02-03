@@ -20,10 +20,10 @@ import javax.inject.Inject;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
-import org.kie.baaas.mcp.api.Decisions;
-import org.kie.baaas.mcp.api.Eventing;
-import org.kie.baaas.mcp.api.Kafka;
-import org.kie.baaas.mcp.api.Model;
+import org.kie.baaas.mcp.api.decisions.DecisionsResponse;
+import org.kie.baaas.mcp.api.decisions.ResponseModel;
+import org.kie.baaas.mcp.api.eventing.Eventing;
+import org.kie.baaas.mcp.api.eventing.kafka.Kafka;
 import org.kie.baaas.mcp.app.dao.DecisionDAO;
 import org.kie.baaas.mcp.app.dao.DecisionVersionDAO;
 import org.kie.baaas.mcp.app.model.Decision;
@@ -43,33 +43,33 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class DecisionManagerTest {
 
     @Inject
-    private CustomerIdResolver customerIdResolver;
+    CustomerIdResolver customerIdResolver;
 
     @Inject
-    private DecisionDAO decisionDAO;
+    DecisionDAO decisionDAO;
 
     @Inject
-    private DecisionVersionDAO decisionVersionDAO;
+    DecisionVersionDAO decisionVersionDAO;
 
     @Inject
-    private DecisionManager decisionManager;
+    DecisionManager decisionManager;
 
-    private Decisions createApiRequest() {
-        Model model = new Model();
-        model.setDmn("dmnnn");
+    private DecisionsResponse createApiResponse() {
+        ResponseModel model = new ResponseModel();
+        // model.setDmn("dmnnn");
         model.setMd5("md555");
 
-        Decisions decisions = new Decisions();
+        DecisionsResponse decisions = new DecisionsResponse();
         decisions.setDescription("The Best Decision Ever");
         decisions.setName("robs-first-decision");
-        decisions.setModel(model);
+        decisions.setResponseModel(model);
         return decisions;
     }
 
-    private Decisions createApiRequestWithVersion(long version) {
-        Decisions apiRequest = createApiRequest();
-        apiRequest.setVersion(version);
-        return apiRequest;
+    private DecisionsResponse createApiResponseWithVersion(long version) {
+        DecisionsResponse apiResponse = createApiResponse();
+        apiResponse.setVersion(version);
+        return apiResponse;
     }
 
     @TestTransaction
@@ -83,10 +83,10 @@ public class DecisionManagerTest {
         Eventing eventing = new Eventing();
         eventing.setKafka(kafka);
 
-        Decisions apiRequest = createApiRequest();
-        apiRequest.setEventing(eventing);
+        DecisionsResponse apiResponse = createApiResponse();
+        apiResponse.setEventing(eventing);
 
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         KafkaTopics kafkaTopics = decision.getNextVersion().getKafkaTopics();
         assertThat(kafkaTopics.getSinkTopic(), equalTo(kafka.getSink()));
         assertThat(kafkaTopics.getSourceTopic(), equalTo(kafka.getSource()));
@@ -96,28 +96,29 @@ public class DecisionManagerTest {
     @Test
     public void createNewVersion_newDecision() {
 
-        Decisions apiRequest = createApiRequest();
+        DecisionsResponse apiResponse = createApiResponse();
 
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         assertThat(decision, is(notNullValue()));
 
-        assertThat(decision.getName(), equalTo(apiRequest.getName()));
-        assertThat(decision.getDescription(), equalTo(apiRequest.getDescription()));
+        assertThat(decision.getName(), equalTo(apiResponse.getName()));
+        assertThat(decision.getDescription(), equalTo(apiResponse.getDescription()));
         assertThat(decision.getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
 
-        assertThat(decision.getNextVersion().getVersion(), equalTo(1l));
+        assertThat(decision.getNextVersion().getVersion(), equalTo(1L));
         assertThat(decision.getNextVersion().getStatus(), equalTo(DecisionVersionStatus.BUILDING));
         assertThat(decision.getNextVersion().getSubmittedAt(), is(notNullValue()));
-        assertThat(decision.getNextVersion().getDmnMd5(), equalTo(apiRequest.getModel().getMd5()));
+        // TODO should point to s3 bucket location?
+        // assertThat(decision.getNextVersion().getDmnMd5(), equalTo(apiResponse.getModel().getMd5()));
     }
 
     @TestTransaction
     @Test
     public void deployed_withFirstVersionOfDecision() {
 
-        Decisions apiRequest = createApiRequest();
+        DecisionsResponse apiResponse = createApiResponse();
 
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         Decision deployed = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
 
         assertThat(deployed, is(notNullValue()));
@@ -129,9 +130,9 @@ public class DecisionManagerTest {
     @Test
     public void failed_withFirstVersionOfDecision() {
 
-        Decisions apiRequest = createApiRequest();
+        DecisionsResponse apiResponse = createApiResponse();
 
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         Decision deployed = decisionManager.failed(decision.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
 
         assertThat(deployed, is(notNullValue()));
@@ -143,17 +144,16 @@ public class DecisionManagerTest {
     @Test
     public void createNewVersion_updateFailsWhenStillCreating() {
 
-        Decisions apiRequest = createApiRequest();
+        DecisionsResponse apiResponse = createApiResponse();
 
-        decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
 
-        apiRequest.setDescription("An updated version!");
-        apiRequest.getModel().setDmn("fff");
-        apiRequest.getModel().setMd5("sdsdsd");
+        apiResponse.setDescription("An updated version!");
+        // apiResponse.getResponseModel().setDmn("fff");
+        apiResponse.getResponseModel().setMd5("sdsdsd");
 
-        DecisionLifecycleException thrown = assertThrows(DecisionLifecycleException.class, () -> {
-            decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
-        });
+        DecisionLifecycleException thrown = assertThrows(DecisionLifecycleException.class, () ->
+                decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse));
 
         assertThat(thrown.getMessage(), equalTo("A lifecycle operation is already in progress for Version '1' of Decision 'robs-first-decision'"));
     }
@@ -162,16 +162,16 @@ public class DecisionManagerTest {
     @Test
     public void createNewVersion_updateDecision() {
 
-        Decisions apiRequest = createApiRequest();
+        DecisionsResponse apiResponse = createApiResponse();
 
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         decisionManager.deployed(decision.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
 
-        apiRequest.setDescription("An updated version!");
-        apiRequest.getModel().setDmn("fff");
-        apiRequest.getModel().setMd5("sdsdsd");
+        apiResponse.setDescription("An updated version!");
+        // apiResponse.getModel().setDmn("fff");
+        apiResponse.getResponseModel().setMd5("sdsdsd");
 
-        decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         assertThat(decision.getCurrentVersion().getStatus(), equalTo(DecisionVersionStatus.CURRENT));
         assertThat(decision.getNextVersion().getStatus(), equalTo(DecisionVersionStatus.BUILDING));
     }
@@ -180,16 +180,16 @@ public class DecisionManagerTest {
     @Test
     public void createNewVersion_updateDecisionUpdateSuccess() {
 
-        Decisions apiRequest = createApiRequest();
+        DecisionsResponse apiResponse = createApiResponse();
 
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         decisionManager.deployed(decision.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
 
-        apiRequest.setDescription("An updated version!");
-        apiRequest.getModel().setDmn("fff");
-        apiRequest.getModel().setMd5("sdsdsd");
+        apiResponse.setDescription("An updated version!");
+        // apiResponse.getModel().setDmn("fff");
+        apiResponse.getResponseModel().setMd5("sdsdsd");
 
-        decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         long nextVersion = decision.getNextVersion().getVersion();
 
         decision = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
@@ -202,16 +202,16 @@ public class DecisionManagerTest {
     @Test
     public void createNewVersion_updateDecisionUpdateFailed() {
 
-        Decisions apiRequest = createApiRequest();
+        DecisionsResponse apiResponse = createApiResponse();
 
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         decisionManager.deployed(decision.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
 
-        apiRequest.setDescription("An updated version!");
-        apiRequest.getModel().setDmn("fff");
-        apiRequest.getModel().setMd5("sdsdsd");
+        apiResponse.setDescription("An updated version!");
+        // apiResponse.getModel().setDmn("fff");
+        apiResponse.getResponseModel().setMd5("sdsdsd");
 
-        decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         long currentVersion = decision.getCurrentVersion().getVersion();
 
         decision = decisionManager.failed(decision.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
@@ -223,13 +223,13 @@ public class DecisionManagerTest {
     @Test
     public void deleteDecision() {
 
-        Decisions apiRequest = createApiRequest();
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        DecisionsResponse apiResponse = createApiResponse();
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         decision = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
 
         String versionId = decision.getCurrentVersion().getId();
 
-        decisionManager.deleteDecision(decision.getCustomerId(), apiRequest);
+        decisionManager.deleteDecision(decision.getCustomerId(), apiResponse);
 
         assertThat(decisionDAO.findById(decision.getId()), is(nullValue()));
         assertThat(decisionVersionDAO.findById(versionId), is(nullValue()));
@@ -239,30 +239,28 @@ public class DecisionManagerTest {
     @Test
     public void deleteVersion_versionDoesNotExist() {
 
-        Decisions apiRequest = createApiRequest();
+        DecisionsResponse apiResponse = createApiResponse();
 
-        assertThrows(DecisionLifecycleException.class, () -> {
-            decisionManager.deleteVersion(customerIdResolver.getCustomerId(), apiRequest);
-        });
+        assertThrows(DecisionLifecycleException.class, () -> decisionManager.deleteVersion(customerIdResolver.getCustomerId(), apiResponse));
     }
 
     @TestTransaction
     @Test
     public void deleteVersion() {
 
-        Decisions apiRequest = createApiRequest();
+        DecisionsResponse apiResponse = createApiResponse();
 
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         decisionManager.deployed(customerIdResolver.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
 
-        apiRequest.getModel().setMd5("foososo");
-        decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        //apiResponse.getModel().setMd5("foososo");
+        decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         decision = decisionManager.deployed(customerIdResolver.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
 
-        assertThat(decision.getCurrentVersion().getVersion(), equalTo(2l));
+        assertThat(decision.getCurrentVersion().getVersion(), equalTo(2L));
         assertThat(decision.getCurrentVersion().getStatus(), equalTo(DecisionVersionStatus.CURRENT));
 
-        Decisions deleteRequest = createApiRequestWithVersion(1l);
+        DecisionsResponse deleteRequest = createApiResponseWithVersion(1L);
         DecisionVersion deletedVersion = decisionManager.deleteVersion(customerIdResolver.getCustomerId(), deleteRequest);
         assertThat(deletedVersion.getStatus(), equalTo(DecisionVersionStatus.DELETED));
     }
@@ -271,25 +269,23 @@ public class DecisionManagerTest {
     @TestTransaction
     public void deleteVersion_versionIsCurrentVersion() {
 
-        Decisions apiRequest = createApiRequest();
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        DecisionsResponse apiResponse = createApiResponse();
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         decision = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decision.getCurrentVersion().getVersion());
 
-        Decisions deleteRequest = createApiRequestWithVersion(decision.getCurrentVersion().getVersion());
+        DecisionsResponse deleteRequest = createApiResponseWithVersion(decision.getCurrentVersion().getVersion());
 
-        assertThrows(DecisionLifecycleException.class, () -> {
-            decisionManager.deleteVersion(customerIdResolver.getCustomerId(), deleteRequest);
-        });
+        assertThrows(DecisionLifecycleException.class, () -> decisionManager.deleteVersion(customerIdResolver.getCustomerId(), deleteRequest));
     }
 
     @Test
     @TestTransaction
     public void deleteVersion_canDeleteAFailedVersion() {
-        Decisions apiRequest = createApiRequest();
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        DecisionsResponse apiResponse = createApiResponse();
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
         decision = decisionManager.failed(customerIdResolver.getCustomerId(), decision.getName(), decision.getNextVersion().getVersion());
 
-        Decisions deleteRequest = createApiRequestWithVersion(decision.getCurrentVersion().getVersion());
+        DecisionsResponse deleteRequest = createApiResponseWithVersion(decision.getCurrentVersion().getVersion());
         DecisionVersion decisionVersion = decisionManager.deleteVersion(customerIdResolver.getCustomerId(), deleteRequest);
 
         assertThat(decisionVersion.getStatus(), equalTo(DecisionVersionStatus.DELETED));
@@ -299,12 +295,10 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void deleteVersion_versionInvolvedInLifecycleOperation() {
-        Decisions apiRequest = createApiRequest();
-        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
-        Decisions deleteRequest = createApiRequestWithVersion(decision.getCurrentVersion().getVersion());
+        DecisionsResponse apiResponse = createApiResponse();
+        Decision decision = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
+        DecisionsResponse deleteRequest = createApiResponseWithVersion(decision.getCurrentVersion().getVersion());
 
-        assertThrows(DecisionLifecycleException.class, () -> {
-            decisionManager.deleteVersion(customerIdResolver.getCustomerId(), deleteRequest);
-        });
+        assertThrows(DecisionLifecycleException.class, () -> decisionManager.deleteVersion(customerIdResolver.getCustomerId(), deleteRequest));
     }
 }

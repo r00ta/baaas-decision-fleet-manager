@@ -23,8 +23,9 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 
-import org.kie.baaas.mcp.api.Decisions;
-import org.kie.baaas.mcp.api.Kafka;
+import org.kie.baaas.mcp.api.decisions.Decisions;
+import org.kie.baaas.mcp.api.decisions.DecisionsResponse;
+import org.kie.baaas.mcp.api.eventing.kafka.Kafka;
 import org.kie.baaas.mcp.app.dao.DecisionDAO;
 import org.kie.baaas.mcp.app.dao.DecisionVersionDAO;
 import org.kie.baaas.mcp.app.model.Decision;
@@ -73,33 +74,35 @@ public class DecisionManager {
     }
 
     /**
-     * @param customerId - The id of the customer for the Decision
-     * @param decisions  - The API request
-     * @return - the
+     * @param customerId        - The id of the customer for the Decision
+     * @param decisionsResponse - The API processed request
+     * @return - the updated Decision
      */
-    public Decision createOrUpdateVersion(String customerId, Decisions decisions) {
+    public Decision createOrUpdateVersion(String customerId, DecisionsResponse decisionsResponse) {
 
-        Decision decision = decisionDAO.findByCustomerAndName(customerId, decisions.getName());
+        Decision decision = decisionDAO.findByCustomerAndName(customerId, decisionsResponse.getName());
         if (decision == null) {
-            return createDecision(customerId, decisions);
+            return createDecision(customerId, decisionsResponse);
         }
-        return updateDecision(customerId, decision, decisions);
+        return updateDecision(customerId, decision, decisionsResponse);
     }
 
-    private DecisionVersion createDecisionVersion(String customerId, Decisions decisions) {
+    private DecisionVersion createDecisionVersion(String customerId, DecisionsResponse decisionsResponse) {
 
         DecisionVersion decisionVersion = new DecisionVersion();
-        //TODO - handle DMN hash generatiouploading and path resolution
+        //TODO - handle DMN hash generation/uploading and path resolution
         // decisionDMNStorage.writeDMN(customerId, decisions);
 
-        decisionVersion.setDmnMd5(decisions.getModel().getMd5());
+        decisionVersion.setDmnMd5(decisionsResponse.getResponseModel().getMd5());
         decisionVersion.setDmnLocation("s3://some.dmn.location");
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
         decisionVersion.setSubmittedAt(LocalDateTime.now(ZoneOffset.UTC));
-        decisionVersion.setVersion(decisionVersionDAO.getNextVersionId(customerId, decisions.getName()));
+        decisionVersion.setVersion(decisionVersionDAO.getNextVersionId(customerId, decisionsResponse.getName()));
+        decisionVersion.setConfiguration(decisionsResponse.getConfiguration());
+        decisionVersion.setTags(decisionsResponse.getTags());
 
-        if (decisions.getEventing() != null) {
-            Kafka kafka = decisions.getEventing().getKafka();
+        if (decisionsResponse.getEventing() != null) {
+            Kafka kafka = decisionsResponse.getEventing().getKafka();
             if (kafka != null) {
                 KafkaTopics topics = new KafkaTopics();
                 topics.setSourceTopic(kafka.getSource());
@@ -111,13 +114,13 @@ public class DecisionManager {
         return decisionVersion;
     }
 
-    private Decision createDecision(String customerId, Decisions decisions) {
+    private Decision createDecision(String customerId, DecisionsResponse decisionsResponse) {
         Decision decision = new Decision();
         decision.setCustomerId(customerId);
-        decision.setName(decisions.getName());
-        decision.setDescription(decisions.getDescription());
+        decision.setName(decisionsResponse.getName());
+        decision.setDescription(decisionsResponse.getDescription());
 
-        DecisionVersion decisionVersion = createDecisionVersion(customerId, decisions);
+        DecisionVersion decisionVersion = createDecisionVersion(customerId, decisionsResponse);
 
         decision.addVersion(decisionVersion);
         decision.setNextVersion(decisionVersion);
@@ -128,11 +131,11 @@ public class DecisionManager {
         return decision;
     }
 
-    private Decision updateDecision(String customerId, Decision decision, Decisions decisions) {
+    private Decision updateDecision(String customerId, Decision decision, DecisionsResponse decisionsResponse) {
         checkForExistingLifecycleOperation(decision);
-        decision.setDescription(decisions.getDescription());
+        decision.setDescription(decisionsResponse.getDescription());
 
-        DecisionVersion decisionVersion = createDecisionVersion(customerId, decisions);
+        DecisionVersion decisionVersion = createDecisionVersion(customerId, decisionsResponse);
         decision.addVersion(decisionVersion);
         decision.setNextVersion(decisionVersion);
 
@@ -223,18 +226,18 @@ public class DecisionManager {
     /**
      * Attempts to delete the specified version of a Decision
      *
-     * @param customerId - The customer that owns the Decision
-     * @param decisions  - The API request encapsulating the delete request
+     * @param customerId        - The customer that owns the Decision
+     * @param decisionsResponse - The API request encapsulating the delete request
      * @return - The deleted version of the Decision.
      */
-    public DecisionVersion deleteVersion(String customerId, Decisions decisions) {
+    public DecisionVersion deleteVersion(String customerId, DecisionsResponse decisionsResponse) {
 
-        DecisionVersion decisionVersion = decisionVersionDAO.findByCustomerAndDecisionName(customerId, decisions.getName(), decisions.getVersion());
+        DecisionVersion decisionVersion = decisionVersionDAO.findByCustomerAndDecisionName(customerId, decisionsResponse.getName(), decisionsResponse.getVersion());
         if (decisionVersion == null) {
             String message = new StringBuilder("Version '")
-                    .append(decisions.getVersion())
+                    .append(decisionsResponse.getVersion())
                     .append("' of Decision '")
-                    .append(decisions.getName())
+                    .append(decisionsResponse.getName())
                     .append("' does not exist for customer id '")
                     .append(customerId)
                     .append("'")
@@ -244,12 +247,12 @@ public class DecisionManager {
 
         // Can't delete a version whilst it is current
         if (DecisionVersionStatus.CURRENT == decisionVersion.getStatus()) {
-            throw new DecisionLifecycleException("It is not valid to delete the 'CURRENT' version of Decision '" + decisions.getName() + "' for customer id '" + customerId + "'");
+            throw new DecisionLifecycleException("It is not valid to delete the 'CURRENT' version of Decision '" + decisionsResponse.getName() + "' for customer id '" + customerId + "'");
         }
 
         // Can't delete a version whilst we are building it
         if (DecisionVersionStatus.BUILDING == decisionVersion.getStatus()) {
-            throw new DecisionLifecycleException("It is not valid to delete a 'BUILDING' version of Decision '" + decisions.getName() + "' for customer id '" + customerId + "'");
+            throw new DecisionLifecycleException("It is not valid to delete a 'BUILDING' version of Decision '" + decisionsResponse.getName() + "' for customer id '" + customerId + "'");
         }
 
         // Deleting a DecisionVersion is a logical delete. They should still appear in history.

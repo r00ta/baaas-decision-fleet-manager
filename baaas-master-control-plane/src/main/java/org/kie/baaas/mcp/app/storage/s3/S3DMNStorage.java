@@ -18,7 +18,7 @@ package org.kie.baaas.mcp.app.storage.s3;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import org.kie.baaas.mcp.api.Decisions;
+import org.kie.baaas.mcp.api.decisions.DecisionsRequest;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.kie.baaas.mcp.app.storage.hash.DMNHashGenerator;
 
@@ -36,7 +36,7 @@ public class S3DMNStorage implements DecisionDMNStorage {
     }
 
     @Override
-    public void writeDMN(String customerId, Decisions decisions) {
+    public void writeDMN(String customerId, DecisionsRequest decisions) {
 
         String hash = hashGenerator.generateHash(decisions.getModel().getDmn());
 

@@ -13,51 +13,57 @@
  * limitations under the License.
  */
 
-package org.kie.baaas.mcp.api;
+package org.kie.baaas.mcp.api.eventing;
+
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
+import org.kie.baaas.mcp.api.eventing.kafka.Kafka;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "source",
-        "sink"
+        "kafka"
 })
 @RegisterForReflection
-public class Kafka {
+public class Eventing {
 
-    @JsonProperty("source")
-    private String source;
-    @JsonProperty("sink")
-    private String sink;
+    @JsonProperty("kafka")
+    private Kafka kafka;
 
-    @JsonProperty("source")
-    public String getSource() {
-        return source;
+    @JsonProperty("kafka")
+    public Kafka getKafka() {
+        return kafka;
     }
 
-    @JsonProperty("source")
-    public void setSource(String source) {
-        this.source = source;
+    @JsonProperty("kafka")
+    public void setKafka(Kafka kafka) {
+        this.kafka = kafka;
     }
 
-    @JsonProperty("sink")
-    public String getSink() {
-        return sink;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Eventing eventing = (Eventing) o;
+        return Objects.equals(kafka, eventing.kafka);
     }
 
-    @JsonProperty("sink")
-    public void setSink(String sink) {
-        this.sink = sink;
+    @Override
+    public int hashCode() {
+        return Objects.hash(kafka);
     }
 
     @Override
     public String toString() {
-        return "Kafka{" +
-                "source='" + source + '\'' +
-                ", sink='" + sink + '\'' +
+        return "Eventing{" +
+                "kafka=" + kafka +
                 '}';
     }
 }

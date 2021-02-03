@@ -12,7 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kie.baaas.mcp.api;
+package org.kie.baaas.mcp.api.decisions;
+
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,28 +23,39 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "key"
+        "md5",
+        "href"
 })
 @RegisterForReflection
-public class Tags {
+public class ResponseModel {
 
-    @JsonProperty("key")
-    private String key;
+    @JsonProperty("md5")
+    private String md5;
 
-    @JsonProperty("key")
-    public String getKey() {
-        return key;
+    @JsonProperty("href")
+    private String href;
+
+    public String getMd5() {
+        return md5;
     }
 
-    @JsonProperty("key")
-    public void setKey(String key) {
-        this.key = key;
+    public void setMd5(String md5) {
+        this.md5 = md5;
+    }
+
+    public String getHref() {
+        return href;
+    }
+
+    public void setHref(String href) {
+        this.href = href;
     }
 
     @Override
     public String toString() {
-        return "Tags{" +
-                "key='" + key + '\'' +
+        return "ResponseModel{" +
+                "md5='" + md5 + '\'' +
+                ", href='" + href + '\'' +
                 '}';
     }
 }
