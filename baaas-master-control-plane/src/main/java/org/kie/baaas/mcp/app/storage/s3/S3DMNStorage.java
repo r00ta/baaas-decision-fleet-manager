@@ -18,7 +18,8 @@ package org.kie.baaas.mcp.app.storage.s3;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import org.kie.baaas.mcp.api.decisions.DecisionsRequest;
+import org.kie.baaas.mcp.api.decisions.DecisionRequest;
+import org.kie.baaas.mcp.app.storage.DMNStorageRequest;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.kie.baaas.mcp.app.storage.hash.DMNHashGenerator;
 
@@ -36,12 +37,14 @@ public class S3DMNStorage implements DecisionDMNStorage {
     }
 
     @Override
-    public void writeDMN(String customerId, DecisionsRequest decisions) {
+    public DMNStorageRequest writeDMN(String customerId, DecisionRequest decisions) {
 
         String hash = hashGenerator.generateHash(decisions.getModel().getDmn());
 
         //TODO - Write the DMN into the correct location as specified here:  https://issues.redhat.com/browse/BAAAS-41
         // e.g s3://${baaas-s3-bucket}/customers/<customer_id>/<decision_name>/<decision_version>/dmn.xml
+
+        return new DMNStorageRequest("foo", hash);
     }
 
     @Override

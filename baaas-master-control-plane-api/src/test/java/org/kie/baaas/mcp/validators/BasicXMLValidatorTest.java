@@ -26,8 +26,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.kie.baaas.mcp.api.decisions.Decisions;
-import org.kie.baaas.mcp.api.decisions.DecisionsRequest;
+import org.kie.baaas.mcp.api.decisions.DecisionBase;
+import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.decisions.Model;
 import org.kie.baaas.mcp.validators.xml.BasicXML;
 
@@ -35,7 +35,7 @@ import org.kie.baaas.mcp.validators.xml.BasicXML;
 @QuarkusTest
 public class BasicXMLValidatorTest {
 
-    DecisionsRequest myDecision;
+    DecisionRequest myDecision;
 
     @Inject
     Validator validator;
@@ -48,7 +48,7 @@ public class BasicXMLValidatorTest {
 
     @BeforeAll
     public void createBasePayload() {
-        myDecision = new DecisionsRequest();
+        myDecision = new DecisionRequest();
         myDecision.setKind("Decision");
         myDecision.setName("Quarkus Test");
         myDecision.setDescription("some test");
@@ -58,14 +58,14 @@ public class BasicXMLValidatorTest {
     @Test
     public void testValidXML() {
         myDecision.getModel().setDmn(myValidXml);
-        Set<ConstraintViolation<Decisions>> violations = validator.validate(myDecision);
+        Set<ConstraintViolation<DecisionBase>> violations = validator.validate(myDecision);
         Assertions.assertTrue(violations.isEmpty());
     }
 
     @Test
     public void testInvalidXML() {
         myDecision.getModel().setDmn(myInvalidXML);
-        Set<ConstraintViolation<Decisions>> violations = validator.validate(myDecision);
+        Set<ConstraintViolation<DecisionBase>> violations = validator.validate(myDecision);
         Assertions.assertFalse(violations.isEmpty());
         Assertions.assertEquals("[XML document structures must start and end within the same entity.]",
                                 violations.stream()

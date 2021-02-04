@@ -15,8 +15,6 @@
 
 package org.kie.baaas.mcp.app.controller;
 
-import java.util.Objects;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -30,6 +28,7 @@ import org.kie.baaas.mcp.api.DMNJITList;
 import org.kie.baaas.mcp.app.dao.DMNJITDAO;
 
 import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 
 @Path("/decisions/jit")
 @ApplicationScoped
@@ -39,7 +38,7 @@ public class DMNJITResource {
 
     @Inject
     public DMNJITResource(DMNJITDAO dmnjitdao) {
-        Objects.requireNonNull(dmnjitdao, "dmnjitdao cannot be null");
+        requireNonNull(dmnjitdao, "dmnjitdao cannot be null");
         this.dmnjitdao = dmnjitdao;
     }
 

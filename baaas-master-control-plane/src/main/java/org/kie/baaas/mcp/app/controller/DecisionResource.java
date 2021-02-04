@@ -14,12 +14,9 @@
  */
 package org.kie.baaas.mcp.app.controller;
 
-import java.util.Set;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
+import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -31,31 +28,42 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.kie.baaas.mcp.api.decisions.DecisionsRequest;
-import org.kie.baaas.mcp.api.decisions.DecisionsResponse;
+import org.kie.baaas.mcp.api.decisions.DecisionRequest;
+import org.kie.baaas.mcp.api.decisions.DecisionResponse;
+import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
-import org.kie.baaas.mcp.app.model.Decision;
+import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Objects.requireNonNull;
+
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 @Path("/decisions")
 @ApplicationScoped
-public class DecisionsResource {
+public class DecisionResource {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(DecisionsResource.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(DecisionResource.class);
+
+    private final CustomerIdResolver customerIdResolver;
+
+    private final DecisionManager decisionManager;
+
+    private final DecisionMapper decisionMapper;
 
     @Inject
-    Validator validator;
+    public DecisionResource(CustomerIdResolver customerIdResolver, DecisionManager decisionManager, DecisionMapper decisionMapper) {
 
-    @Inject
-    private CustomerIdResolver customerIdResolver;
+        requireNonNull(customerIdResolver, "customerIdResolver cannot be null");
+        requireNonNull(decisionManager, "decisionManager cannot be null");
+        requireNonNull(decisionMapper, "decisionMapper cannot be null");
 
-    @Inject
-    private DecisionManager decisionManager;
+        this.customerIdResolver = customerIdResolver;
+        this.decisionManager = decisionManager;
+        this.decisionMapper = decisionMapper;
+    }
 
     @PUT
     @Path("{id}/versions/{version}")
@@ -123,54 +131,13 @@ public class DecisionsResource {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response process(DecisionsRequest decisionsRequest) {
+    public Response createOrUpdateDecision(@Valid DecisionRequest decisionsRequest) {
 
-        Set<ConstraintViolation<DecisionsRequest>> violations = validator.validate(decisionsRequest);
+        String customerId = customerIdResolver.getCustomerId();
+        LOGGER.info("Decision with name '{}' received for processing for customer id '{}'...", decisionsRequest.getName(), customerId);
 
-        if (violations.isEmpty()) {
-
-            LOGGER.info("Decision {} received for processing...", decisionsRequest.getName());
-            DecisionsResponse decisionsResponse = copyFields(decisionsRequest);
-
-            // TODO persist on S3 while saving decision on database
-            decisionsResponse.getResponseModel().setMd5("test");
-            Decision d = decisionManager.createOrUpdateVersion("customer-1", decisionsResponse);
-
-            decisionsResponse.setId(d.getId());
-            decisionsResponse.setSubmittedAt(d.getCurrentVersion().getSubmittedAt());
-            decisionsResponse.setVersion(d.getCurrentVersion().getVersion());
-
-            // TODO deploy on ccp
-
-            return Response.status(Response.Status.CREATED).entity(decisionsResponse).build();
-        } else {
-
-            LOGGER.info("Decision {} received for processing is not valid, check response.", decisionsRequest.getName());
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(violations.stream().map(violation -> "Field: 'decisionsRequest." +
-                            violation.getPropertyPath() + "' -> Provided value seems not to be valid, explanation: " +
-                            violation.getMessage())).build();
-        }
-    }
-
-    /**
-     * Copy common fields from @{link DecisionsRequest} to {@link DecisionsResponse}
-     *
-     * @param @{link DecisionsRequest} decisionsRequest
-     * @return @link DecisionsResponse} decisionsResponse
-     */
-    private DecisionsResponse copyFields(DecisionsRequest decisionsRequest) {
-        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        try {
-            DecisionsResponse copy = mapper.readValue(mapper.writeValueAsString(decisionsRequest), DecisionsResponse.class);
-            return copy;
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return new DecisionsResponse();
-        }
+        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerId, decisionsRequest);
+        DecisionResponse decisionResponse = decisionMapper.mapVersionToDecisionResponse(decisionVersion);
+        return Response.status(Response.Status.CREATED).entity(decisionResponse).build();
     }
 }
-
-

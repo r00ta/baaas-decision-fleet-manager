@@ -13,40 +13,43 @@
  *
  */
 
-package org.kie.baaas.mcp.api;
+package org.kie.baaas.mcp.api.decisions;
 
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
-/**
- * Represents instances of the DMN JIT that can be invoked by the user to test their
- * DMN as part of the Decision Authoring lifecycle.
- */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
         "kind",
-        "url"
+        "items"
 })
 @RegisterForReflection
-public class DMNJIT {
+public class DecisionResponseList {
 
     @JsonProperty("kind")
-    private final String kind = "DMNJIT";
+    private String kind = "DecisionList";
 
-    @JsonProperty("url")
-    private URL url;
+    @JsonProperty("items")
+    private List<DecisionResponse> items = new ArrayList<>();
 
     public String getKind() {
         return kind;
     }
 
-    public URL getUrl() {
-        return url;
+    public void setKind(String kind) {
+        this.kind = kind;
     }
 
-    public void setUrl(URL url) {
-        this.url = url;
+    public List<DecisionResponse> getItems() {
+        return items;
+    }
+
+    public void setItems(List<DecisionResponse> items) {
+        this.items = items;
     }
 }

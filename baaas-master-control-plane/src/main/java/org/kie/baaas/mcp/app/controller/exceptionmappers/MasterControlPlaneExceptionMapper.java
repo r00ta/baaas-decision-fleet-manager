@@ -13,7 +13,7 @@
  *
  */
 
-package org.kie.baaas.mcp.app.controller.exceptionhandlers;
+package org.kie.baaas.mcp.app.controller.exceptionmappers;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -22,10 +22,10 @@ import javax.ws.rs.ext.Provider;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 
 /**
- * Handles mapping of Master Control Plane API Exceptions.
+ * Centralized {@link ExceptionMapper} for the {@link MasterControlPlaneException} hierarchy.
  */
 @Provider
-public class MasterControlPlaneExceptionHandler implements ExceptionMapper<MasterControlPlaneException> {
+public class MasterControlPlaneExceptionMapper implements ExceptionMapper<MasterControlPlaneException> {
 
     //TODO - Extend this with support for Error codes and useful payload
     @Override

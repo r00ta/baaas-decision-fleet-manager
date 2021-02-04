@@ -34,7 +34,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "tags"
 })
 @RegisterForReflection
-public class DecisionsRequest extends Decisions {
+public class DecisionRequest extends DecisionBase {
 
     @Valid
     @JsonProperty("model")
@@ -59,7 +59,7 @@ public class DecisionsRequest extends Decisions {
         if (!super.equals(o)) {
             return false;
         }
-        DecisionsRequest that = (DecisionsRequest) o;
+        DecisionRequest that = (DecisionRequest) o;
         return Objects.equals(model, that.model);
     }
 

@@ -17,7 +17,6 @@ package org.kie.baaas.mcp.api.decisions;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
@@ -28,7 +27,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.kie.baaas.mcp.api.eventing.Eventing;
 
 @RegisterForReflection
-public class Decisions {
+public abstract class DecisionBase {
 
     @JsonProperty("kind")
     @NotEmpty(message = "Kind cannot be blank")

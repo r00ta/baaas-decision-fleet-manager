@@ -22,6 +22,6 @@ public class DMNHashGenerator {
 
     public String generateHash(String dmn) {
         //TODO - generate the MD5 hash of the DMN that we have received.
-        return null;
+        return "hashhashhash";
     }
 }

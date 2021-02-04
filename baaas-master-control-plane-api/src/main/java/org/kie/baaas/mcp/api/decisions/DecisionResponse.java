@@ -38,7 +38,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "submitted_at",
 })
 @RegisterForReflection
-public class DecisionsResponse extends Decisions {
+public class DecisionResponse extends DecisionBase {
 
     @JsonProperty("kind")
     private final String kind = "Decision";
@@ -111,7 +111,7 @@ public class DecisionsResponse extends Decisions {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        DecisionsResponse that = (DecisionsResponse) o;
+        DecisionResponse that = (DecisionResponse) o;
         return Objects.equals(id, that.id);
     }
 
