@@ -9,6 +9,7 @@ services:
       BAAAS_MCP_DB_USERNAME: mcp
       BAAAS_MCP_DB_PASSWORD: mcp
       BAAAS_MCP_DB_HOST: db
+      BAAAS_MCP_API_BASE_URL: http://localhost:8080
       BAAAS_CCP_DMN_JIT_URL: http://localhost:9000/jitdmn
     ports:
       - "8080:8080"

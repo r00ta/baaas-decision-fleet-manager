@@ -81,7 +81,6 @@ public class DecisionResourceTest {
         return response;
     }
 
-
     @BeforeEach
     public void beforeEach() {
         lenient().when(customerIdResolver.getCustomerId()).thenReturn("customer-id");
@@ -105,5 +104,4 @@ public class DecisionResourceTest {
         assertThat(decisionResponse.getId(), equalTo("id"));
         assertThat(decisionResponse.getVersion(), equalTo(100L));
     }
-
 }

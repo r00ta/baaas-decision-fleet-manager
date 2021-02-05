@@ -35,7 +35,11 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "eventing",
         "configuration",
         "tags",
+        "url",
+        "status",
+        "status_message",
         "submitted_at",
+        "published_at"
 })
 @RegisterForReflection
 public class DecisionResponse extends DecisionBase {
@@ -57,6 +61,18 @@ public class DecisionResponse extends DecisionBase {
 
     @JsonProperty("submitted_at")
     private LocalDateTime submittedAt;
+
+    @JsonProperty("published_at")
+    private LocalDateTime publishedAt;
+
+    @JsonProperty("status")
+    private String status;
+
+    @JsonProperty("status_message")
+    private String statusMessage;
+
+    @JsonProperty("url")
+    private String url;
 
     @Override
     public String getKind() {
@@ -101,6 +117,38 @@ public class DecisionResponse extends DecisionBase {
 
     public void setSubmittedAt(LocalDateTime submittedAt) {
         this.submittedAt = submittedAt;
+    }
+
+    public LocalDateTime getPublishedAt() {
+        return publishedAt;
+    }
+
+    public void setPublishedAt(LocalDateTime publishedAt) {
+        this.publishedAt = publishedAt;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getStatusMessage() {
+        return statusMessage;
+    }
+
+    public void setStatusMessage(String statusMessage) {
+        this.statusMessage = statusMessage;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     @Override

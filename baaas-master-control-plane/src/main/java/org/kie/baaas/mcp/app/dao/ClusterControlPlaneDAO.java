@@ -22,7 +22,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
-import org.kie.baaas.mcp.app.config.ClusterControlPlaneConfig;
+import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,12 +38,12 @@ public class ClusterControlPlaneDAO {
 
     private static final int DEFAULT_CCP_ID = 1;
 
-    private final ClusterControlPlaneConfig controlPlaneConfig;
+    private final MasterControlPlaneConfig controlPlaneConfig;
 
     private final EntityManager em;
 
     @Inject
-    public ClusterControlPlaneDAO(ClusterControlPlaneConfig controlPlaneConfig, EntityManager em) {
+    public ClusterControlPlaneDAO(MasterControlPlaneConfig controlPlaneConfig, EntityManager em) {
 
         Objects.requireNonNull(controlPlaneConfig, "controlPlaneConfig cannot be null");
         Objects.requireNonNull(controlPlaneConfig, "em cannot be null");
@@ -61,8 +61,8 @@ public class ClusterControlPlaneDAO {
 
         LOGGER.info("Registering Cluster Control Plane. Kubernetes API URL: '{}'. DMN JIT URL: '{}'.", controlPlaneConfig.getKubernetesApiUrl(), controlPlaneConfig.getDmnJitUrl());
 
-        ccp.setKubernetesApiUrl(controlPlaneConfig.getKubernetesApiUrl());
-        ccp.setDmnJitUrl(controlPlaneConfig.getDmnJitUrl());
+        ccp.setKubernetesApiUrl(controlPlaneConfig.getKubernetesApiUrl().toExternalForm());
+        ccp.setDmnJitUrl(controlPlaneConfig.getDmnJitUrl().toExternalForm());
         em.merge(ccp);
     }
 

@@ -15,6 +15,8 @@
 
 package org.kie.baaas.mcp.app.config;
 
+import java.net.URL;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.validation.constraints.NotBlank;
 
@@ -25,29 +27,29 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  * current implementation of the MCP.
  */
 @ApplicationScoped
-public class ClusterControlPlaneConfig {
+public class MasterControlPlaneConfig {
+
+    @NotBlank
+    @ConfigProperty(name = "baaas.mcp.urls.api-base")
+    URL apiBaseUrl;
 
     @NotBlank
     @ConfigProperty(name = "baaas.ccp.urls.dmn-jit")
-    String dmnJitUrl;
+    URL dmnJitUrl;
 
     @NotBlank
     @ConfigProperty(name = "baaas.ccp.urls.k8s-api")
-    String kubernetesApiUrl;
+    URL kubernetesApiUrl;
 
-    public String getDmnJitUrl() {
+    public URL getApiBaseUrl() {
+        return apiBaseUrl;
+    }
+
+    public URL getDmnJitUrl() {
         return dmnJitUrl;
     }
 
-    public void setDmnJitUrl(String dmnJitUrl) {
-        this.dmnJitUrl = dmnJitUrl;
-    }
-
-    public String getKubernetesApiUrl() {
+    public URL getKubernetesApiUrl() {
         return kubernetesApiUrl;
-    }
-
-    public void setKubernetesApiUrl(String kubernetesApiUrl) {
-        this.kubernetesApiUrl = kubernetesApiUrl;
     }
 }

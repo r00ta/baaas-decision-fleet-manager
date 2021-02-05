@@ -15,15 +15,17 @@
 
 package org.kie.baaas.mcp.app.dao;
 
+import java.net.URL;
+
 import javax.persistence.EntityManager;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kie.baaas.mcp.app.config.ClusterControlPlaneConfig;
+import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -50,18 +52,11 @@ public class ClusterControlPlaneDAOTest {
     @Captor
     private ArgumentCaptor<ClusterControlPlane> captor;
 
-    private ClusterControlPlaneConfig controlPlaneConfig;
+    @Mock
+    private MasterControlPlaneConfig controlPlaneConfig;
 
+    @InjectMocks
     private ClusterControlPlaneDAO controlPlaneDAO;
-
-    @BeforeEach
-    public void before() {
-        controlPlaneConfig = new ClusterControlPlaneConfig();
-        controlPlaneConfig.setDmnJitUrl(DMN_JIT_URL);
-        controlPlaneConfig.setKubernetesApiUrl(KUBERNETES_URL);
-
-        controlPlaneDAO = new ClusterControlPlaneDAO(controlPlaneConfig, em);
-    }
 
     @Test
     public void findOne() {
@@ -73,8 +68,10 @@ public class ClusterControlPlaneDAOTest {
     }
 
     @Test
-    public void init_createsNewControlPlane() {
+    public void init_createsNewControlPlane() throws Exception {
 
+        when(controlPlaneConfig.getDmnJitUrl()).thenReturn(new URL(DMN_JIT_URL));
+        when(controlPlaneConfig.getKubernetesApiUrl()).thenReturn(new URL(KUBERNETES_URL));
         when(em.find(ClusterControlPlane.class, 1)).thenReturn(null);
 
         controlPlaneDAO.init();
@@ -89,8 +86,9 @@ public class ClusterControlPlaneDAOTest {
     }
 
     @Test
-    public void init_updatesExistingControlPlane() {
-
+    public void init_updatesExistingControlPlane() throws Exception {
+        when(controlPlaneConfig.getDmnJitUrl()).thenReturn(new URL(DMN_JIT_URL));
+        when(controlPlaneConfig.getKubernetesApiUrl()).thenReturn(new URL(KUBERNETES_URL));
         when(em.find(ClusterControlPlane.class, 1)).thenReturn(controlPlane);
 
         controlPlaneDAO.init();
