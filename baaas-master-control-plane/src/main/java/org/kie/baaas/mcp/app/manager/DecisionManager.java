@@ -17,6 +17,7 @@ package org.kie.baaas.mcp.app.manager;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Objects;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -35,6 +36,8 @@ import org.kie.baaas.mcp.app.storage.DMNStorageRequest;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Manages the core lifecycle for Decisions. Our API should ensure valid Payload and then
@@ -71,6 +74,69 @@ public class DecisionManager {
                 throw new DecisionLifecycleException("A lifecycle operation is already in progress for Version '" + decision.getCurrentVersion().getVersion() + "' of Decision '" + decision.getName() + "'");
             }
         }
+    }
+
+    private NoSuchDecisionVersionException decisionVersionDoesNotExist(String customerId, String idOrName, long version) {
+        String message = String.format("Version '%s' of Decision with id or name '%s' does not exist for customer '%s", customerId, idOrName, version);
+        throw new NoSuchDecisionVersionException(message);
+    }
+
+    private NoSuchDecisionException decisionDoesNotExist(String customerId, String idOrName) {
+        String message = String.format("Decision with id or name '%s' does not exist for customer '%s'", idOrName, customerId);
+        return new NoSuchDecisionException(message);
+    }
+
+    /**
+     * Gets the specified version of the decision for the given customer.
+     *
+     * @param customerId       - The customer id
+     * @param decisionIdOrName - The decision id or name
+     * @param decisionVersion  - The version of the Decision
+     * @return - The Decision Version
+     */
+    public DecisionVersion getVersion(String customerId, String decisionIdOrName, long decisionVersion) {
+        return findDecisionVersion(customerId, decisionIdOrName, decisionVersion);
+    }
+
+    /**
+     * Gets the current version of the decision for the given customer and decision id or name
+     *
+     * @param customerId       - the customer id
+     * @param decisionIdOrName - the decision id or name
+     * @return - The decision version
+     */
+    public DecisionVersion getCurrentVersion(String customerId, String decisionIdOrName) {
+        DecisionVersion decisionVersion = decisionVersionDAO.getCurrentVersion(customerId, decisionIdOrName);
+        if (decisionVersion == null) {
+            throw decisionDoesNotExist(customerId, decisionIdOrName);
+        }
+        return decisionVersion;
+    }
+
+    /**
+     * Lists the known versions of a Decision for the specified customer and Decision id or name
+     *
+     * @param customerId       - The customer id
+     * @param decisionIdOrName - The decision id or name
+     * @return - The list of versions.
+     */
+    public List<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName) {
+
+        List<DecisionVersion> versions = decisionVersionDAO.listByCustomerAndDecisionIdOrName(customerId, decisionIdOrName);
+        if (versions.isEmpty()) {
+            throw decisionDoesNotExist(customerId, decisionIdOrName);
+        }
+        return versions;
+    }
+
+    /**
+     * Lists the currently known Decisions for the specified Customer.
+     *
+     * @param customerId - The customer id to find decisions for
+     * @return - The list of decisions for this customer.
+     */
+    public List<Decision> listDecisions(String customerId) {
+        return decisionVersionDAO.listCurrentByCustomerId(customerId).stream().map((version) -> version.getDecision()).collect(toList());
     }
 
     /**
@@ -223,9 +289,28 @@ public class DecisionManager {
         return nextVersion;
     }
 
-    public DecisionVersion rollbackToVersion(String customerId, String decisionName, long version) {
-        //TODO - rollback
-        return null;
+    /**
+     * Begin the process of rolling back to the specified version of the decision.
+     *
+     * @param customerId       - The customer that owns the decision
+     * @param decisionIdOrName - The id or name of the decision
+     * @param version          - The version to rollback too
+     * @return - The Decision Version we are attempting to rollback to.
+     */
+    public DecisionVersion rollbackToVersion(String customerId, String decisionIdOrName, long version) {
+
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
+        checkForExistingLifecycleOperation(decisionVersion.getDecision());
+
+        if (!DecisionVersionStatus.READY.equals(decisionVersion.getStatus())) {
+            throw new DecisionLifecycleException("Cannot rollback to version '" + version + "' of decision '" + decisionIdOrName + "' as it is in state '" + decisionVersion.getStatus() + "'");
+        }
+
+        decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
+        decisionVersion.getDecision().setNextVersion(decisionVersion);
+
+        //TODO - send request to CCP to rollback
+        return decisionVersion;
     }
 
     /**
@@ -238,18 +323,7 @@ public class DecisionManager {
      */
     public DecisionVersion deleteVersion(String customerId, String decisionName, long version) {
 
-        DecisionVersion decisionVersion = decisionVersionDAO.findByCustomerAndDecisionName(customerId, decisionName, version);
-        if (decisionVersion == null) {
-            String message = new StringBuilder("Version '")
-                    .append(version)
-                    .append("' of Decision '")
-                    .append(decisionName)
-                    .append("' does not exist for customer id '")
-                    .append(customerId)
-                    .append("'")
-                    .toString();
-            throw new DecisionLifecycleException(message);
-        }
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionName, version);
 
         // Can't delete a version whilst it is current
         if (DecisionVersionStatus.CURRENT == decisionVersion.getStatus()) {
@@ -266,6 +340,19 @@ public class DecisionManager {
         return decisionVersion;
     }
 
+    private DecisionVersion findDecisionVersion(String customerId, String decisionName, long version) {
+        DecisionVersion decisionVersion = decisionVersionDAO.findByCustomerAndDecisionIdOrName(customerId, decisionName, version);
+        if (decisionVersion == null) {
+            Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionName);
+            if (decision == null) {
+                throw decisionDoesNotExist(customerId, decisionName);
+            } else {
+                throw decisionVersionDoesNotExist(customerId, decisionName, version);
+            }
+        }
+        return decisionVersion;
+    }
+
     /**
      * Deletes the specified decision fully
      *
@@ -275,9 +362,12 @@ public class DecisionManager {
      */
     public Decision deleteDecision(String customerId, String decisionName) {
 
-        Decision decision = findByCustomerIdAndName(customerId, decisionName, true);
-        decisionDAO.delete(decision);
+        Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionName);
+        if (decision == null) {
+            throw decisionDoesNotExist(customerId, decisionName);
+        }
 
+        decisionDAO.delete(decision);
         LOGGER.info("Deleted Decision with name '{}' and customer id '{}'", decisionName, customerId);
         return decision;
     }

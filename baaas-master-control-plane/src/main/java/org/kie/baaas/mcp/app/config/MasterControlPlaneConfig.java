@@ -15,8 +15,6 @@
 
 package org.kie.baaas.mcp.app.config;
 
-import java.net.URL;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.validation.constraints.NotBlank;
 
@@ -31,25 +29,25 @@ public class MasterControlPlaneConfig {
 
     @NotBlank
     @ConfigProperty(name = "baaas.mcp.urls.api-base")
-    URL apiBaseUrl;
+    String apiBaseUrl;
 
     @NotBlank
     @ConfigProperty(name = "baaas.ccp.urls.dmn-jit")
-    URL dmnJitUrl;
+    String dmnJitUrl;
 
     @NotBlank
     @ConfigProperty(name = "baaas.ccp.urls.k8s-api")
-    URL kubernetesApiUrl;
+    String kubernetesApiUrl;
 
-    public URL getApiBaseUrl() {
+    public String getApiBaseUrl() {
         return apiBaseUrl;
     }
 
-    public URL getDmnJitUrl() {
+    public String getDmnJitUrl() {
         return dmnJitUrl;
     }
 
-    public URL getKubernetesApiUrl() {
+    public String getKubernetesApiUrl() {
         return kubernetesApiUrl;
     }
 }

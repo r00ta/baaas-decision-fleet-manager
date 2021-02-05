@@ -61,8 +61,8 @@ public class ClusterControlPlaneDAO {
 
         LOGGER.info("Registering Cluster Control Plane. Kubernetes API URL: '{}'. DMN JIT URL: '{}'.", controlPlaneConfig.getKubernetesApiUrl(), controlPlaneConfig.getDmnJitUrl());
 
-        ccp.setKubernetesApiUrl(controlPlaneConfig.getKubernetesApiUrl().toExternalForm());
-        ccp.setDmnJitUrl(controlPlaneConfig.getDmnJitUrl().toExternalForm());
+        ccp.setKubernetesApiUrl(controlPlaneConfig.getKubernetesApiUrl());
+        ccp.setDmnJitUrl(controlPlaneConfig.getDmnJitUrl());
         em.merge(ccp);
     }
 

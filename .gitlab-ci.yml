@@ -65,6 +65,7 @@ native-compile:
     - baaas
   only:
     - main@baaas/baaas-master-control-plane
+    - merge_requests@baaas/baaas-master-control-plane
 
 build-and-push-container:
   image: docker:19.03.12

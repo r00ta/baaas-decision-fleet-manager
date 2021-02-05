@@ -15,8 +15,6 @@
 
 package org.kie.baaas.mcp.app.dao;
 
-import java.net.URL;
-
 import javax.persistence.EntityManager;
 
 import org.junit.jupiter.api.Test;
@@ -70,8 +68,8 @@ public class ClusterControlPlaneDAOTest {
     @Test
     public void init_createsNewControlPlane() throws Exception {
 
-        when(controlPlaneConfig.getDmnJitUrl()).thenReturn(new URL(DMN_JIT_URL));
-        when(controlPlaneConfig.getKubernetesApiUrl()).thenReturn(new URL(KUBERNETES_URL));
+        when(controlPlaneConfig.getDmnJitUrl()).thenReturn(DMN_JIT_URL);
+        when(controlPlaneConfig.getKubernetesApiUrl()).thenReturn(KUBERNETES_URL);
         when(em.find(ClusterControlPlane.class, 1)).thenReturn(null);
 
         controlPlaneDAO.init();
@@ -87,8 +85,8 @@ public class ClusterControlPlaneDAOTest {
 
     @Test
     public void init_updatesExistingControlPlane() throws Exception {
-        when(controlPlaneConfig.getDmnJitUrl()).thenReturn(new URL(DMN_JIT_URL));
-        when(controlPlaneConfig.getKubernetesApiUrl()).thenReturn(new URL(KUBERNETES_URL));
+        when(controlPlaneConfig.getDmnJitUrl()).thenReturn(DMN_JIT_URL);
+        when(controlPlaneConfig.getKubernetesApiUrl()).thenReturn(KUBERNETES_URL);
         when(em.find(ClusterControlPlane.class, 1)).thenReturn(controlPlane);
 
         controlPlaneDAO.init();

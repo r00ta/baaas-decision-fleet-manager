@@ -33,4 +33,9 @@ public class DecisionDAO implements PanacheRepositoryBase<Decision, String> {
         Parameters params = Parameters.with("name", decisionName).and("customerId", customerId);
         return find("#Decision.byCustomerIdAndName", params).firstResult();
     }
+
+    public Decision findByCustomerAndIdOrName(String customerId, String decisionIdOrName) {
+        Parameters params = Parameters.with("idOrName", decisionIdOrName).and("customerId", customerId);
+        return find("#Decision.byCustomerAndIdOrName", params).firstResult();
+    }
 }

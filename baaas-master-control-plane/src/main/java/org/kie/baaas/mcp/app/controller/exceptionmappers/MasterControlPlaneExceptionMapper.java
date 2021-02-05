@@ -30,6 +30,6 @@ public class MasterControlPlaneExceptionMapper implements ExceptionMapper<Master
     //TODO - Extend this with support for Error codes and useful payload
     @Override
     public Response toResponse(MasterControlPlaneException e) {
-        return Response.serverError().entity(e.getMessage()).build();
+        return Response.status(e.getStatusCode()).entity(e.getMessage()).build();
     }
 }

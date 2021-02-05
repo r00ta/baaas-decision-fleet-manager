@@ -14,6 +14,8 @@
  */
 package org.kie.baaas.mcp.app.controller;
 
+import java.util.List;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -30,9 +32,12 @@ import javax.ws.rs.core.Response;
 
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.decisions.DecisionResponse;
+import org.kie.baaas.mcp.api.decisions.DecisionResponseList;
 import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
+import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,28 +70,41 @@ public class DecisionResource {
         this.decisionMapper = decisionMapper;
     }
 
+    private Response mapDecisionVersion(DecisionVersion decisionVersion) {
+        DecisionResponse response = decisionMapper.mapVersionToDecisionResponse(decisionVersion);
+        return Response.ok(response).build();
+    }
+
     @PUT
     @Path("{id}/versions/{version}")
     public Response rollbackToDecisionVersion(String id, long version) {
-        //TODO - invoke the DecisionManager to rollback to the specified version
-        //TODO - marshall the response back to our DTOs
-        return null;
+
+        String customerId = customerIdResolver.getCustomerId();
+        LOGGER.info("Rolling back to version '{}' of Decision with id or name '{}' for customer '{}'...", id, version, customerId);
+        DecisionVersion decisionVersion = decisionManager.rollbackToVersion(customerId, id, version);
+        return mapDecisionVersion(decisionVersion);
     }
 
     @DELETE
     @Path("{id}")
     public Response deleteDecision(String id) {
-        //TODO - invoke DecisionManager to delete the Decision
-        //TODO - marshall the response back into our DTOs
-        return null;
+
+        String customerId = customerIdResolver.getCustomerId();
+        LOGGER.info("Deleting decision with id or name '{}' for customer id '{}'...", id, customerId);
+        Decision decision = decisionManager.deleteDecision(customerId, id);
+        DecisionResponse response = decisionMapper.mapToDecisionResponse(decision);
+        return Response.ok(response).build();
     }
 
     @DELETE
     @Path("{id}/versions/{version}")
     public Response deleteDecisionVersion(@PathParam("id") String id, @PathParam("version") long version) {
-        //TODO - invoke DecisionManager to delete decision version
-        //TODO - Marshall into our DTOs
-        return null;
+
+        String customerId = customerIdResolver.getCustomerId();
+        LOGGER.info("Deleting version '{}' of Decision with id or name '{}' for customer '{}'...");
+
+        DecisionVersion decisionVersion = decisionManager.deleteVersion(customerId, id, version);
+        return mapDecisionVersion(decisionVersion);
     }
 
     @GET
@@ -100,34 +118,42 @@ public class DecisionResource {
     @GET
     @Path("{id}/versions/{version}")
     public Response getDecisionVersion(@PathParam("id") String id, @PathParam("version") long version) {
-        // TODO - invoke the DecisionManager to find details of the specific Decision Version
-        // TODO - marshall response back into our DTOs
-        return null;
+
+        String customerId = customerIdResolver.getCustomerId();
+        LOGGER.info("Getting details of Decision Version '{}' for Decision with id or name '{}' for customer '{}'...", id, version, customerId);
+        DecisionVersion decisionVersion = decisionManager.getVersion(customerId, id, version);
+        return mapDecisionVersion(decisionVersion);
     }
 
     @GET
     @Path("{id}")
     public Response getDecision(@PathParam("id") String id) {
 
-        //TODO - invoke the DecisionManager to find details of the specific Decision
-        //TODO - marshall response from DecisionManager into our DTOs
-        return null;
+        String customerId = customerIdResolver.getCustomerId();
+        LOGGER.info("Getting details of '{}' version of Decision with id or name '{}' for customer '{}'...", DecisionVersionStatus.CURRENT, id, customerId);
+        DecisionVersion decisionVersion = decisionManager.getCurrentVersion(customerIdResolver.getCustomerId(), id);
+        return mapDecisionVersion(decisionVersion);
     }
 
     @GET
     @Path("{id}/versions")
     public Response listDecisionVersions(@PathParam("id") String id) {
-        // TODO - invoke the DecisionManager to get a list of all versions for this Decision
-        // TODO - marshall returned list from DecisionManager into our DTOs
-        // TODO - should id be either the internal DB id _or_ the decision name?
-        return null;
+
+        String customerId = customerIdResolver.getCustomerId();
+        LOGGER.info("Listing all versions for Decision with id or name '{}' for customer '{}'...", id, customerId);
+        List<DecisionVersion> versions = decisionManager.listDecisionVersions(customerId, id);
+        DecisionResponseList responseList = decisionMapper.mapVersionsToDecisionResponseList(versions);
+        return Response.ok(responseList).build();
     }
 
     @GET
     public Response listDecisions() {
-        //TODO - invoke the DecisionManager to get a list of decisions
-        //TODO - marshall the returned list into our DTOs
-        return null;
+
+        String customerId = customerIdResolver.getCustomerId();
+        LOGGER.info("Listing all Decisions for customer with id '{}...'", customerId);
+        List<Decision> decisions = decisionManager.listDecisions(customerId);
+        DecisionResponseList responseList = decisionMapper.mapToDecisionResponseList(decisions);
+        return Response.ok(responseList).build();
     }
 
     @POST

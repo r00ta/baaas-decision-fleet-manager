@@ -20,20 +20,20 @@ import javax.ws.rs.core.Response;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 
 /**
- * Models an exception in the transition of a Decision lifecycle.
+ * Indicates that we are trying to perform an action against a Decision that does not exist.
  */
-public class DecisionLifecycleException extends MasterControlPlaneException {
+public class NoSuchDecisionException extends MasterControlPlaneException {
 
-    public DecisionLifecycleException(String message) {
+    public NoSuchDecisionException(String message) {
         super(message);
     }
 
-    public DecisionLifecycleException(String message, Throwable cause) {
+    public NoSuchDecisionException(String message, Throwable cause) {
         super(message, cause);
     }
 
     @Override
     public int getStatusCode() {
-        return Response.Status.BAD_REQUEST.getStatusCode();
+        return Response.Status.NOT_FOUND.getStatusCode();
     }
 }

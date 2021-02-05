@@ -49,7 +49,7 @@ public class HrefGenerator {
         long version = decisionVersion.getVersion();
 
         try {
-            return UriBuilder.fromUri(config.getApiBaseUrl().toURI()).path(DECISION_HREF_SUFFIX).build(id, version).toURL().toExternalForm();
+            return UriBuilder.fromUri(config.getApiBaseUrl()).path(DECISION_HREF_SUFFIX).build(id, version).toString();
         } catch (Exception e) {
             throw new MasterControlPlaneException("Failed to build HATEOAS href for DecisionVersion with version '" + version + "' for Decision '" + id + "'", e);
         }

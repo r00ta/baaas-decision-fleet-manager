@@ -15,6 +15,8 @@
 
 package org.kie.baaas.mcp.app.dao;
 
+import java.util.List;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.Transactional;
 
@@ -29,15 +31,40 @@ import org.kie.baaas.mcp.app.model.DecisionVersion;
 @Transactional
 public class DecisionVersionDAO implements PanacheRepositoryBase<DecisionVersion, String> {
 
+    private static final String CUSTOMER_ID_PARAM = "customerId";
+
+    private Parameters customerIdParams(String customerId) {
+        return Parameters.with(CUSTOMER_ID_PARAM, customerId);
+    }
+
     public long getNextVersionId(String customerId, String decisionName) {
-        Parameters params = Parameters.with("customerId", customerId).and("name", decisionName);
+        Parameters params = customerIdParams(customerId).and("name", decisionName);
         return find("#DecisionVersion.countByCustomerAndName", params).count() + 1;
     }
 
+    public DecisionVersion getCurrentVersion(String customerId, String decisionIdOrName) {
+        Parameters params = customerIdParams(customerId).and("idOrName", decisionIdOrName);
+        return find("#DecisionVersion.currentByCustomerAndDecisionIdOrName", params).firstResult();
+    }
+
+    public DecisionVersion findByCustomerAndDecisionIdOrName(String customerId, String decisionIdOrName, long decisionVersion) {
+        Parameters params = customerIdParams(customerId).and("idOrName", decisionIdOrName).and("version", decisionVersion);
+        return find("#DecisionVersion.byCustomerDecisionIdOrNameAndVersion", params).firstResult();
+    }
+
     public DecisionVersion findByCustomerAndDecisionName(String customerId, String decisionName, long decisionVersion) {
-        Parameters params = Parameters.with("customerId", customerId)
+        Parameters params = customerIdParams(customerId)
                 .and("name", decisionName)
                 .and("version", decisionVersion);
         return find("#DecisionVersion.byCustomerAndNameAndVersion", params).firstResult();
+    }
+
+    public List<DecisionVersion> listCurrentByCustomerId(String customerId) {
+        return list("#DecisionVersion.currentByCustomer", customerIdParams(customerId));
+    }
+
+    public List<DecisionVersion> listByCustomerAndDecisionIdOrName(String customerId, String decisionIdOrName) {
+        Parameters params = customerIdParams(customerId).and("idOrName", decisionIdOrName);
+        return list("#DecisionVersion.byCustomerAndDecisionIdOrName", params);
     }
 }

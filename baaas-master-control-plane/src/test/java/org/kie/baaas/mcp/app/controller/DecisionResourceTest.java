@@ -15,6 +15,8 @@
 
 package org.kie.baaas.mcp.app.controller;
 
+import java.util.List;
+
 import javax.ws.rs.core.Response;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,24 +24,33 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.decisions.DecisionResponse;
+import org.kie.baaas.mcp.api.decisions.DecisionResponseList;
 import org.kie.baaas.mcp.api.decisions.Model;
 import org.kie.baaas.mcp.api.decisions.ResponseModel;
 import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class DecisionResourceTest {
+
+    private static final String DEFAULT_CUSTOMER_ID = "customer-id";
 
     @Mock
     CustomerIdResolver customerIdResolver;
@@ -83,11 +94,128 @@ public class DecisionResourceTest {
 
     @BeforeEach
     public void beforeEach() {
-        lenient().when(customerIdResolver.getCustomerId()).thenReturn("customer-id");
+        lenient().when(customerIdResolver.getCustomerId()).thenReturn(DEFAULT_CUSTOMER_ID);
     }
 
     @Test
-    public void processValidRequest() {
+    public void rollbackToVersion() {
+        DecisionVersion version = mock(DecisionVersion.class);
+        DecisionResponse decisionResponse = mock(DecisionResponse.class);
+        String decisionId = "foo";
+        long decisionVersion = 1l;
+
+        when(decisionManager.rollbackToVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
+        when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
+
+        Response response = decisionResource.rollbackToDecisionVersion(decisionId, decisionVersion);
+        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+
+        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+    }
+
+    @Test
+    public void deleteDecision() {
+
+        Decision decision = mock(Decision.class);
+        DecisionResponse decisionResponse = mock(DecisionResponse.class);
+        String decisionId = "foo";
+
+        when(decisionManager.deleteDecision(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(decision);
+        when(decisionMapper.mapToDecisionResponse(decision)).thenReturn(decisionResponse);
+
+        Response response = decisionResource.deleteDecision(decisionId);
+        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+
+        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+    }
+
+    @Test
+    public void deleteDecisionVersion() {
+        DecisionVersion version = mock(DecisionVersion.class);
+        DecisionResponse decisionResponse = mock(DecisionResponse.class);
+        String decisionId = "foo";
+        long decisionVersion = 1l;
+
+        when(decisionManager.deleteVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
+        when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
+
+        Response response = decisionResource.deleteDecisionVersion(decisionId, decisionVersion);
+        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+
+        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+    }
+
+    @Test
+    public void getDecisionVersion() {
+        DecisionVersion version = mock(DecisionVersion.class);
+        DecisionResponse decisionResponse = mock(DecisionResponse.class);
+        String decisionId = "foo";
+        long decisionVersion = 1l;
+
+        when(decisionManager.getVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
+        when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
+
+        Response response = decisionResource.getDecisionVersion(decisionId, decisionVersion);
+        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+
+        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+    }
+
+    @Test
+    public void getDecision() {
+        DecisionVersion version = mock(DecisionVersion.class);
+        DecisionResponse decisionResponse = mock(DecisionResponse.class);
+        String decisionId = "foo";
+
+        when(decisionManager.getCurrentVersion(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(version);
+        when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
+
+        Response response = decisionResource.getDecision(decisionId);
+        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+
+        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+    }
+
+    @Test
+    public void listDecisionVersions() {
+
+        DecisionVersion version = mock(DecisionVersion.class);
+        DecisionResponseList responseList = mock(DecisionResponseList.class);
+        ArgumentCaptor<List<DecisionVersion>> decisionList = ArgumentCaptor.forClass(List.class);
+
+        String decisionId = "foo";
+
+        when(decisionManager.listDecisionVersions(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(singletonList(version));
+        when(decisionMapper.mapVersionsToDecisionResponseList(decisionList.capture())).thenReturn(responseList);
+
+        Response response = decisionResource.listDecisionVersions(decisionId);
+        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+
+        DecisionResponseList decisions = response.readEntity(DecisionResponseList.class);
+        assertThat(responseList, equalTo(decisions));
+        assertThat(decisionList.getValue(), contains(version));
+    }
+
+    @Test
+    public void listDecisions() {
+
+        Decision decision = mock(Decision.class);
+        DecisionResponseList responseList = mock(DecisionResponseList.class);
+        ArgumentCaptor<List<Decision>> decisionList = ArgumentCaptor.forClass(List.class);
+
+        when(decisionManager.listDecisions(DEFAULT_CUSTOMER_ID)).thenReturn(singletonList(decision));
+        when(decisionMapper.mapToDecisionResponseList(decisionList.capture())).thenReturn(responseList);
+
+        Response response = decisionResource.listDecisions();
+        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+
+        DecisionResponseList decisions = response.readEntity(DecisionResponseList.class);
+        assertThat(responseList, equalTo(decisions));
+        assertThat(decisionList.getValue(), contains(decision));
+    }
+
+    @Test
+    public void createOrUpdateDecision() {
         DecisionRequest decisionRequest = createApiRequest();
 
         lenient().when(decisionManager.createOrUpdateVersion("customer-id", decisionRequest)).thenReturn(decisionVersion);

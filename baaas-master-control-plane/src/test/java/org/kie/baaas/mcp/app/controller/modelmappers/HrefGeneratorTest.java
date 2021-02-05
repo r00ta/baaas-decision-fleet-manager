@@ -15,8 +15,6 @@
 
 package org.kie.baaas.mcp.app.controller.modelmappers;
 
-import java.net.URL;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +42,7 @@ public class HrefGeneratorTest {
 
     @BeforeEach
     public void before() throws Exception {
-        when(config.getApiBaseUrl()).thenReturn(new URL(API_BASE_URL));
+        when(config.getApiBaseUrl()).thenReturn(API_BASE_URL);
     }
 
     @Test
