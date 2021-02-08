@@ -15,47 +15,199 @@
 
 package org.kie.baaas.mcp.app.storage.s3;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
+import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
+import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.manager.NoSuchDecisionException;
+import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.storage.DMNStorageRequest;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
+import org.kie.baaas.mcp.app.storage.DecisionDMNStorageException;
 import org.kie.baaas.mcp.app.storage.hash.DMNHashGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+
+import static java.util.Objects.requireNonNull;
 
 @ApplicationScoped
 public class S3DMNStorage implements DecisionDMNStorage {
 
-    // s3 bucket name should be configurable via BAAAS_MCP_S3_BUCKET config property (or similar)
-    // AWS credentials will be provided as ENV variables so should work directly with Quarkus
+    private final Logger LOGGER = LoggerFactory.getLogger(S3DMNStorage.class);
 
+    // base url = https://s3Endpoint/s3BucketName
+    private final String S3_DMN_ENDPOINT = "%s/%s";
+    // base file location customers/<customer_id>/<decision_name>/<decision_version>/dmn.xml
+    private final String DMN_LOCATION = "customers/%s/%s/%d/dmn.xml";
+
+    private final MasterControlPlaneConfig config;
+    private final S3Client s3Client;
     private final DMNHashGenerator hashGenerator;
+    private final DecisionManager decisionManager;
 
     @Inject
-    public S3DMNStorage(DMNHashGenerator hashGenerator) {
+    public S3DMNStorage(MasterControlPlaneConfig config, DMNHashGenerator hashGenerator, S3Client s3Client,
+                        DecisionManager decisionManager) {
+
+        requireNonNull(config, "config cannot be null");
+        requireNonNull(s3Client, "s3Client cannot be null");
+        requireNonNull(hashGenerator, "hashGenerator cannot be null");
+        requireNonNull(decisionManager, "decisionManager cannot be null");
+
+        this.config = config;
+        this.s3Client = s3Client;
         this.hashGenerator = hashGenerator;
+        this.decisionManager = decisionManager;
     }
 
     @Override
-    public DMNStorageRequest writeDMN(String customerId, DecisionRequest decisions) {
+    public DMNStorageRequest writeDMN(String customerId, DecisionRequest decisionRequest, DecisionVersion decisionVersion) {
 
-        String hash = hashGenerator.generateHash(decisions.getModel().getDmn());
+        String dmnLocation = composeDMNLocation(customerId, decisionRequest.getName(), decisionVersion.getVersion());
+        String dmnURL = composeS3URL(dmnLocation);
 
-        //TODO - Write the DMN into the correct location as specified here:  https://issues.redhat.com/browse/BAAAS-41
-        // e.g s3://${baaas-s3-bucket}/customers/<customer_id>/<decision_name>/<decision_version>/dmn.xml
+        PutObjectResponse response = s3Client.putObject(
+                putObjectRequest(dmnLocation, hashGenerator.generateHash(decisionRequest.getModel().getDmn())),
+                RequestBody.fromBytes(decisionRequest.getModel().getDmn().getBytes(StandardCharsets.UTF_8)));
 
-        return new DMNStorageRequest("foo", hash);
+        LOGGER.info("DMN file {} successfully written at {}.", decisionRequest.getName(), dmnURL);
+        return new DMNStorageRequest(dmnURL, response.eTag());
     }
 
     @Override
     public void deleteDMN(String customerId, String decisionName) {
-        //TODO Delete all versions of DMN for the specified decision in the specified customer account
+        // get objects from bucket
+        ListObjectsV2Response objectsInBucket = s3Client
+                .listObjectsV2(ListObjectsV2Request
+                                       .builder()
+                                       .bucket(config.getBucketName())
+                                       .build());
+
+        if (objectsInBucket.contents().isEmpty()) {
+            throw new DecisionDMNStorageException(
+                    String.format("There is no object on bucket %s that matches customer id %s and decision name %s",
+                                  config.getBucketName(),
+                                  customerId,
+                                  decisionName));
+        }
+
+        objectsInBucket.contents().stream()
+                .filter(obj -> obj.key().contains(customerId) && obj.key().contains(decisionName))
+                .forEach(obj -> {
+                    s3Client.deleteObject(deleteObjectRequest(obj.key()));
+                    LOGGER.info("Object {} deleted from bucket {}.", obj.key(), config.getBucketName());
+                });
     }
 
     @Override
-    public String readDMN(String customerId, String decisionName, long decisionVersion) {
-        //TODO - Fetch the DMN for the specified decision and version for the given customer
-        //TODO Is String the best return value here? Is something else better?
-        return null;
+    public ByteArrayOutputStream readDMN(String customerId, String decisionName, long decisionVersion) {
+
+        DecisionVersion localDecisionVersion = decisionManager.getVersion(customerId, decisionName, decisionVersion);
+
+        if (localDecisionVersion == null) {
+            throw new NoSuchDecisionException(
+                    String.format("Decision %s version %s associated with customer id %s was n ot found.",
+                                  decisionName, decisionVersion, customerId));
+        }
+
+        String dmnLocation = composeDMNLocation(customerId, decisionName, localDecisionVersion.getVersion());
+
+        try {
+            ByteArrayOutputStream dmnBaos = new ByteArrayOutputStream();
+            GetObjectResponse response = s3Client.getObject(getObjectRequest(dmnLocation), ResponseTransformer.toOutputStream(dmnBaos));
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(response.toString());
+            }
+
+            return dmnBaos;
+        } catch (final Exception e) {
+            throw new DecisionDMNStorageException("Failed to read decision from S3 Bucket.", e);
+        }
+    }
+
+    /**
+     * Return the full s3 url for the given dmn
+     *
+     * @param dmnLocation - The full dmn location
+     * @return url to access the dmn.
+     */
+    private String composeS3URL(String dmnLocation) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(String.format(S3_DMN_ENDPOINT, config.getS3Endpoint(), config.getBucketName()));
+        builder.append("/");
+        builder.append(dmnLocation);
+        return builder.toString();
+    }
+
+    /**
+     * Return the dmnLocation on S3 Bucket based on given inputs
+     *
+     * @param customerId      - The customer id associated with the decision
+     * @param decisionName    - The decision name
+     * @param decisionVersion - The decision version
+     * @return full location of the dmn file.
+     */
+    private String composeDMNLocation(String customerId, String decisionName, long decisionVersion) {
+        return String.format(DMN_LOCATION, customerId, decisionName, decisionVersion);
+    }
+
+    /**
+     * Builds a put object request for the given dmn which will be persisted on S3 Bucket.
+     *
+     * @param decisionName - The decision name to be persisted
+     * @param md5Checksum  - The decision chedksum (MD5)
+     * @return PutObjectRequest with dmn file information.
+     */
+    private PutObjectRequest putObjectRequest(String decisionName, String md5Checksum) {
+        return PutObjectRequest.builder()
+                .bucket(config.getBucketName())
+                .key(decisionName)
+                .contentMD5(md5Checksum)
+                .contentType("application/xml")
+                .build();
+    }
+
+    /**
+     * Builds a get object request for the given dmn.
+     *
+     * @param dmnLocation - The decision location on bucket
+     * @return GetObjectRequest with dmn file information.
+     */
+    private GetObjectRequest getObjectRequest(String dmnLocation) {
+        return GetObjectRequest
+                .builder()
+                .bucket(config.getBucketName())
+                .key(dmnLocation)
+                .build();
+    }
+
+    /**
+     * Builds a delete object request for the given dmn.
+     *
+     * @param objectKey - The decision chedksum (MD5)
+     * @return DeleteObjectRequest with dmn file information.
+     */
+    private DeleteObjectRequest deleteObjectRequest(String objectKey) {
+        return DeleteObjectRequest
+                .builder()
+                .bucket(config.getBucketName())
+                .key(objectKey)
+                .build();
     }
 }

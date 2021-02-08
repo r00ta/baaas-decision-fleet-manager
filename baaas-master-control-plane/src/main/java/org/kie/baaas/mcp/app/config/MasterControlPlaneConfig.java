@@ -16,6 +16,7 @@
 package org.kie.baaas.mcp.app.config;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.validation.constraints.NotBlank;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -51,6 +52,14 @@ public class MasterControlPlaneConfig {
     @ConfigProperty(name = "baaas.kafka.secret-name")
     String kafkaSecretName;
 
+    @Inject
+    @ConfigProperty(name = "baaas.mcp.s3.bucket.name")
+    String bucketName;
+
+    @Inject
+    @ConfigProperty(name = "quarkus.s3.endpoint-override")
+    String s3Endpoint;
+
     public String getApiBaseUrl() {
         return apiBaseUrl;
     }
@@ -73,5 +82,13 @@ public class MasterControlPlaneConfig {
 
     public String getKafkaSecretName() {
         return kafkaSecretName;
+    }
+
+    public String getBucketName() {
+        return bucketName;
+    }
+
+    public String getS3Endpoint() {
+        return s3Endpoint;
     }
 }

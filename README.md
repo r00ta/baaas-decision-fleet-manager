@@ -26,13 +26,6 @@ consumed.
 
 The supported schema for registering a new decision is:
 
-**Schemas**:
-
-| JSON     |      Yaml     |
-|----------|:-------------:|
-| [json schema](#json-payload) | [yaml schema](#yaml-payload)
-
-
 ## **Schema**:
 
 ### JSON payload
@@ -90,19 +83,52 @@ The MCP can be run locally using either `quarkus:dev` mode or through the `docke
 
 Generally, the choice as to which one you want to use will be:
 
- - `quarkus:dev` if you're doing iterative development on the MCP
- - `docker-compose` if you want to test or integrate something against the MCP
+- `quarkus:dev` if you're doing iterative development on the MCP
+- `docker-compose` if you want to test or integrate something against the MCP
 
 #### quarkus:dev
 
-To use `quarkus:dev` mode, use the following commands:
+To use `quarkus:dev` mode with MCP, we need to setup 2 services:
+
+- PostgreSQL
+- Localstack with S3 to provide a S3 Bucket implementation
+
+There is a docker-compose file for this purpose: [docker-compse-quarkus-dev.yml](docker-compose-quarkus-dev.yml)
+To start it use the command below:
+
+```bash
+$ podman|docker-compose -f docker-compose-quarkus-dev.yml up
+```
+
+After S3 is available, configure it as the following example:
+
+```bash
+$ aws configure --profile localstack
+AWS Access Key ID [None]: test-key
+AWS Secret Access Key [None]: test-secret
+Default region name [None]: us-east-1
+Default output format [None]:
+```
+
+And create the `decisions-bucket`:
+
+```bash
+$ aws s3 mb s3://decisions-bucket --profile localstack --endpoint-url=http://localhost:8008
+make_bucket: decisions-bucket
+```
+
 
 ```shell
-docker-compose up -d db
-cd ~/baaas-master-control-plane
 mvn clean install quarkus:dev
 ```
 This will start the MCP on `http://localhost:8080` and will support live-reload of the code as you develop.
+
+And when you're done developing with dev mode:
+
+```bash
+$ podman|docker-compose -f docker-compose-quarkus-dev.yml down
+```
+
 
 #### docker-compose
 
@@ -138,7 +164,7 @@ We use the following naming strategy when creating database tables:
   * `CLUSTER_CONTROL_PLANE` and not `CLUSTER_CONTROL_PLANES`
 * Column names must be all lowercase with words separated with `_`. Column names should be in the singular form e.g:
   * `kubernetes_api_url` and not `kubernetes_api_urls`
-    
+
 ### Flyway for Migrations
 
 We use [Flyway](https://flywaydb.org) for our database migrations.

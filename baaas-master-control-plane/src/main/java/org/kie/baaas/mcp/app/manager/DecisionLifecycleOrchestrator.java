@@ -15,6 +15,7 @@
 
 package org.kie.baaas.mcp.app.manager;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -133,4 +134,10 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     public List<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName) {
         return decisionManager.listDecisionVersions(customerId, decisionIdOrName);
     }
+
+    @Override
+    public ByteArrayOutputStream getDMNFromBucket(String customerId, String decisionIdOrName, long version) {
+        return decisionManager.getDMNFromBucket(customerId, decisionIdOrName, version);
+    }
+
 }

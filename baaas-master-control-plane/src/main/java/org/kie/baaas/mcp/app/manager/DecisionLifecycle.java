@@ -15,6 +15,7 @@
 
 package org.kie.baaas.mcp.app.manager;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
@@ -101,4 +102,15 @@ public interface DecisionLifecycle {
      * @return - The list of versions for this decision.
      */
     List<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName);
+
+    /**
+     * Retrieve the requested dmn file from S3 Bucket as ByteArrayOutputStream
+     *
+     * @param customerId - The id of the customer that owns the Decision
+     * @param decisionIdOrName - The id or name of the Decision
+     * @param version - The version of the Decision
+     * @return the request dmn file as ByteArrayOutputStream
+     */
+    ByteArrayOutputStream getDMNFromBucket(String customerId, String decisionIdOrName, long version);
+
 }

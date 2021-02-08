@@ -15,6 +15,8 @@
 
 package org.kie.baaas.mcp.app.controller;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import javax.ws.rs.core.Response;
@@ -144,6 +146,20 @@ public class DecisionResourceTest {
 
         assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
     }
+
+    @Test
+    public void getDecisionVersionDMN() {
+
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        b.writeBytes("<xml test=\"123\">foo</xml>".getBytes(StandardCharsets.UTF_8));
+
+        when(decisionLifecycle.getDMNFromBucket("customer-id", "foo" ,1L)).thenReturn(b);
+
+        Response response = decisionResource.getDecisionVersionDMN("foo", 1L);
+        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+        assertThat(response.hasEntity(), equalTo(true));
+    }
+
 
     @Test
     public void getDecisionVersion() {

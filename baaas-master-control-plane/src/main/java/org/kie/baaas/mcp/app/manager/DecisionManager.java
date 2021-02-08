@@ -15,6 +15,7 @@
 
 package org.kie.baaas.mcp.app.manager;
 
+import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -158,12 +159,8 @@ public class DecisionManager implements DecisionLifecycle {
 
         DecisionVersion decisionVersion = new DecisionVersion();
 
-        //TODO - this is occuring within a transaction. If the write to storage takes a long time, the transaction
+        //TODO - this is occurring within a transaction. If the write to storage takes a long time, the transaction
         // will be held open.
-
-        DMNStorageRequest dmnStorageRequest = decisionDMNStorage.writeDMN(customerId, decisionRequest);
-        decisionVersion.setDmnMd5(dmnStorageRequest.getMd5Hash());
-        decisionVersion.setDmnLocation(dmnStorageRequest.getProviderUrl());
 
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
         decisionVersion.setSubmittedAt(LocalDateTime.now(ZoneOffset.UTC));
@@ -184,13 +181,17 @@ public class DecisionManager implements DecisionLifecycle {
         return decisionVersion;
     }
 
-    private DecisionVersion createDecision(String customerId, DecisionRequest decisionsResponse) {
+    private DecisionVersion createDecision(String customerId, DecisionRequest decisionRequest) {
         Decision decision = new Decision();
         decision.setCustomerId(customerId);
-        decision.setName(decisionsResponse.getName());
-        decision.setDescription(decisionsResponse.getDescription());
+        decision.setName(decisionRequest.getName());
+        decision.setDescription(decisionRequest.getDescription());
 
-        DecisionVersion decisionVersion = createDecisionVersion(customerId, decisionsResponse);
+        DecisionVersion decisionVersion = createDecisionVersion(customerId, decisionRequest);
+
+        DMNStorageRequest dmnStorageRequest = decisionDMNStorage.writeDMN(customerId, decisionRequest, decisionVersion);
+        decisionVersion.setDmnMd5(dmnStorageRequest.getMd5Hash());
+        decisionVersion.setDmnLocation(dmnStorageRequest.getProviderUrl());
 
         decision.addVersion(decisionVersion);
         decision.setNextVersion(decisionVersion);
@@ -206,11 +207,15 @@ public class DecisionManager implements DecisionLifecycle {
         decision.setDescription(decisionRequest.getDescription());
 
         DecisionVersion decisionVersion = createDecisionVersion(customerId, decisionRequest);
+        DMNStorageRequest dmnStorageRequest = decisionDMNStorage.writeDMN(customerId, decisionRequest, decisionVersion);
+        decisionVersion.setDmnMd5(dmnStorageRequest.getMd5Hash());
+        decisionVersion.setDmnLocation(dmnStorageRequest.getProviderUrl());
+
         decision.addVersion(decisionVersion);
         decision.setNextVersion(decisionVersion);
 
+        decisionDAO.persist(decision);
         LOGGER.info("Updating Decision with name '{}' with new version '{}' for customer with id '{}'", decision.getName(), decisionVersion.getVersion(), customerId);
-
         return decisionVersion;
     }
 
@@ -307,6 +312,18 @@ public class DecisionManager implements DecisionLifecycle {
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
         decisionVersion.getDecision().setNextVersion(decisionVersion);
         return decisionVersion;
+    }
+
+    /**
+     * Reads the given dmn version and name from associated customerId
+     *
+     * @param customerId   - The customer that owns the Decision
+     * @param decisionName - The name of the decision to be returned
+     * @param version      - The version of the decision to be returned
+     * @return - The dmn as String from S3 bucket
+     */
+    public ByteArrayOutputStream getDMNFromBucket(String customerId, String decisionName, long version) {
+        return decisionDMNStorage.readDMN(customerId, decisionName, version);
     }
 
     /**

@@ -17,6 +17,7 @@ services:
       - "8080:8080"
     depends_on:
       - db
+      - s3
 
   jit:
     image: quay.io/kiegroup/kogito-jit-runner-nightly:1.2.x-2021-02-03
@@ -31,3 +32,11 @@ services:
       POSTGRES_DB: baaas-mcp
     ports:
       - "5432:5432"
+
+  s3:
+    image: localstack/localstack:0.11.5
+    environment:
+      START_WEB: 0
+      SERVICES: S3
+    ports:
+      - "4566:8008"

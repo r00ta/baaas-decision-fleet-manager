@@ -15,9 +15,10 @@
 
         <!-- dependencies version properties -->
         <compiler-plugin.version>3.8.1</compiler-plugin.version>
-        <quarkus.platform.version>1.11.0.Final</quarkus.platform.version>
-        <quarkus-plugin.version>1.11.0.Final</quarkus-plugin.version>
+        <quarkus.platform.version>1.11.1.Final</quarkus.platform.version>
+        <quarkus-plugin.version>1.11.1.Final</quarkus-plugin.version>
         <surefire-plugin.version>2.22.1</surefire-plugin.version>
+        <org.mockito.inline.version>2.13.0</org.mockito.inline.version>
 
         <!-- other properties -->
         <maven.compiler.source>11</maven.compiler.source>

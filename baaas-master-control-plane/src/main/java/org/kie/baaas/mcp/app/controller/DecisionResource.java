@@ -14,6 +14,7 @@
  */
 package org.kie.baaas.mcp.app.controller;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -29,6 +30,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.decisions.DecisionResponse;
@@ -102,7 +104,8 @@ public class DecisionResource {
     public Response deleteDecisionVersion(@PathParam("id") String id, @PathParam("version") long version) {
 
         String customerId = customerIdResolver.getCustomerId();
-        LOGGER.info("Deleting version '{}' of Decision with id or name '{}' for customer '{}'...");
+        LOGGER.info("Deleting version '{}' of Decision with id or name '{}' for customer '{}'...",
+                    version, id, customerId);
 
         DecisionVersion decisionVersion = decisionLifecycle.deleteVersion(customerId, id, version);
         return mapDecisionVersion(decisionVersion);
@@ -110,10 +113,27 @@ public class DecisionResource {
 
     @GET
     @Path("{id}/versions/{version}/dmn")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response getDecisionVersionDMN(@PathParam("id") String id, @PathParam("version") long version) {
-        //TODO - invoke the DecisionManager to retrieve the DMN for this specific version
-        //TODO - marshall into our DTOs
-        return null;
+
+        // TODO HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
+        // happens when trying to fetch a decision that does not exist. it might be preventing the exception to be thrown
+        // on readDMN method.
+
+        // TODO returns a formatted xml file.
+
+
+        String customerId = customerIdResolver.getCustomerId();
+        LOGGER.info("Requesting Decision version '{}' of with id or name '{}' for customer '{}' to be downloaded...",
+                    version, id, customerId);
+
+        ByteArrayOutputStream byteArrayOutputStream = decisionLifecycle.getDMNFromBucket(customerId, id, version);
+
+        Response.ResponseBuilder response = Response.ok((StreamingOutput) output -> byteArrayOutputStream.writeTo(output));
+        response.header("Content-Disposition", "attachment;filename=" + id + ".xml");
+        response.header("Content-Type", MediaType.APPLICATION_XML);
+
+        return response.build();
     }
 
     @GET

@@ -15,13 +15,21 @@
 
 package org.kie.baaas.mcp.app.storage.hash;
 
+import java.nio.charset.StandardCharsets;
+
 import javax.enterprise.context.ApplicationScoped;
+
+import software.amazon.awssdk.utils.Md5Utils;
 
 @ApplicationScoped
 public class DMNHashGenerator {
 
-    public String generateHash(String dmn) {
-        //TODO - generate the MD5 hash of the DMN that we have received.
-        return "hashhashhash";
+    /**
+     * MD5 checksum sum calculator, based on aws md5 utils
+     * @param plainTextDmn
+     * @return md5 checksum as string
+     */
+    public String generateHash(String plainTextDmn) {
+        return Md5Utils.md5AsBase64(plainTextDmn.getBytes(StandardCharsets.UTF_8));
     }
 }
