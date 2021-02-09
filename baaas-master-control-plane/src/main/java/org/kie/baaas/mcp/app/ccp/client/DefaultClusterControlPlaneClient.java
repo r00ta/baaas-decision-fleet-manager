@@ -27,9 +27,14 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
 
     private ClusterControlPlane clusterControlPlane;
 
+    public DefaultClusterControlPlaneClient(KubernetesClient kubernetesClient, ClusterControlPlane clusterControlPlane) {
+        this.kubernetesClient = kubernetesClient;
+        this.clusterControlPlane = clusterControlPlane;
+    }
+
     @Override
     public ClusterControlPlane getClusterControlPlane() {
-        return null;
+        return clusterControlPlane;
     }
 
     @Override

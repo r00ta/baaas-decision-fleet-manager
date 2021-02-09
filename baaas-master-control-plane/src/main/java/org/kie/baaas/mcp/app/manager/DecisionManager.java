@@ -45,7 +45,7 @@ import static java.util.stream.Collectors.toList;
  */
 @ApplicationScoped
 @Transactional
-public class DecisionManager {
+public class DecisionManager implements DecisionLifecycle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DecisionManager.class);
 
@@ -308,8 +308,6 @@ public class DecisionManager {
 
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
         decisionVersion.getDecision().setNextVersion(decisionVersion);
-
-        //TODO - send request to CCP to rollback
         return decisionVersion;
     }
 
@@ -357,18 +355,18 @@ public class DecisionManager {
      * Deletes the specified decision fully
      *
      * @param customerId   - The customer that owns the decision
-     * @param decisionName - The name of the Decision to delete.
+     * @param decisionNameOrId - The name of the Decision to delete.
      * @return - The deleted decision.
      */
-    public Decision deleteDecision(String customerId, String decisionName) {
+    public Decision deleteDecision(String customerId, String decisionNameOrId) {
 
-        Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionName);
+        Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionNameOrId);
         if (decision == null) {
-            throw decisionDoesNotExist(customerId, decisionName);
+            throw decisionDoesNotExist(customerId, decisionNameOrId);
         }
 
         decisionDAO.delete(decision);
-        LOGGER.info("Deleted Decision with name '{}' and customer id '{}'", decisionName, customerId);
+        LOGGER.info("Deleted Decision with name '{}' and customer id '{}'", decisionNameOrId, customerId);
         return decision;
     }
 }

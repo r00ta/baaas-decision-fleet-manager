@@ -36,6 +36,6 @@ public class DBMigrationTest {
 
         ClusterControlPlane clusterControlPlane = controlPlaneDAO.findOne();
         assertThat(clusterControlPlane.getDmnJitUrl(), equalTo("https://baaas-dmn-jit-baaas-dmn-jit-demo.apps.kogito-cloud.automation.rhmw.io/jitdmn"));
-        assertThat(clusterControlPlane.getKubernetesApiUrl(), equalTo("https://kubernetes.default"));
+        assertThat(clusterControlPlane.getKubernetesApiUrl(), equalTo("https://kubernetes.default.svc"));
     }
 }

@@ -34,7 +34,8 @@ import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.decisions.DecisionResponse;
 import org.kie.baaas.mcp.api.decisions.DecisionResponseList;
 import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
-import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.manager.DecisionLifecycle;
+import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
@@ -54,19 +55,19 @@ public class DecisionResource {
 
     private final CustomerIdResolver customerIdResolver;
 
-    private final DecisionManager decisionManager;
+    private final DecisionLifecycle decisionLifecycle;
 
     private final DecisionMapper decisionMapper;
 
     @Inject
-    public DecisionResource(CustomerIdResolver customerIdResolver, DecisionManager decisionManager, DecisionMapper decisionMapper) {
+    public DecisionResource(CustomerIdResolver customerIdResolver, DecisionLifecycleOrchestrator decisionLifecycle, DecisionMapper decisionMapper) {
 
         requireNonNull(customerIdResolver, "customerIdResolver cannot be null");
-        requireNonNull(decisionManager, "decisionManager cannot be null");
+        requireNonNull(decisionLifecycle, "decisionLifecycle cannot be null");
         requireNonNull(decisionMapper, "decisionMapper cannot be null");
 
         this.customerIdResolver = customerIdResolver;
-        this.decisionManager = decisionManager;
+        this.decisionLifecycle = decisionLifecycle;
         this.decisionMapper = decisionMapper;
     }
 
@@ -81,7 +82,7 @@ public class DecisionResource {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Rolling back to version '{}' of Decision with id or name '{}' for customer '{}'...", id, version, customerId);
-        DecisionVersion decisionVersion = decisionManager.rollbackToVersion(customerId, id, version);
+        DecisionVersion decisionVersion = decisionLifecycle.rollbackToVersion(customerId, id, version);
         return mapDecisionVersion(decisionVersion);
     }
 
@@ -91,7 +92,7 @@ public class DecisionResource {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Deleting decision with id or name '{}' for customer id '{}'...", id, customerId);
-        Decision decision = decisionManager.deleteDecision(customerId, id);
+        Decision decision = decisionLifecycle.deleteDecision(customerId, id);
         DecisionResponse response = decisionMapper.mapToDecisionResponse(decision);
         return Response.ok(response).build();
     }
@@ -103,7 +104,7 @@ public class DecisionResource {
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Deleting version '{}' of Decision with id or name '{}' for customer '{}'...");
 
-        DecisionVersion decisionVersion = decisionManager.deleteVersion(customerId, id, version);
+        DecisionVersion decisionVersion = decisionLifecycle.deleteVersion(customerId, id, version);
         return mapDecisionVersion(decisionVersion);
     }
 
@@ -121,7 +122,7 @@ public class DecisionResource {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Getting details of Decision Version '{}' for Decision with id or name '{}' for customer '{}'...", id, version, customerId);
-        DecisionVersion decisionVersion = decisionManager.getVersion(customerId, id, version);
+        DecisionVersion decisionVersion = decisionLifecycle.getVersion(customerId, id, version);
         return mapDecisionVersion(decisionVersion);
     }
 
@@ -131,7 +132,7 @@ public class DecisionResource {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Getting details of '{}' version of Decision with id or name '{}' for customer '{}'...", DecisionVersionStatus.CURRENT, id, customerId);
-        DecisionVersion decisionVersion = decisionManager.getCurrentVersion(customerIdResolver.getCustomerId(), id);
+        DecisionVersion decisionVersion = decisionLifecycle.getCurrentVersion(customerIdResolver.getCustomerId(), id);
         return mapDecisionVersion(decisionVersion);
     }
 
@@ -141,7 +142,7 @@ public class DecisionResource {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Listing all versions for Decision with id or name '{}' for customer '{}'...", id, customerId);
-        List<DecisionVersion> versions = decisionManager.listDecisionVersions(customerId, id);
+        List<DecisionVersion> versions = decisionLifecycle.listDecisionVersions(customerId, id);
         DecisionResponseList responseList = decisionMapper.mapVersionsToDecisionResponseList(versions);
         return Response.ok(responseList).build();
     }
@@ -151,7 +152,7 @@ public class DecisionResource {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Listing all Decisions for customer with id '{}...'", customerId);
-        List<Decision> decisions = decisionManager.listDecisions(customerId);
+        List<Decision> decisions = decisionLifecycle.listDecisions(customerId);
         DecisionResponseList responseList = decisionMapper.mapToDecisionResponseList(decisions);
         return Response.ok(responseList).build();
     }
@@ -162,7 +163,7 @@ public class DecisionResource {
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Decision with name '{}' received for processing for customer id '{}'...", decisionsRequest.getName(), customerId);
 
-        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerId, decisionsRequest);
+        DecisionVersion decisionVersion = decisionLifecycle.createOrUpdateVersion(customerId, decisionsRequest);
         DecisionResponse decisionResponse = decisionMapper.mapVersionToDecisionResponse(decisionVersion);
         return Response.status(Response.Status.CREATED).entity(decisionResponse).build();
     }

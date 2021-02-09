@@ -23,6 +23,9 @@ import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 
+/**
+ * Determines which ClusterControlPlane we will deploy the given Decision to.
+ */
 @ApplicationScoped
 public class DefaultControlPlaneSelector implements ClusterControlPlaneSelector {
 
@@ -34,9 +37,6 @@ public class DefaultControlPlaneSelector implements ClusterControlPlaneSelector 
     }
 
     public ClusterControlPlane selectControlPlaneForDeployment(Decision decision) {
-        // TODO - given the specified Decision, select a CCP for deployment
-        // Our demo only has a single, hard-coded CCP so just return that.
-//        return controlPlaneDAO.findOne();
-        return null;
+        return controlPlaneDAO.findOne();
     }
 }

@@ -15,13 +15,26 @@
 
 package org.kie.baaas.mcp.app.ccp.client;
 
+import javax.enterprise.context.ApplicationScoped;
+
+import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.ConfigBuilder;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 
+/**
+ * Creates a client to interact with the given ClusterControlPlane.
+ */
+@ApplicationScoped
 public class ClusterControlPlaneClientFactory {
 
     public ClusterControlPlaneClient createClientFor(ClusterControlPlane clusterControlPlane) {
-        //TODO - should return an instance of our default ClusterControlPlane client
-        return null;
+
+        Config config = new ConfigBuilder().withMasterUrl(clusterControlPlane.getKubernetesApiUrl()).build();
+        KubernetesClient client = new DefaultKubernetesClient(config);
+
+        return new DefaultClusterControlPlaneClient(client, clusterControlPlane);
     }
 }

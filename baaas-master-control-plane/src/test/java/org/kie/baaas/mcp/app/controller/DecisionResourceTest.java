@@ -28,7 +28,7 @@ import org.kie.baaas.mcp.api.decisions.DecisionResponseList;
 import org.kie.baaas.mcp.api.decisions.Model;
 import org.kie.baaas.mcp.api.decisions.ResponseModel;
 import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
-import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
@@ -56,7 +56,7 @@ public class DecisionResourceTest {
     CustomerIdResolver customerIdResolver;
 
     @Mock
-    DecisionManager decisionManager;
+    DecisionLifecycleOrchestrator decisionLifecycle;
 
     @Mock
     DecisionVersion decisionVersion;
@@ -104,7 +104,7 @@ public class DecisionResourceTest {
         String decisionId = "foo";
         long decisionVersion = 1l;
 
-        when(decisionManager.rollbackToVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
+        when(decisionLifecycle.rollbackToVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
         when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
 
         Response response = decisionResource.rollbackToDecisionVersion(decisionId, decisionVersion);
@@ -120,7 +120,7 @@ public class DecisionResourceTest {
         DecisionResponse decisionResponse = mock(DecisionResponse.class);
         String decisionId = "foo";
 
-        when(decisionManager.deleteDecision(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(decision);
+        when(decisionLifecycle.deleteDecision(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(decision);
         when(decisionMapper.mapToDecisionResponse(decision)).thenReturn(decisionResponse);
 
         Response response = decisionResource.deleteDecision(decisionId);
@@ -136,7 +136,7 @@ public class DecisionResourceTest {
         String decisionId = "foo";
         long decisionVersion = 1l;
 
-        when(decisionManager.deleteVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
+        when(decisionLifecycle.deleteVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
         when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
 
         Response response = decisionResource.deleteDecisionVersion(decisionId, decisionVersion);
@@ -152,7 +152,7 @@ public class DecisionResourceTest {
         String decisionId = "foo";
         long decisionVersion = 1l;
 
-        when(decisionManager.getVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
+        when(decisionLifecycle.getVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
         when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
 
         Response response = decisionResource.getDecisionVersion(decisionId, decisionVersion);
@@ -167,7 +167,7 @@ public class DecisionResourceTest {
         DecisionResponse decisionResponse = mock(DecisionResponse.class);
         String decisionId = "foo";
 
-        when(decisionManager.getCurrentVersion(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(version);
+        when(decisionLifecycle.getCurrentVersion(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(version);
         when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
 
         Response response = decisionResource.getDecision(decisionId);
@@ -185,7 +185,7 @@ public class DecisionResourceTest {
 
         String decisionId = "foo";
 
-        when(decisionManager.listDecisionVersions(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(singletonList(version));
+        when(decisionLifecycle.listDecisionVersions(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(singletonList(version));
         when(decisionMapper.mapVersionsToDecisionResponseList(decisionList.capture())).thenReturn(responseList);
 
         Response response = decisionResource.listDecisionVersions(decisionId);
@@ -203,7 +203,7 @@ public class DecisionResourceTest {
         DecisionResponseList responseList = mock(DecisionResponseList.class);
         ArgumentCaptor<List<Decision>> decisionList = ArgumentCaptor.forClass(List.class);
 
-        when(decisionManager.listDecisions(DEFAULT_CUSTOMER_ID)).thenReturn(singletonList(decision));
+        when(decisionLifecycle.listDecisions(DEFAULT_CUSTOMER_ID)).thenReturn(singletonList(decision));
         when(decisionMapper.mapToDecisionResponseList(decisionList.capture())).thenReturn(responseList);
 
         Response response = decisionResource.listDecisions();
@@ -218,7 +218,7 @@ public class DecisionResourceTest {
     public void createOrUpdateDecision() {
         DecisionRequest decisionRequest = createApiRequest();
 
-        lenient().when(decisionManager.createOrUpdateVersion("customer-id", decisionRequest)).thenReturn(decisionVersion);
+        lenient().when(decisionLifecycle.createOrUpdateVersion("customer-id", decisionRequest)).thenReturn(decisionVersion);
         lenient().when(decisionMapper.mapVersionToDecisionResponse(decisionVersion)).thenReturn(createApiResponse());
 
         Response response = decisionResource.createOrUpdateDecision(decisionRequest);
