@@ -70,8 +70,53 @@ as the example below:
   "Field: 'decisionsRequest.model.dmn' -> Provided value seems not to be valid, explanation: The element type \"dmn:definitions\" must be terminated by the matching end-tag \"</dmn:definitions>\"."
 ]
 ```
+## Running the Master Control Plane Locally
 
-## Database
+### Pre-requisites
+
+Local development is supported on Unix or Mac environments. Windows is not supported.
+
+You will need the following installed:
+
+* Docker
+* Docker-Compose
+* Maven
+
+The latest versions of these dependencies is fine.
+
+### Running the MCP
+
+The MCP can be run locally using either `quarkus:dev` mode or through the `docker-compose` setup in the root of this repository.
+
+Generally, the choice as to which one you want to use will be:
+
+ - `quarkus:dev` if you're doing iterative development on the MCP
+ - `docker-compose` if you want to test or integrate something against the MCP
+
+#### quarkus:dev
+
+To use `quarkus:dev` mode, use the following commands:
+
+```shell
+docker-compose up -d db
+cd ~/baaas-master-control-plane
+mvn clean install quarkus:dev
+```
+This will start the MCP on `http://localhost:8080` and will support live-reload of the code as you develop.
+
+#### docker-compose
+
+You can run the MCP using docker-compose if you just want to test or develop against the API. You can start the MCP
+(and the DMN JIT) using the following:
+
+```shell
+docker-compose up -d db jit
+docker-compose build
+docker-compose up mcp
+```
+This will connect you to the terminal of the MCP, so you can watch the logs to help you debug any issues you may be having.
+
+## Database Development
 
 Our Production Database is Postgres. For testing we use H2 in-memory database.
 
