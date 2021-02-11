@@ -33,21 +33,45 @@ public class MasterControlPlaneConfig {
 
     @NotBlank
     @ConfigProperty(name = "baaas.ccp.urls.dmn-jit")
-    String dmnJitUrl;
+    String ccpDmnJitUrl;
 
     @NotBlank
     @ConfigProperty(name = "baaas.ccp.urls.k8s-api")
-    String kubernetesApiUrl;
+    String ccpKubernetesApiUrl;
+
+    @NotBlank
+    @ConfigProperty(name = "baaas.ccp.namespace")
+    String ccpNamespace;
+
+    @NotBlank
+    @ConfigProperty(name = "baaas.kafka.bootstrap-urls")
+    String kafkaBootstrapServers;
+
+    @NotBlank
+    @ConfigProperty(name = "baaas.kafka.secret-name")
+    String kafkaSecretName;
 
     public String getApiBaseUrl() {
         return apiBaseUrl;
     }
 
-    public String getDmnJitUrl() {
-        return dmnJitUrl;
+    public String getCcpDmnJitUrl() {
+        return ccpDmnJitUrl;
     }
 
-    public String getKubernetesApiUrl() {
-        return kubernetesApiUrl;
+    public String getCcpKubernetesApiUrl() {
+        return ccpKubernetesApiUrl;
+    }
+
+    public String getCcpNamespace() {
+        return ccpNamespace;
+    }
+
+    public String getKafkaBootstrapServers() {
+        return this.kafkaBootstrapServers;
+    }
+
+    public String getKafkaSecretName() {
+        return kafkaSecretName;
     }
 }

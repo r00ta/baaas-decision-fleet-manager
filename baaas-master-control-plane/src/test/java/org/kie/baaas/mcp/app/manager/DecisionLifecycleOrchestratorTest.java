@@ -15,25 +15,31 @@
 
 package org.kie.baaas.mcp.app.manager;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
 import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
+import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
+import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,9 +70,9 @@ public class DecisionLifecycleOrchestratorTest {
     @Test
     public void createOrUpdateDecision() {
         String customerId = "foo";
-        DecisionRequest request = Mockito.mock(DecisionRequest.class);
-        DecisionVersion decisionVersion = Mockito.mock(DecisionVersion.class);
-        Decision decision = Mockito.mock(Decision.class);
+        DecisionRequest request = mock(DecisionRequest.class);
+        DecisionVersion decisionVersion = mock(DecisionVersion.class);
+        Decision decision = mock(Decision.class);
 
         when(decisionVersion.getDecision()).thenReturn(decision);
         when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
@@ -81,11 +87,36 @@ public class DecisionLifecycleOrchestratorTest {
     }
 
     @Test
+    public void createOrUpdateDecision_recordsFailure() {
+
+        String customerId = "foo";
+        String decisionId = "bob";
+        long version = 1l;
+        DecisionRequest request = mock(DecisionRequest.class);
+        DecisionVersion decisionVersion = mock(DecisionVersion.class);
+        when(decisionVersion.getVersion()).thenReturn(version);
+        Decision decision = mock(Decision.class);
+        when(decision.getId()).thenReturn(decisionId);
+
+        when(decisionVersion.getDecision()).thenReturn(decision);
+        when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
+        when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
+        when(clientFactory.createClientFor(clusterControlPlane)).thenReturn(client);
+        doThrow(new RuntimeException("Nope!")).when(client).deploy(decisionVersion);
+
+        Assertions.assertThrows(MasterControlPlaneException.class, () -> {
+            orchestrator.createOrUpdateVersion(customerId, request);
+        });
+
+        verify(decisionManager).failed(eq(customerId), eq(decisionId), eq(version), any(Deployment.class));
+    }
+
+    @Test
     public void deleteDecision() {
 
         String customerId = "foo";
         String decisionName = "bar";
-        Decision decision = Mockito.mock(Decision.class);
+        Decision decision = mock(Decision.class);
 
         when(decisionManager.deleteDecision(customerId, decisionName)).thenReturn(decision);
         when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
@@ -105,8 +136,8 @@ public class DecisionLifecycleOrchestratorTest {
         String decisionName = "bar";
         long version = 2l;
 
-        DecisionVersion decisionVersion = Mockito.mock(DecisionVersion.class);
-        Decision decision = Mockito.mock(Decision.class);
+        DecisionVersion decisionVersion = mock(DecisionVersion.class);
+        Decision decision = mock(Decision.class);
         when(decisionVersion.getDecision()).thenReturn(decision);
 
         when(decisionManager.deleteVersion(customerId, decisionName, version)).thenReturn(decisionVersion);
@@ -126,8 +157,8 @@ public class DecisionLifecycleOrchestratorTest {
         String decisionName = "bar";
         long version = 2l;
 
-        DecisionVersion decisionVersion = Mockito.mock(DecisionVersion.class);
-        Decision decision = Mockito.mock(Decision.class);
+        DecisionVersion decisionVersion = mock(DecisionVersion.class);
+        Decision decision = mock(Decision.class);
         when(decisionVersion.getDecision()).thenReturn(decision);
 
         when(decisionManager.rollbackToVersion(customerId, decisionName, version)).thenReturn(decisionVersion);

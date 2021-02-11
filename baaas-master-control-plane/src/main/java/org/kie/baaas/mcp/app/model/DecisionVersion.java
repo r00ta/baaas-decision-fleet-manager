@@ -41,6 +41,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.Version;
 
+import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
 
 /**
@@ -73,10 +74,6 @@ public class DecisionVersion {
     @Enumerated(EnumType.STRING)
     private DecisionVersionStatus status;
 
-    @Basic
-    @Column(name = "status_message")
-    private String statusMessage;
-
     @Column(updatable = false, nullable = false)
     private long version;
 
@@ -89,10 +86,6 @@ public class DecisionVersion {
     @Version
     @Column(name = "lock_version", nullable = false)
     private int lockVersion = 0;
-
-    @Basic
-    @Column
-    private String url;
 
     @Basic
     @Column(name = "dmn_md5", updatable = false)
@@ -123,6 +116,24 @@ public class DecisionVersion {
     })
     private KafkaTopics kafkaTopics;
 
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "namespace", column = @Column(name = "ccp_namespace")),
+            @AttributeOverride(name = "name", column = @Column(name = "ccp_name")),
+            @AttributeOverride(name = "versionName", column = @Column(name = "ccp_version_name")),
+            @AttributeOverride(name = "url", column = @Column(name = "ccp_exposed_url")),
+            @AttributeOverride(name = "statusMessage", column = @Column(name = "status_message"))
+    })
+    private Deployment deployment;
+
+    public Deployment getDeployment() {
+        return deployment;
+    }
+
+    public void setDeployment(Deployment deployment) {
+        this.deployment = deployment;
+    }
+
     public KafkaTopics getKafkaTopics() {
         return kafkaTopics;
     }
@@ -147,10 +158,6 @@ public class DecisionVersion {
         return status;
     }
 
-    public String getStatusMessage() {
-        return statusMessage;
-    }
-
     public long getVersion() {
         return version;
     }
@@ -161,10 +168,6 @@ public class DecisionVersion {
 
     public LocalDateTime getPublishedAt() {
         return publishedAt;
-    }
-
-    public String getUrl() {
-        return url;
     }
 
     public String getDmnMd5() {
@@ -183,10 +186,6 @@ public class DecisionVersion {
         this.status = status;
     }
 
-    public void setStatusMessage(String statusMessage) {
-        this.statusMessage = statusMessage;
-    }
-
     public void setVersion(long version) {
         this.version = version;
     }
@@ -197,10 +196,6 @@ public class DecisionVersion {
 
     public void setPublishedAt(LocalDateTime publishedAt) {
         this.publishedAt = publishedAt;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
     }
 
     public void setDmnMd5(String dmnMd5) {

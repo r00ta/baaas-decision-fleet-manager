@@ -31,6 +31,7 @@ import org.kie.baaas.mcp.app.dao.DecisionVersionDAO;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
+import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
 import org.kie.baaas.mcp.app.storage.DMNStorageRequest;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
@@ -213,15 +214,6 @@ public class DecisionManager implements DecisionLifecycle {
         return decisionVersion;
     }
 
-    private Decision findByCustomerIdAndName(String customerId, String decisionName, boolean fail) {
-        Decision decision = decisionDAO.findByCustomerAndName(customerId, decisionName);
-        if (decision == null && fail) {
-            throw new DecisionLifecycleException("Decision with name '" + decisionName + "' does not exist for customer with id '" + customerId + "'");
-        }
-
-        return decision;
-    }
-
     private void verifyCorrectVersionForCallback(org.kie.baaas.mcp.app.model.Decision decision, long version, DecisionVersionStatus operation) {
         if (decision.getNextVersion().getVersion() != version) {
             String message = new StringBuilder()
@@ -242,21 +234,23 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Callback method invoked when we have failed to deploy the specified version of a Decision.
      *
-     * @param customerId   - The id of the customer that owns the decision
-     * @param decisionName - The name of the decision
-     * @param version      - The version of the decision
+     * @param customerId       - The id of the customer that owns the decision
+     * @param decisionIdOrName - The id of the DecisionVersion
+     * @param version          - The version of the decision deployed
+     * @param deployment       - The deployment for the DecisionVersion
      * @return - The updated Decision with the result of the failure recorded.
      */
-    public DecisionVersion failed(String customerId, String decisionName, long version) {
+    public DecisionVersion failed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
 
-        Decision decision = findByCustomerIdAndName(customerId, decisionName, true);
-        verifyCorrectVersionForCallback(decision, version, DecisionVersionStatus.FAILED);
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
+        Decision decision = decisionVersion.getDecision();
+        verifyCorrectVersionForCallback(decision, decisionVersion.getVersion(), DecisionVersionStatus.BUILDING);
+        decisionVersion.setDeployment(deployment);
 
-        DecisionVersion decisionVersion = decision.getNextVersion();
         decisionVersion.setStatus(DecisionVersionStatus.FAILED);
         decision.setNextVersion(null);
 
-        LOGGER.info("Marked version '{}' of Decision '{}' as FAILED for customer id '{}", version, decisionName, customerId);
+        LOGGER.info("Marked version '{}' of Decision '{}' as FAILED for customer id '{}", decisionVersion.getVersion(), decision.getName(), customerId);
 
         return decisionVersion;
     }
@@ -264,29 +258,33 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Callback method invoked when we have deployed the specified version of a Decision.
      *
-     * @param customerId   - The id of the customer that owns the decision
-     * @param decisionName - The name of the decision
-     * @param version      - The version of the decision
+     * @param customerId       - The id of the customer that owns the decision
+     * @param decisionIdOrName - The id of the decisionVersion that has been deployed
+     * @param version          - The version of the decision deployed
+     * @param deployment       - The deployment record.
      * @return - The updated Decision with the result of the deployment recorded.
      */
-    public DecisionVersion deployed(String customerId, String decisionName, long version) {
-        Decision decision = findByCustomerIdAndName(customerId, decisionName, true);
-        verifyCorrectVersionForCallback(decision, version, DecisionVersionStatus.CURRENT);
+    public DecisionVersion deployed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
 
-        DecisionVersion nextVersion = decision.getNextVersion();
-        nextVersion.setStatus(DecisionVersionStatus.CURRENT);
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
+        Decision decision = decisionVersion.getDecision();
+        verifyCorrectVersionForCallback(decision, decisionVersion.getVersion(), DecisionVersionStatus.BUILDING);
+
+        decisionVersion.setDeployment(deployment);
+        decisionVersion.setStatus(DecisionVersionStatus.CURRENT);
+        decisionVersion.setPublishedAt(LocalDateTime.now());
 
         DecisionVersion currentVersion = decision.getCurrentVersion();
-        if (currentVersion.getVersion() != nextVersion.getVersion()) {
+        if (currentVersion.getVersion() != decisionVersion.getVersion()) {
             currentVersion.setStatus(DecisionVersionStatus.READY);
         }
 
-        decision.setCurrentVersion(nextVersion);
+        decision.setCurrentVersion(decisionVersion);
         decision.setNextVersion(null);
 
-        LOGGER.info("Marked version '{}' of Decision '{}' as CURRENT for customer id '{}", version, decisionName, customerId);
+        LOGGER.info("Marked version '{}' of Decision '{}' as CURRENT for customer id '{}", decisionVersion.getVersion(), decision.getName(), customerId);
 
-        return nextVersion;
+        return decisionVersion;
     }
 
     /**
@@ -354,7 +352,7 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Deletes the specified decision fully
      *
-     * @param customerId   - The customer that owns the decision
+     * @param customerId       - The customer that owns the decision
      * @param decisionNameOrId - The name of the Decision to delete.
      * @return - The deleted decision.
      */

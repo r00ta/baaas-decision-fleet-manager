@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
+import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,11 +35,14 @@ public class ClusterControlPlaneClientFactoryTest {
     @Mock
     private ClusterControlPlane ccp;
 
+    @Mock
+    private MasterControlPlaneConfig config;
+
     private ClusterControlPlaneClientFactory factory;
 
     @BeforeEach
     public void before() {
-        factory = new ClusterControlPlaneClientFactory();
+        factory = new ClusterControlPlaneClientFactory(config);
     }
 
     @Test

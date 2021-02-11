@@ -56,9 +56,11 @@ public class DecisionMapper {
         decisionResponse.setVersion(decisionVersion.getVersion());
         decisionResponse.setSubmittedAt(decisionVersion.getSubmittedAt());
         decisionResponse.setPublishedAt(decisionVersion.getPublishedAt());
-        decisionResponse.setUrl(decisionVersion.getUrl());
+        if (decisionVersion.getDeployment() != null) {
+            decisionResponse.setUrl(decisionVersion.getDeployment().getUrl());
+            decisionResponse.setStatusMessage(decisionVersion.getDeployment().getStatusMessage());
+        }
         decisionResponse.setStatus(decisionVersion.getStatus().name());
-        decisionResponse.setStatusMessage(decisionVersion.getStatusMessage());
         decisionResponse.setConfiguration(decisionVersion.getConfiguration());
         decisionResponse.setTags(decisionVersion.getTags());
         decisionResponse.setHref(hrefGenerator.generateDecisionHref(decisionVersion));

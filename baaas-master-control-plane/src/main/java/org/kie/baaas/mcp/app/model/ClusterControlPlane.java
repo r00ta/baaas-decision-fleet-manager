@@ -39,6 +39,10 @@ public class ClusterControlPlane {
     private String kubernetesApiUrl;
 
     @Basic
+    @Column(nullable = false, name = "namespace")
+    private String namespace;
+
+    @Basic
     @Column(name = "dmn_jit_url", nullable = false)
     private String dmnJitUrl;
 
@@ -64,6 +68,14 @@ public class ClusterControlPlane {
 
     public void setDmnJitUrl(String dmnJITUrl) {
         this.dmnJitUrl = dmnJITUrl;
+    }
+
+    public String getNamespace() {
+        return namespace;
+    }
+
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
     }
 
     @Override

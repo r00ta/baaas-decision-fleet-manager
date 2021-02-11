@@ -10,6 +10,9 @@
     <packaging>pom</packaging>
 
     <properties>
+
+        <baaas.ccp.version>1.0-SNAPSHOT</baaas.ccp.version>
+
         <!-- dependencies version properties -->
         <compiler-plugin.version>3.8.1</compiler-plugin.version>
         <quarkus.platform.version>1.11.0.Final</quarkus.platform.version>
@@ -34,6 +37,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.kie.baaas.ccp</groupId>
+                <artifactId>baaas-cluster-control-plane-api</artifactId>
+                <version>${baaas.ccp.version}</version>
+            </dependency>
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
                 <artifactId>${quarkus.platform.artifact-id}</artifactId>
@@ -114,4 +122,14 @@
             </plugins>
         </pluginManagement>
     </build>
+    <repositories>
+        <repository>
+            <id>BAaaS Nexus Repository</id>
+            <url>https://repository.engineering.redhat.com/nexus/repository/kie-baaas</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>interval:30</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>

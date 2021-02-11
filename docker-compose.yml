@@ -11,6 +11,8 @@ services:
       BAAAS_MCP_DB_HOST: db
       BAAAS_MCP_API_BASE_URL: http://localhost:8080
       BAAAS_CCP_DMN_JIT_URL: http://localhost:9000/jitdmn
+      BAAAS_KAFKA_BOOTSTRAP_SERVERS: ruben-kafk--oc-z--vzwdhkz-yetntfrgzpra.kafka.devshift.org:443
+      BAAAS_KAFKA_CREDENTIALS: baaas-ccp-kafka-credentials
     ports:
       - "8080:8080"
     depends_on:

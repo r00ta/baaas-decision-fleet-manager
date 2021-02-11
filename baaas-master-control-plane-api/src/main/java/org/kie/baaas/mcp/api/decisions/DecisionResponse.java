@@ -18,6 +18,7 @@ package org.kie.baaas.mcp.api.decisions;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -59,9 +60,11 @@ public class DecisionResponse extends DecisionBase {
     @JsonProperty("model")
     private ResponseModel responseModel;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
     @JsonProperty("submitted_at")
     private LocalDateTime submittedAt;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
     @JsonProperty("published_at")
     private LocalDateTime publishedAt;
 

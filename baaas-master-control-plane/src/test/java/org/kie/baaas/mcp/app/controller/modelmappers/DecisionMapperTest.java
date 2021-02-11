@@ -27,6 +27,7 @@ import org.kie.baaas.mcp.api.decisions.DecisionResponseList;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
+import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -74,7 +75,6 @@ public class DecisionMapperTest {
         decisionVersion.setDecision(decision);
         decisionVersion.setVersion(1l);
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
-        decisionVersion.setStatusMessage("my status message");
         decisionVersion.setSubmittedAt(LocalDateTime.now());
         decisionVersion.setPublishedAt(LocalDateTime.now());
         decisionVersion.setDmnLocation("s3://dmn-location");
@@ -87,17 +87,22 @@ public class DecisionMapperTest {
         Map<String, String> tags = new HashMap<>();
         tags.put("tag", "tagValue");
         decisionVersion.setTags(tags);
+
+        Deployment deployment = new Deployment();
+        deployment.setUrl("my.url");
+        deployment.setStatusMessage("Deployment status");
+        decisionVersion.setDeployment(deployment);
         return decisionVersion;
     }
 
     private void assertDecisionResponse(DecisionResponse response, Decision decision, DecisionVersion decisionVersion, boolean hasKafka) {
         assertThat(response, is(notNullValue()));
         assertThat(response.getStatus(), equalTo(decisionVersion.getStatus().name()));
-        assertThat(response.getStatusMessage(), equalTo(decisionVersion.getStatusMessage()));
+        assertThat(response.getStatusMessage(), equalTo(decisionVersion.getDeployment().getStatusMessage()));
         assertThat(response.getPublishedAt(), equalTo(decisionVersion.getPublishedAt()));
         assertThat(response.getSubmittedAt(), equalTo(decisionVersion.getSubmittedAt()));
         assertThat(response.getVersion(), equalTo(decisionVersion.getVersion()));
-        assertThat(response.getUrl(), equalTo(decisionVersion.getUrl()));
+        assertThat(response.getUrl(), equalTo(decisionVersion.getDeployment().getUrl()));
         assertThat(response.getResponseModel().getHref(), equalTo(DECISION_VERSION_DMN_HREF));
         assertThat(response.getResponseModel().getMd5(), equalTo(decisionVersion.getDmnMd5()));
         assertThat(response.getHref(), equalTo(DECISION_VERSION_HREF));

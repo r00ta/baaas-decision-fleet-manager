@@ -20,6 +20,8 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Centralized {@link ExceptionMapper} for the {@link MasterControlPlaneException} hierarchy.
@@ -27,9 +29,12 @@ import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 @Provider
 public class MasterControlPlaneExceptionMapper implements ExceptionMapper<MasterControlPlaneException> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MasterControlPlaneExceptionMapper.class);
+
     //TODO - Extend this with support for Error codes and useful payload
     @Override
     public Response toResponse(MasterControlPlaneException e) {
+        LOGGER.error("Failure", e);
         return Response.status(e.getStatusCode()).entity(e.getMessage()).build();
     }
 }

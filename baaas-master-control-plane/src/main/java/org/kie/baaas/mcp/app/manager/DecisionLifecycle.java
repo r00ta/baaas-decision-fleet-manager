@@ -29,7 +29,7 @@ public interface DecisionLifecycle {
     /**
      * Delete the specified Decision
      *
-     * @param customerId - The id of the customer that owns the Decision
+     * @param customerId       - The id of the customer that owns the Decision
      * @param decisionNameOrId - The id or name of the Decision
      * @return - The deleted Decision
      */
@@ -38,7 +38,7 @@ public interface DecisionLifecycle {
     /**
      * Creates or updates a Decision for the given customerId
      *
-     * @param customerId - The id of the customer that owns the Decision
+     * @param customerId      - The id of the customer that owns the Decision
      * @param decisionRequest - The API request sent to the BAaaS API
      * @return - The created or updated DecisionVersion
      */
@@ -47,10 +47,9 @@ public interface DecisionLifecycle {
     /**
      * Rollback to a specific version of a Decision.
      *
-     * @param customerId - The id of the customer that owns the Decision
+     * @param customerId       - The id of the customer that owns the Decision
      * @param decisionIdOrName - The id or name of the Decision
-     * @param version - The version to rollback to
-     *
+     * @param version          - The version to rollback to
      * @return - The DecisionVersion that has been rolled back to
      */
     DecisionVersion rollbackToVersion(String customerId, String decisionIdOrName, long version);
@@ -64,12 +63,11 @@ public interface DecisionLifecycle {
     List<Decision> listDecisions(String customerId);
 
     /**
-     *  Return details of a specific Decision Version
+     * Return details of a specific Decision Version
      *
-     * @param customerId - The id of the customer that owns the Decision
+     * @param customerId       - The id of the customer that owns the Decision
      * @param decisionIdOrName - The id or name of the Decision
-     * @param version - The version of the Decision
-     *
+     * @param version          - The version of the Decision
      * @return - The DecisionVersion requested
      */
     DecisionVersion getVersion(String customerId, String decisionIdOrName, long version);
@@ -77,10 +75,9 @@ public interface DecisionLifecycle {
     /**
      * Delete a specific Decision Version
      *
-     * @param customerId - The id of the customer that owns the Decision
+     * @param customerId       - The id of the customer that owns the Decision
      * @param decisionIdOrName - The id or name of the Decision
-     * @param version - The version of the Decision
-     *
+     * @param version          - The version of the Decision
      * @return - The deleted DecisionVersion
      */
     DecisionVersion deleteVersion(String customerId, String decisionIdOrName, long version);
@@ -90,9 +87,8 @@ public interface DecisionLifecycle {
      * in state CURRENT. However if the Decision does not have a version in state CURRENT,
      * this will be the most recent DecisionVersion in state BUILDING or FAILED.
      *
-     * @param customerId - The id of the customer that owns the Decision
+     * @param customerId       - The id of the customer that owns the Decision
      * @param decisionIdOrName - The id or name of the Decision
-     *
      * @return - The current Decision Version.
      */
     DecisionVersion getCurrentVersion(String customerId, String decisionIdOrName);
@@ -100,9 +96,8 @@ public interface DecisionLifecycle {
     /**
      * Lists all versions of the specified decision
      *
-     * @param customerId - The id of the customer that owns the decision
+     * @param customerId       - The id of the customer that owns the decision
      * @param decisionIdOrName - The id or name of the Decision
-     *
      * @return - The list of versions for this decision.
      */
     List<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName);

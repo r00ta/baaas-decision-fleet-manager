@@ -24,9 +24,11 @@ import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
 import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
+import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
+import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 
 /**
@@ -71,9 +73,19 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         // storage location, but the storage requires the DecisionVersion.
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerId, decisionRequest);
         ClusterControlPlaneClient client = getControlPlaneClient(decisionVersion.getDecision());
-        client.deploy(decisionVersion);
+        try {
+            client.deploy(decisionVersion);
+            return decisionVersion;
+        } catch (Exception e) {
+            decisionManager.failed(customerId, decisionVersion.getDecision().getId(), decisionVersion.getVersion(), failedToDeploy());
+            throw new MasterControlPlaneException("Failed to request deployment of Decision to control plane", e);
+        }
+    }
 
-        return decisionVersion;
+    private Deployment failedToDeploy() {
+        Deployment deployment = new Deployment();
+        deployment.setStatusMessage("Failed to deploy Decision.");
+        return deployment;
     }
 
     private ClusterControlPlaneClient getControlPlaneClient(Decision decision) {
@@ -85,8 +97,13 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     public DecisionVersion rollbackToVersion(String customerId, String decisionIdOrName, long version) {
         DecisionVersion decisionVersion = decisionManager.rollbackToVersion(customerId, decisionIdOrName, version);
         ClusterControlPlaneClient client = getControlPlaneClient(decisionVersion.getDecision());
-        client.rollback(decisionVersion);
-        return decisionVersion;
+        try {
+            client.rollback(decisionVersion);
+            return decisionVersion;
+        } catch (Exception e) {
+            decisionManager.failed(customerId, decisionVersion.getDecision().getId(), decisionVersion.getVersion(), failedToDeploy());
+            throw new MasterControlPlaneException("Failed to request rollback for Decision '" + decisionVersion.getDecision().getName() + "' on Control Plane '" + client.getClusterControlPlane().getKubernetesApiUrl() + "'", e);
+        }
     }
 
     @Override

@@ -41,6 +41,8 @@ public class ClusterControlPlaneDAOTest {
 
     private static final String DMN_JIT_URL = "https://my-favourite-dmn-jit.com";
 
+    private static final String NAMESPACE = "baaas-ccp";
+
     @Mock
     private EntityManager em;
 
@@ -68,8 +70,9 @@ public class ClusterControlPlaneDAOTest {
     @Test
     public void init_createsNewControlPlane() throws Exception {
 
-        when(controlPlaneConfig.getDmnJitUrl()).thenReturn(DMN_JIT_URL);
-        when(controlPlaneConfig.getKubernetesApiUrl()).thenReturn(KUBERNETES_URL);
+        when(controlPlaneConfig.getCcpDmnJitUrl()).thenReturn(DMN_JIT_URL);
+        when(controlPlaneConfig.getCcpKubernetesApiUrl()).thenReturn(KUBERNETES_URL);
+        when(controlPlaneConfig.getCcpNamespace()).thenReturn(NAMESPACE);
         when(em.find(ClusterControlPlane.class, 1)).thenReturn(null);
 
         controlPlaneDAO.init();
@@ -81,18 +84,21 @@ public class ClusterControlPlaneDAOTest {
         assertThat(ccp, is(notNullValue()));
         assertThat(ccp.getKubernetesApiUrl(), equalTo(KUBERNETES_URL));
         assertThat(ccp.getDmnJitUrl(), equalTo(DMN_JIT_URL));
+        assertThat(ccp.getNamespace(), equalTo(NAMESPACE));
     }
 
     @Test
     public void init_updatesExistingControlPlane() throws Exception {
-        when(controlPlaneConfig.getDmnJitUrl()).thenReturn(DMN_JIT_URL);
-        when(controlPlaneConfig.getKubernetesApiUrl()).thenReturn(KUBERNETES_URL);
+        when(controlPlaneConfig.getCcpDmnJitUrl()).thenReturn(DMN_JIT_URL);
+        when(controlPlaneConfig.getCcpKubernetesApiUrl()).thenReturn(KUBERNETES_URL);
+        when(controlPlaneConfig.getCcpNamespace()).thenReturn(NAMESPACE);
         when(em.find(ClusterControlPlane.class, 1)).thenReturn(controlPlane);
 
         controlPlaneDAO.init();
 
         verify(controlPlane).setDmnJitUrl(DMN_JIT_URL);
         verify(controlPlane).setKubernetesApiUrl(KUBERNETES_URL);
+        verify(controlPlane).setNamespace(NAMESPACE);
         verify(em).merge(controlPlane);
     }
 }

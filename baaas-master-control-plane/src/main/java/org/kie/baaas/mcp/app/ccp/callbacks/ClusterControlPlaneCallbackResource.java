@@ -17,15 +17,32 @@ package org.kie.baaas.mcp.app.ccp.callbacks;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.kie.baaas.ccp.api.Phase;
+import org.kie.baaas.ccp.api.Webhook;
+import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.model.deployment.Deployment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Receives callbacks from the ClusterControlPlane to update progress on deployment
+ * of a Decision Service.
+ */
+@Path("/callback/")
+@Consumes(MediaType.APPLICATION_JSON)
+@Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
 public class ClusterControlPlaneCallbackResource {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterControlPlaneCallbackResource.class);
 
     private final DecisionManager decisionManager;
 
@@ -34,27 +51,30 @@ public class ClusterControlPlaneCallbackResource {
         this.decisionManager = decisionManager;
     }
 
-    @Path("/callback")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response processClusterControlPlaneCallback() {
-        //TODO
-        // - What is the JSON payload call back from the CCP (discuss and confirm with Ruben)
-        // - This will most likely require an update to the current deployed and failed callback methods on DecisionManager
-        // - There may be additional callbacks that we need to support please see: https://docs.google.com/document/d/1DvcwJUKSzzdiEhYbiID66aUnHex793HbFQmdWyp1tHs/edit#
-        // - Determine if the deployment was success/failure or something else
-        // - Invoke the correct callback on the manager.
-
-        if (didDeploymentSucceed()) {
-            //decisionManager.deployed();
-        } else {
-            // decisionManager.failed();
-        }
-
-        return null;
+    private Deployment createDeployment(Webhook webhook) {
+        Deployment deployment = new Deployment();
+        deployment.setName(webhook.getDecision());
+        deployment.setNamespace(webhook.getNamespace());
+        deployment.setVersionName(webhook.getVersionResource());
+        deployment.setUrl(webhook.getEndpoint().toString());
+        deployment.setStatusMessage(webhook.getMessage());
+        return deployment;
     }
 
-    private boolean didDeploymentSucceed() {
-        //TODO
-        return false;
+    @Path("decisions/{id}/versions/{version}")
+    public Response processClusterControlPlaneCallback(@PathParam("id") String decisionIdOrName, @PathParam("version") long version, Webhook webhook) {
+
+        LOGGER.info("Received callback for decision with idOrName '{}' at version '{}' for customer '{}'. Phase: '{}'", decisionIdOrName, version, webhook.getCustomer(), webhook.getPhase());
+
+        Deployment deployment = createDeployment(webhook);
+        if (Phase.CURRENT.equals(webhook.getPhase())) {
+            decisionManager.deployed(webhook.getCustomer(), decisionIdOrName, version, deployment);
+        } else if (Phase.FAILED.equals(webhook.getPhase())) {
+            decisionManager.failed(webhook.getCustomer(), decisionIdOrName, version, deployment);
+        } else {
+            throw new MasterControlPlaneException("Received unsupported phase '" + webhook.getPhase() + "' in callback.");
+        }
+
+        return Response.ok().build();
     }
 }

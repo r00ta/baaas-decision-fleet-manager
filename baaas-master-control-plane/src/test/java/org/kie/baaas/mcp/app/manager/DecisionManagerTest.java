@@ -33,6 +33,7 @@ import org.kie.baaas.mcp.app.dao.DecisionVersionDAO;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
+import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 
@@ -113,6 +114,15 @@ public class DecisionManagerTest {
         assertThat(decisionVersion.getDmnLocation(), is(notNullValue()));
     }
 
+    private Deployment createDeployment() {
+        Deployment deployment = new Deployment();
+        deployment.setUrl("http://foo");
+        deployment.setVersionName("my-version");
+        deployment.setNamespace("my-namespace");
+        deployment.setName("my-name");
+        return deployment;
+    }
+
     @TestTransaction
     @Test
     public void deployed_withFirstVersionOfDecision() {
@@ -122,10 +132,13 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         Decision decision = decisionVersion.getDecision();
 
-        DecisionVersion deployed = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        Deployment deployment = createDeployment();
+        DecisionVersion deployed = decisionManager.deployed(decision.getCustomerId(), decision.getId(), decisionVersion.getVersion(), deployment);
 
         assertThat(deployed, is(notNullValue()));
         assertThat(deployed.getStatus(), equalTo(DecisionVersionStatus.CURRENT));
+        assertThat(deployed.getPublishedAt(), is(notNullValue()));
+        assertThat(deployed.getDeployment(), is(notNullValue()));
         assertThat(deployed.getDecision().getCurrentVersion().getVersion(), equalTo(deployed.getVersion()));
         assertThat(deployed.getDecision().getNextVersion(), is(nullValue()));
     }
@@ -139,7 +152,7 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         Decision decision = decisionVersion.getDecision();
 
-        DecisionVersion deployed = decisionManager.failed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        DecisionVersion deployed = decisionManager.failed(decision.getCustomerId(), decision.getId(), decisionVersion.getVersion(), createDeployment());
         assertThat(deployed, is(notNullValue()));
         assertThat(deployed.getStatus(), equalTo(DecisionVersionStatus.FAILED));
 
@@ -173,7 +186,7 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         Decision decision = decisionVersion.getDecision();
 
-        decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
 
         apiRequest.setDescription("An updated version!");
         apiRequest.getModel().setDmn("Updated dmn!");
@@ -196,13 +209,13 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         Decision decision = decisionVersion.getDecision();
 
-        decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
 
         apiRequest.setDescription("An updated version!");
         apiRequest.getModel().setDmn("fff");
 
         decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
-        decisionVersion = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        decisionVersion = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
         assertThat(decisionVersion.getStatus(), equalTo(DecisionVersionStatus.CURRENT));
 
         decision = decisionVersion.getDecision();
@@ -219,13 +232,13 @@ public class DecisionManagerTest {
 
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         Decision decision = decisionVersion.getDecision();
-        decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
 
         apiRequest.setDescription("An updated version!");
         apiRequest.getModel().setDmn("fff");
 
         DecisionVersion failedVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
-        failedVersion = decisionManager.failed(decision.getCustomerId(), decision.getName(), failedVersion.getVersion());
+        failedVersion = decisionManager.failed(decision.getCustomerId(), decision.getName(), failedVersion.getVersion(), createDeployment());
         assertThat(failedVersion.getStatus(), equalTo(DecisionVersionStatus.FAILED));
 
         decision = failedVersion.getDecision();
@@ -242,7 +255,7 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         Decision decision = decisionVersion.getDecision();
 
-        decisionVersion = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        decisionVersion = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
         decisionManager.deleteDecision(decision.getCustomerId(), decision.getName());
 
         assertThat(decisionDAO.findById(decisionVersion.getId()), is(nullValue()));
@@ -276,12 +289,12 @@ public class DecisionManagerTest {
 
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         Decision decision = decisionVersion.getDecision();
-        decisionManager.deployed(customerIdResolver.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        decisionManager.deployed(customerIdResolver.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
 
         apiRequest.getModel().setDmn("updated dmn!");
 
         decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
-        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
         decision = decisionVersion.getDecision();
 
         assertThat(decision.getCurrentVersion().getVersion(), equalTo(2L));
@@ -300,7 +313,7 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         Decision decision = decisionVersion.getDecision();
 
-        DecisionVersion deployed = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        DecisionVersion deployed = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
         assertThrows(DecisionLifecycleException.class, () -> decisionManager.deleteVersion(customerIdResolver.getCustomerId(), decision.getName(), deployed.getVersion()));
     }
 
@@ -313,7 +326,7 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         Decision decision = decisionVersion.getDecision();
 
-        decisionVersion = decisionManager.failed(customerIdResolver.getCustomerId(), decision.getName(), decisionVersion.getVersion());
+        decisionVersion = decisionManager.failed(customerIdResolver.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
 
         decisionVersion = decisionManager.deleteVersion(customerIdResolver.getCustomerId(), decision.getName(), decisionVersion.getVersion());
         assertThat(decisionVersion.getStatus(), equalTo(DecisionVersionStatus.DELETED));
@@ -504,7 +517,7 @@ public class DecisionManagerTest {
         DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
 
-        DecisionVersion deployed = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion());
+        DecisionVersion deployed = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());
 
         assertThrows(DecisionLifecycleException.class, () -> {
             decisionManager.rollbackToVersion(customerIdResolver.getCustomerId(), deployed.getDecision().getId(), deployed.getVersion());
@@ -518,13 +531,13 @@ public class DecisionManagerTest {
         DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
 
-        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion());
+        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());
 
         apiRequest = createApiRequest();
         apiRequest.getModel().setDmn("Updated dmn!");
 
         decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
-        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion());
+        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());
 
         apiRequest = createApiRequest();
         apiRequest.getModel().setDmn("Updated dmn again!");
@@ -546,19 +559,19 @@ public class DecisionManagerTest {
         DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
 
-        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion());
+        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());
 
         apiRequest = createApiRequest();
         apiRequest.getModel().setDmn("Updated dmn!");
 
         decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
-        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion());
+        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());
 
         apiRequest = createApiRequest();
         apiRequest.getModel().setDmn("Updated dmn again!");
 
         decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
-        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion());
+        decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());
 
         DecisionVersion firstVersion = decisionManager.getVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), 1l);
         assertThat(firstVersion.getStatus(), equalTo(DecisionVersionStatus.READY));

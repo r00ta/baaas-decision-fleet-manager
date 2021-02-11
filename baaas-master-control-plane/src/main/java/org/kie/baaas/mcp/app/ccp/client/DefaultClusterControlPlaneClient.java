@@ -15,21 +15,47 @@
 
 package org.kie.baaas.mcp.app.ccp.client;
 
+import java.net.URI;
+import java.util.Collection;
+
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.utils.KubernetesResourceUtil;
+import org.kie.baaas.ccp.api.DecisionRequest;
+import org.kie.baaas.ccp.api.DecisionRequestSpec;
+import org.kie.baaas.ccp.api.DecisionVersionSpec;
+import org.kie.baaas.ccp.api.Kafka;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
+import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
+import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
+import org.kie.baaas.mcp.app.manager.DecisionLifecycleException;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
+import org.kie.baaas.mcp.app.model.deployment.Deployment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static java.util.Collections.singleton;
 
 public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClient {
+
+    private static final String CALLBACK_URL_SUFFIX = "/callback/decisions/%s/versions/%s";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClusterControlPlaneClient.class);
 
     private KubernetesClient kubernetesClient;
 
     private ClusterControlPlane clusterControlPlane;
 
-    public DefaultClusterControlPlaneClient(KubernetesClient kubernetesClient, ClusterControlPlane clusterControlPlane) {
+    private MasterControlPlaneConfig config;
+
+    public DefaultClusterControlPlaneClient(MasterControlPlaneConfig config, KubernetesClient kubernetesClient, ClusterControlPlane clusterControlPlane) {
         this.kubernetesClient = kubernetesClient;
         this.clusterControlPlane = clusterControlPlane;
+        this.config = config;
     }
 
     @Override
@@ -37,9 +63,63 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
         return clusterControlPlane;
     }
 
+    private String getNamespace() {
+
+        Namespace namespace = kubernetesClient.namespaces().withName(clusterControlPlane.getNamespace()).get();
+        if (namespace == null) {
+            throw new MasterControlPlaneException("Cannot locate namespace '" + clusterControlPlane.getNamespace() + "' for Cluster Control Plane.");
+        }
+
+        return namespace.getMetadata().getName();
+    }
+
     @Override
     public void deploy(DecisionVersion decisionVersion) {
-        // Map the DecisionVersion to the CRD expected by the CCP and create it in the correct namespace
+        String namespace = getNamespace();
+        DecisionRequest decisionRequest = from(decisionVersion);
+        LOGGER.info("Creating DecisionRequest with name '{}' in namespace '{}'...", decisionRequest.getMetadata().getName(), namespace);
+        kubernetesClient.customResources(DecisionRequest.class).inNamespace(namespace).create(decisionRequest);
+    }
+
+    private String getDecisionRequestName(DecisionVersion decisionVersion) {
+        return decisionVersion.getDecision().getCustomerId() + "-" + decisionVersion.getDecision().getId() + "-v" + decisionVersion.getVersion();
+    }
+
+    private DecisionRequest from(DecisionVersion decisionVersion) {
+
+        ObjectMeta objectMeta = new ObjectMeta();
+        objectMeta.setName(getDecisionRequestName(decisionVersion));
+
+        DecisionVersionSpec decisionVersionSpec = new DecisionVersionSpec();
+        decisionVersionSpec.setVersion(String.valueOf(decisionVersion.getVersion()));
+        decisionVersionSpec.setSource(URI.create(decisionVersion.getDmnLocation()));
+
+        if (decisionVersion.getKafkaTopics() != null) {
+            Kafka kafka = new Kafka();
+            kafka.setInputTopic(decisionVersion.getKafkaTopics().getSourceTopic());
+            kafka.setOutputTopic(decisionVersion.getKafkaTopics().getSinkTopic());
+            // The kafka cluster in-use is hard-coded for the demo. The user can only vary the topics that they want to use.
+            kafka.setBootstrapServers(config.getKafkaBootstrapServers());
+            kafka.setSecretName(config.getKafkaSecretName());
+            decisionVersionSpec.setKafka(kafka);
+        }
+
+        DecisionRequestSpec decisionRequestSpec = new DecisionRequestSpec();
+        decisionRequestSpec.setDefinition(decisionVersionSpec);
+        decisionRequestSpec.setName(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName()));
+        decisionRequestSpec.setCustomerId(decisionVersion.getDecision().getCustomerId());
+        decisionRequestSpec.setWebhooks(createCallbackUrl(decisionVersion));
+
+        DecisionRequest decisionRequest = new DecisionRequest();
+        decisionRequest.setMetadata(objectMeta);
+        decisionRequest.setSpec(decisionRequestSpec);
+        return decisionRequest;
+    }
+
+    private Collection<URI> createCallbackUrl(DecisionVersion decisionVersion) {
+        String path = String.format(CALLBACK_URL_SUFFIX, decisionVersion.getDecision().getId(), decisionVersion.getVersion());
+        String callbackPath = config.getApiBaseUrl() + path;
+        return singleton(URI.create(callbackPath));
     }
 
     @Override
@@ -47,13 +127,59 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
         // Update the correct CRD in the customer namespace to adjust the pointer in the CCP for the current version
     }
 
+    private Resource<org.kie.baaas.ccp.api.DecisionVersion> getDecisionVersion(Deployment deployment) {
+
+        if (deployment != null) {
+            Namespace namespace = getDeploymentNamespace(deployment);
+            if (namespace != null) {
+                return kubernetesClient.customResources(org.kie.baaas.ccp.api.DecisionVersion.class).inNamespace(namespace.getMetadata().getName()).withName(deployment.getVersionName());
+            }
+        }
+
+        return null;
+    }
+
+    private Namespace getDeploymentNamespace(Deployment deployment) {
+        if (deployment != null) {
+            return kubernetesClient.namespaces().withName(deployment.getNamespace()).get();
+        }
+
+        return null;
+    }
+
+    private Resource<org.kie.baaas.ccp.api.Decision> getDecision(Deployment deployment) {
+        if (deployment != null) {
+            Namespace namespace = getDeploymentNamespace(deployment);
+            if (namespace != null) {
+                return kubernetesClient.customResources(org.kie.baaas.ccp.api.Decision.class).inNamespace(namespace.getMetadata().getName()).withName(deployment.getName());
+            }
+        }
+
+        return null;
+    }
+
     @Override
     public void delete(DecisionVersion decisionVersion) {
-        // Delete the correct resource from the customer namespace of the CCP
+
+        Deployment deployment = decisionVersion.getDeployment();
+        Resource<org.kie.baaas.ccp.api.DecisionVersion> resource = getDecisionVersion(deployment);
+        org.kie.baaas.ccp.api.DecisionVersion deployedVersion = resource.get();
+        if (deployedVersion == null) {
+            throw new DecisionLifecycleException("Unable to locate DecisionVersion '" + deployment.getVersionName() + "' in namespace '" + deployment.getNamespace() + "'");
+        }
+        LOGGER.info("Deleting DecisionVersion '{}' from namespace '{}'", deployment.getVersionName(), deployment.getNamespace());
+        resource.delete();
     }
 
     @Override
     public void delete(Decision decision) {
-        // Delete the entire Decision resource from the correct customer namespace on the CCP
+        Deployment deployment = decision.getCurrentVersion().getDeployment();
+        Resource<org.kie.baaas.ccp.api.Decision> resource = getDecision(deployment);
+        org.kie.baaas.ccp.api.Decision deployedDecision = resource.get();
+        if (deployedDecision == null) {
+            throw new DecisionLifecycleException("Unable to locate Decision with name '" + deployment.getName() + "' in namespace '" + deployment.getNamespace() + "'");
+        }
+        LOGGER.info("Deleting Decision with name '{}' from namespace '{}'...", deployment.getName(), deployment.getNamespace());
+        resource.delete();
     }
 }
