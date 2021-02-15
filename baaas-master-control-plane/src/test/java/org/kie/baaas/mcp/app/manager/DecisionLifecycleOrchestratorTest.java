@@ -127,7 +127,7 @@ public class DecisionLifecycleOrchestratorTest {
         assertThat(deleted, equalTo(decision));
 
         verify(client).delete(decision);
-        verify(decisionDMNStorage).deleteDMN(customerId, decisionName);
+        verify(decisionDMNStorage).deleteDMN(customerId, deleted);
     }
 
     @Test

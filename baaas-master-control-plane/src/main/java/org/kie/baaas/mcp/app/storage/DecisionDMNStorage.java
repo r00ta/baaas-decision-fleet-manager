@@ -18,13 +18,14 @@ package org.kie.baaas.mcp.app.storage;
 import java.io.ByteArrayOutputStream;
 
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
+import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 
 public interface DecisionDMNStorage {
 
     DMNStorageRequest writeDMN(String customerId, DecisionRequest decisionRequest, DecisionVersion decisionVersion);
 
-    void deleteDMN(String customerId, String decisionName);
+    void deleteDMN(String customerId, Decision decision);
 
-    ByteArrayOutputStream readDMN(String customerId, String decisionName, long decisionVersion);
+    ByteArrayOutputStream readDMN(String customerId, DecisionVersion decisionVersion);
 }

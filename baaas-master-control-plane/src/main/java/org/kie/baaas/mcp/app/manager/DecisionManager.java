@@ -322,8 +322,10 @@ public class DecisionManager implements DecisionLifecycle {
      * @param version      - The version of the decision to be returned
      * @return - The dmn as String from S3 bucket
      */
-    public ByteArrayOutputStream getDMNFromBucket(String customerId, String decisionName, long version) {
-        return decisionDMNStorage.readDMN(customerId, decisionName, version);
+    public ByteArrayOutputStream getDMN(String customerId, String decisionName, long version) {
+
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionName, version);
+        return decisionDMNStorage.readDMN(customerId, decisionVersion);
     }
 
     /**

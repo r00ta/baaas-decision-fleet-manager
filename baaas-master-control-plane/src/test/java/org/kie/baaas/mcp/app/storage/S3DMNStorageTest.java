@@ -15,6 +15,7 @@
 
 package org.kie.baaas.mcp.app.storage;
 
+import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -26,15 +27,19 @@ import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.decisions.Model;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.storage.hash.DMNHashGenerator;
 import org.kie.baaas.mcp.app.storage.s3.S3DMNStorage;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -43,9 +48,9 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -84,28 +89,30 @@ public class S3DMNStorageTest {
     }
 
     @Test
-    public void s3Client() {
-        assertThat(s3Client, is(notNullValue()));
-    }
-
-    @Test
     public void writeDMNTest() {
+
+        String bucketName = "baaas-storage-dev";
+        when(masterControlPlaneConfig.getBucketName()).thenReturn(bucketName);
+
+        Decision decision = new Decision();
+        DecisionVersion decisionVersion = new DecisionVersion();
+        decisionVersion.setVersion(1L);
+        decisionVersion.setDecision(decision);
 
         PutObjectResponse response = mock(PutObjectResponse.class);
         PutObjectRequest request = PutObjectRequest.builder()
-                .key("customers/customer-id-1/robs-first-decision/1/dmn.xml")
+                .key("customers/customer-id-1/" + decision.getId() + "/1/dmn.xml")
                 .contentType("application/xml")
+                .bucket(bucketName)
                 .build();
 
         when(response.eTag()).thenReturn("ff576fa78715ffc6f9fa6d32c3bc9b9a");
-        when(s3Client.putObject(Mockito.eq(request), Mockito.any(RequestBody.class)))
+        when(s3Client.putObject(Mockito.eq(request), any(RequestBody.class)))
                 .thenReturn(response);
 
-        DecisionVersion decisionVersion = new DecisionVersion();
-        decisionVersion.setVersion(1L);
         dmnStorageRequest = s3DMNStorage.writeDMN("customer-id-1", createApiRequest(), decisionVersion);
 
-        assertThat(dmnStorageRequest.getProviderUrl(), endsWith("customers/customer-id-1/robs-first-decision/1/dmn.xml"));
+        assertThat(dmnStorageRequest.getProviderUrl(), equalTo("s3://" + bucketName + "/customers/customer-id-1/" + decision.getId() + "/1/dmn.xml"));
         assertThat(dmnStorageRequest.getMd5Hash(), equalTo("ff576fa78715ffc6f9fa6d32c3bc9b9a"));
     }
 
@@ -124,20 +131,32 @@ public class S3DMNStorageTest {
                             .storageClass("STANDARD")
                             .build());
 
-
         ListObjectsV2Response listObjectsV2Response = ListObjectsV2Response.builder().contents(objLIst).build();
 
         lenient().when(s3Client.listObjectsV2(ListObjectsV2Request.builder().build())).thenReturn(listObjectsV2Response);
 
         // TODO finish to mock the delete request.
 
-
-
     }
 
     @Test
     public void readDMNTest() {
-        // TODO revisit later
+        String id = "1234";
+        long version = 1l;
+        Decision decision = mock(Decision.class);
+        when(decision.getId()).thenReturn(id);
+        DecisionVersion decisionVersion = mock(DecisionVersion.class);
+        when(decisionVersion.getVersion()).thenReturn(version);
+        when(decisionVersion.getDecision()).thenReturn(decision);
+
+        ArgumentCaptor<GetObjectRequest> cap = ArgumentCaptor.forClass(GetObjectRequest.class);
+        when(s3Client.getObject(cap.capture(), any(ResponseTransformer.class))).thenReturn(null);
+
+        ByteArrayOutputStream outputStream = s3DMNStorage.readDMN("1", decisionVersion);
+        assertThat(outputStream, is(notNullValue()));
+
+        GetObjectRequest getObjectRequest = cap.getValue();
+        assertThat(getObjectRequest.key(), equalTo("customers/1/" + id + "/" + version + "/dmn.xml"));
     }
 }
 

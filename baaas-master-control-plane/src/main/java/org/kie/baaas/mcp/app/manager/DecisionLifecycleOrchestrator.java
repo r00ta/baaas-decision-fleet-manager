@@ -62,7 +62,7 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         Decision decision = decisionManager.deleteDecision(customerId, decisionNameOrId);
         ClusterControlPlaneClient client = getControlPlaneClient(decision);
         client.delete(decision);
-        decisionDMNStorage.deleteDMN(customerId, decisionNameOrId);
+        decisionDMNStorage.deleteDMN(customerId, decision);
 
         return decision;
     }
@@ -136,8 +136,7 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     }
 
     @Override
-    public ByteArrayOutputStream getDMNFromBucket(String customerId, String decisionIdOrName, long version) {
-        return decisionManager.getDMNFromBucket(customerId, decisionIdOrName, version);
+    public ByteArrayOutputStream getDMN(String customerId, String decisionIdOrName, long version) {
+        return decisionManager.getDMN(customerId, decisionIdOrName, version);
     }
-
 }

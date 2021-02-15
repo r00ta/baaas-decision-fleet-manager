@@ -106,11 +106,10 @@ public interface DecisionLifecycle {
     /**
      * Retrieve the requested dmn file from S3 Bucket as ByteArrayOutputStream
      *
-     * @param customerId - The id of the customer that owns the Decision
+     * @param customerId       - The id of the customer that owns the Decision
      * @param decisionIdOrName - The id or name of the Decision
-     * @param version - The version of the Decision
+     * @param version          - The version of the Decision
      * @return the request dmn file as ByteArrayOutputStream
      */
-    ByteArrayOutputStream getDMNFromBucket(String customerId, String decisionIdOrName, long version);
-
+    ByteArrayOutputStream getDMN(String customerId, String decisionIdOrName, long version);
 }

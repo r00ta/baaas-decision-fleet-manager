@@ -24,7 +24,7 @@ import javax.inject.Inject;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
-import org.kie.baaas.mcp.app.manager.NoSuchDecisionException;
+import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.storage.DMNStorageRequest;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
@@ -37,7 +37,6 @@ import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -51,8 +50,8 @@ public class S3DMNStorage implements DecisionDMNStorage {
     private final Logger LOGGER = LoggerFactory.getLogger(S3DMNStorage.class);
 
     // base url = https://s3Endpoint/s3BucketName
-    private final String S3_DMN_ENDPOINT = "%s/%s";
-    // base file location customers/<customer_id>/<decision_name>/<decision_version>/dmn.xml
+    private final String S3_DMN_ENDPOINT = "s3://%s";
+    // base file location customers/<customer_id>/<decision_id>/<decision_version>/dmn.xml
     private final String DMN_LOCATION = "customers/%s/%s/%d/dmn.xml";
 
     private final MasterControlPlaneConfig config;
@@ -78,19 +77,19 @@ public class S3DMNStorage implements DecisionDMNStorage {
     @Override
     public DMNStorageRequest writeDMN(String customerId, DecisionRequest decisionRequest, DecisionVersion decisionVersion) {
 
-        String dmnLocation = composeDMNLocation(customerId, decisionRequest.getName(), decisionVersion.getVersion());
-        String dmnURL = composeS3URL(dmnLocation);
+        String dmnLocation = composeDMNLocation(customerId, decisionVersion.getDecision().getId(), decisionVersion.getVersion());
 
         PutObjectResponse response = s3Client.putObject(
                 putObjectRequest(dmnLocation, hashGenerator.generateHash(decisionRequest.getModel().getDmn())),
                 RequestBody.fromBytes(decisionRequest.getModel().getDmn().getBytes(StandardCharsets.UTF_8)));
 
+        String dmnURL = composeS3URL(dmnLocation);
         LOGGER.info("DMN file {} successfully written at {}.", decisionRequest.getName(), dmnURL);
         return new DMNStorageRequest(dmnURL, response.eTag());
     }
 
     @Override
-    public void deleteDMN(String customerId, String decisionName) {
+    public void deleteDMN(String customerId, Decision decision) {
         // get objects from bucket
         ListObjectsV2Response objectsInBucket = s3Client
                 .listObjectsV2(ListObjectsV2Request
@@ -103,11 +102,11 @@ public class S3DMNStorage implements DecisionDMNStorage {
                     String.format("There is no object on bucket %s that matches customer id %s and decision name %s",
                                   config.getBucketName(),
                                   customerId,
-                                  decisionName));
+                                  decision.getId()));
         }
 
         objectsInBucket.contents().stream()
-                .filter(obj -> obj.key().contains(customerId) && obj.key().contains(decisionName))
+                .filter(obj -> obj.key().contains(customerId) && obj.key().contains(decision.getId()))
                 .forEach(obj -> {
                     s3Client.deleteObject(deleteObjectRequest(obj.key()));
                     LOGGER.info("Object {} deleted from bucket {}.", obj.key(), config.getBucketName());
@@ -115,26 +114,13 @@ public class S3DMNStorage implements DecisionDMNStorage {
     }
 
     @Override
-    public ByteArrayOutputStream readDMN(String customerId, String decisionName, long decisionVersion) {
+    public ByteArrayOutputStream readDMN(String customerId, DecisionVersion decisionVersion) {
 
-        DecisionVersion localDecisionVersion = decisionManager.getVersion(customerId, decisionName, decisionVersion);
-
-        if (localDecisionVersion == null) {
-            throw new NoSuchDecisionException(
-                    String.format("Decision %s version %s associated with customer id %s was n ot found.",
-                                  decisionName, decisionVersion, customerId));
-        }
-
-        String dmnLocation = composeDMNLocation(customerId, decisionName, localDecisionVersion.getVersion());
+        String dmnLocation = composeDMNLocation(customerId, decisionVersion.getDecision().getId(), decisionVersion.getVersion());
 
         try {
             ByteArrayOutputStream dmnBaos = new ByteArrayOutputStream();
-            GetObjectResponse response = s3Client.getObject(getObjectRequest(dmnLocation), ResponseTransformer.toOutputStream(dmnBaos));
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(response.toString());
-            }
-
+            s3Client.getObject(getObjectRequest(dmnLocation), ResponseTransformer.toOutputStream(dmnBaos));
             return dmnBaos;
         } catch (final Exception e) {
             throw new DecisionDMNStorageException("Failed to read decision from S3 Bucket.", e);
@@ -149,7 +135,7 @@ public class S3DMNStorage implements DecisionDMNStorage {
      */
     private String composeS3URL(String dmnLocation) {
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format(S3_DMN_ENDPOINT, config.getS3Endpoint(), config.getBucketName()));
+        builder.append(String.format(S3_DMN_ENDPOINT, config.getBucketName()));
         builder.append("/");
         builder.append(dmnLocation);
         return builder.toString();
@@ -159,12 +145,12 @@ public class S3DMNStorage implements DecisionDMNStorage {
      * Return the dmnLocation on S3 Bucket based on given inputs
      *
      * @param customerId      - The customer id associated with the decision
-     * @param decisionName    - The decision name
+     * @param decisionId      - The decision name
      * @param decisionVersion - The decision version
      * @return full location of the dmn file.
      */
-    private String composeDMNLocation(String customerId, String decisionName, long decisionVersion) {
-        return String.format(DMN_LOCATION, customerId, decisionName, decisionVersion);
+    private String composeDMNLocation(String customerId, String decisionId, long decisionVersion) {
+        return String.format(DMN_LOCATION, customerId, decisionId, decisionVersion);
     }
 
     /**

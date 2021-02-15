@@ -26,6 +26,7 @@ public class DMNHashGenerator {
 
     /**
      * MD5 checksum sum calculator, based on aws md5 utils
+     *
      * @param plainTextDmn
      * @return md5 checksum as string
      */

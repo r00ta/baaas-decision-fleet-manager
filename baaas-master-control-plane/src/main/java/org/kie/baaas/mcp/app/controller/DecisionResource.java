@@ -122,12 +122,11 @@ public class DecisionResource {
 
         // TODO returns a formatted xml file.
 
-
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Requesting Decision version '{}' of with id or name '{}' for customer '{}' to be downloaded...",
                     version, id, customerId);
 
-        ByteArrayOutputStream byteArrayOutputStream = decisionLifecycle.getDMNFromBucket(customerId, id, version);
+        ByteArrayOutputStream byteArrayOutputStream = decisionLifecycle.getDMN(customerId, id, version);
 
         Response.ResponseBuilder response = Response.ok((StreamingOutput) output -> byteArrayOutputStream.writeTo(output));
         response.header("Content-Disposition", "attachment;filename=" + id + ".xml");
