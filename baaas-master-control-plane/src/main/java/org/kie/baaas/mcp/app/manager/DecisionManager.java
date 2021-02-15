@@ -188,14 +188,13 @@ public class DecisionManager implements DecisionLifecycle {
         decision.setDescription(decisionRequest.getDescription());
 
         DecisionVersion decisionVersion = createDecisionVersion(customerId, decisionRequest);
+        decision.addVersion(decisionVersion);
+        decision.setNextVersion(decisionVersion);
+        decision.setCurrentVersion(decisionVersion);
 
         DMNStorageRequest dmnStorageRequest = decisionDMNStorage.writeDMN(customerId, decisionRequest, decisionVersion);
         decisionVersion.setDmnMd5(dmnStorageRequest.getMd5Hash());
         decisionVersion.setDmnLocation(dmnStorageRequest.getProviderUrl());
-
-        decision.addVersion(decisionVersion);
-        decision.setNextVersion(decisionVersion);
-        decision.setCurrentVersion(decisionVersion);
 
         decisionDAO.persist(decision);
         LOGGER.info("Created new Decision with name '{}' at version '{}' for customer with id '{}'", decision.getName(), decisionVersion.getVersion(), customerId);
@@ -207,12 +206,12 @@ public class DecisionManager implements DecisionLifecycle {
         decision.setDescription(decisionRequest.getDescription());
 
         DecisionVersion decisionVersion = createDecisionVersion(customerId, decisionRequest);
+        decision.addVersion(decisionVersion);
+        decision.setNextVersion(decisionVersion);
+
         DMNStorageRequest dmnStorageRequest = decisionDMNStorage.writeDMN(customerId, decisionRequest, decisionVersion);
         decisionVersion.setDmnMd5(dmnStorageRequest.getMd5Hash());
         decisionVersion.setDmnLocation(dmnStorageRequest.getProviderUrl());
-
-        decision.addVersion(decisionVersion);
-        decision.setNextVersion(decisionVersion);
 
         decisionDAO.persist(decision);
         LOGGER.info("Updating Decision with name '{}' with new version '{}' for customer with id '{}'", decision.getName(), decisionVersion.getVersion(), customerId);
