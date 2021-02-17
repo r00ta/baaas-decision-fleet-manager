@@ -67,20 +67,38 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         return decision;
     }
 
-    @Override
-    public DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest) {
-
-        // TODO - chicken and egg problem here.  The DecisionVersion requires information about the DMN
-        // storage location, but the storage requires the DecisionVersion.
-        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerId, decisionRequest);
+    private DecisionVersion requestDeployment(String customerId, DecisionVersion decisionVersion) {
         ClusterControlPlaneClient client = getControlPlaneClient(decisionVersion.getDecision());
         try {
             client.deploy(decisionVersion);
             return decisionVersion;
         } catch (Exception e) {
             decisionManager.failed(customerId, decisionVersion.getDecision().getId(), decisionVersion.getVersion(), failedToDeploy());
-            throw new MasterControlPlaneException("Failed to request deployment of Decision to control plane", e);
+            throw failedToDeploy(customerId, decisionVersion, e);
         }
+    }
+
+    private MasterControlPlaneException failedToDeploy(String customerId, DecisionVersion decisionVersion, Throwable t) {
+        String message = new StringBuilder("Failed to request deployment of Decision with id '")
+                .append(decisionVersion.getDecision().getId())
+                .append("' at version '")
+                .append("'")
+                .append(decisionVersion.getVersion())
+                .append("' for customer '")
+                .append(customerId)
+                .append("'").toString();
+        return new MasterControlPlaneException(message, t);
+    }
+
+    @Override
+    public DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest) {
+
+        // TODO - chicken and egg problem here.  The DecisionVersion requires information about the DMN
+        // storage location, but the storage requires the DecisionVersion. We therefore have the write
+        // to storage happening within the DecisionManager implementation. Ideally the write should happen
+        // outside of this as we don't want to write to remote resources within a transaction boundary.
+        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerId, decisionRequest);
+        return requestDeployment(customerId, decisionVersion);
     }
 
     private Deployment failedToDeploy() {
@@ -97,14 +115,7 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     @Override
     public DecisionVersion rollbackToVersion(String customerId, String decisionIdOrName, long version) {
         DecisionVersion decisionVersion = decisionManager.rollbackToVersion(customerId, decisionIdOrName, version);
-        ClusterControlPlaneClient client = getControlPlaneClient(decisionVersion.getDecision());
-        try {
-            client.rollback(decisionVersion);
-            return decisionVersion;
-        } catch (Exception e) {
-            decisionManager.failed(customerId, decisionVersion.getDecision().getId(), decisionVersion.getVersion(), failedToDeploy());
-            throw new MasterControlPlaneException("Failed to request rollback for Decision '" + decisionVersion.getDecision().getName() + "' on Control Plane '" + client.getClusterControlPlane().getKubernetesApiUrl() + "'", e);
-        }
+        return requestDeployment(customerId, decisionVersion);
     }
 
     @Override

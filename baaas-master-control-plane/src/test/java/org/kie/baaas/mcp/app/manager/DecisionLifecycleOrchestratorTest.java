@@ -169,6 +169,6 @@ public class DecisionLifecycleOrchestratorTest {
         assertThat(rollback, is(notNullValue()));
         assertThat(rollback, equalTo(decisionVersion));
 
-        verify(client).rollback(decisionVersion);
+        verify(client).deploy(decisionVersion);
     }
 }

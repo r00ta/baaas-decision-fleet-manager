@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.ccp.api.Phase;
 import org.kie.baaas.ccp.api.Webhook;
+import org.kie.baaas.ccp.api.WebhookBuilder;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
@@ -51,10 +52,23 @@ public class ClusterControlPlaneCallbackResourceTest {
     @Captor
     ArgumentCaptor<Deployment> deploymentCap;
 
+    private Webhook createWithPhase(Phase phase) {
+        return new WebhookBuilder().withAt(LocalDateTime.now().toString())
+                .withCustomer("1")
+                .withDecision("my-decision")
+                .withEndpoint(URI.create("https://mydecision.baaas.redhat.com"))
+                .withMessage("message")
+                .withNamespace("namespace")
+                .withPhase(phase)
+                .withVersion("1")
+                .build();
+    }
+
     @Test
     public void deployed() {
 
-        Webhook webhook = new Webhook("1", "my-decision", "1", Phase.CURRENT, URI.create("https://mydecision.baaas.redhat.com"), "foo", LocalDateTime.now().toString(), "namespace", "versionName");
+        Webhook webhook = createWithPhase(Phase.CURRENT);
+
         callbackResource.processClusterControlPlaneCallback(webhook.getDecision(), 1l, webhook);
 
         verify(decisionManager).deployed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
@@ -70,7 +84,7 @@ public class ClusterControlPlaneCallbackResourceTest {
     @Test
     public void failed() {
 
-        Webhook webhook = new Webhook("1", "my-decision", "1", Phase.FAILED, URI.create("https://mydecision.baaas.redhat.com"), "foo", LocalDateTime.now().toString(), "namespace", "versionName");
+        Webhook webhook = createWithPhase(Phase.FAILED);
         callbackResource.processClusterControlPlaneCallback(webhook.getDecision(), 1l, webhook);
 
         verify(decisionManager).failed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
@@ -85,7 +99,7 @@ public class ClusterControlPlaneCallbackResourceTest {
 
     @Test
     public void unsupportedCallback() {
-        Webhook webhook = new Webhook("1", "my-decision", "1", Phase.READY, URI.create("https://mydecision.baaas.redhat.com"), "foo", LocalDateTime.now().toString(), "namespace", "versionName");
+        Webhook webhook = createWithPhase(Phase.READY);
         assertThrows(MasterControlPlaneException.class, () -> {
             callbackResource.processClusterControlPlaneCallback(webhook.getDecision(), 1l, webhook);
         });

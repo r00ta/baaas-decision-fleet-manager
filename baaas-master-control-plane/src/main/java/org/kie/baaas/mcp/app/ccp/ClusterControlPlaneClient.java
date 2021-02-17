@@ -19,15 +19,32 @@ import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 
+/**
+ * Interface for sending requests to the Cluster Control Plane
+ */
 public interface ClusterControlPlaneClient {
 
-    public ClusterControlPlane getClusterControlPlane();
+    ClusterControlPlane getClusterControlPlane();
 
-    public void deploy(DecisionVersion decisionVersion);
+    /**
+     * Request deployment of the specific DecisionVersion. This encompasses a new decision,
+     * and update to an existing Decision or a rollback to a previous version of a Decision.
+     *
+     * @param decisionVersion - The DecisionVersion to deploy
+     */
+    void deploy(DecisionVersion decisionVersion);
 
-    public void rollback(DecisionVersion decisionVersion);
+    /**
+     * Request deletion of the specific DecisionVersion.
+     *
+     * @param decisionVersion - The DecisionVersion to delete
+     */
+    void delete(DecisionVersion decisionVersion);
 
-    public void delete(DecisionVersion decisionVersion);
-
-    public void delete(Decision decision);
+    /**
+     * Request deletion of the specific Decision (and all versions)
+     *
+     * @param decision - The Decision to delete
+     */
+    void delete(Decision decision);
 }

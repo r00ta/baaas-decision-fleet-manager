@@ -34,7 +34,6 @@ import org.junit.jupiter.api.Test;
 import org.kie.baaas.ccp.api.DecisionRequest;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
-import org.kie.baaas.mcp.app.manager.DecisionLifecycleException;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
@@ -48,7 +47,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @QuarkusTestResource(KubernetesMockServerTestResource.class)
 @QuarkusTest
@@ -128,7 +126,7 @@ public class DefaultClusterControlPlaneClientTest {
         DecisionRequest payload = responseBuilder.getPayload();
         assertThat(payload, is(notNullValue()));
 
-        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId() + "-v" + decisionVersion.getVersion()));
+        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId()));
         assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName())));
 
@@ -152,7 +150,7 @@ public class DefaultClusterControlPlaneClientTest {
         DecisionRequest payload = responseBuilder.getPayload();
         assertThat(payload, is(notNullValue()));
 
-        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId() + "-v" + decisionVersion.getVersion()));
+        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId()));
         assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName())));
 
@@ -172,7 +170,7 @@ public class DefaultClusterControlPlaneClientTest {
         DecisionVersion decisionVersion = createDecisionVersion(addKafka);
         Deployment deployment = new Deployment();
         deployment.setNamespace("test-namespace");
-        deployment.setVersionName("foo");
+        deployment.setVersionName("foo-" + System.currentTimeMillis());
         deployment.setName(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName()));
         decisionVersion.setDeployment(deployment);
         return decisionVersion;
@@ -217,9 +215,14 @@ public class DefaultClusterControlPlaneClientTest {
         DecisionVersion decisionVersion = createDecisionVersionWithDeployment(false);
         Deployment deployment = decisionVersion.getDeployment();
         createDeploymentNamespace(deployment);
-        assertThrows(DecisionLifecycleException.class, () -> {
-            client.delete(decisionVersion);
-        });
+
+        CCPResponseBuilder<org.kie.baaas.ccp.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.ccp.api.DecisionVersion.class);
+        String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisionversions/" + deployment.getVersionName();
+        mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
+
+        client.delete(decisionVersion);
+
+        assertThat(deleteResponse.isInvoked(), is(false));
     }
 
     @Test
@@ -246,8 +249,11 @@ public class DefaultClusterControlPlaneClientTest {
         Deployment deployment = decisionVersion.getDeployment();
         createDeploymentNamespace(deployment);
 
-        assertThrows(DecisionLifecycleException.class, () -> {
-            client.delete(decisionVersion.getDecision());
-        });
+        CCPResponseBuilder<org.kie.baaas.ccp.api.Decision> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.ccp.api.Decision.class);
+        String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisions/" + deployment.getName();
+        mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
+
+        client.delete(decisionVersion.getDecision());
+        assertThat(deleteResponse.isInvoked(), is(false));
     }
 }
