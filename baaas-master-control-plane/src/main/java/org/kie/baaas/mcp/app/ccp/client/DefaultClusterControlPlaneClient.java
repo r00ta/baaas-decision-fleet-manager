@@ -134,7 +134,7 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
     }
 
     private Namespace getDeploymentNamespace(Deployment deployment) {
-        if (deployment != null) {
+        if (deployment != null && deployment.getNamespace() != null) {
             return kubernetesClient.namespaces().withName(deployment.getNamespace()).get();
         }
 
@@ -156,8 +156,12 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
     public void delete(DecisionVersion decisionVersion) {
 
         Deployment deployment = decisionVersion.getDeployment();
+        org.kie.baaas.ccp.api.DecisionVersion deployedVersion = null;
         Resource<org.kie.baaas.ccp.api.DecisionVersion> resource = getDecisionVersion(deployment);
-        org.kie.baaas.ccp.api.DecisionVersion deployedVersion = resource.get();
+
+        if (resource != null) {
+            deployedVersion = resource.get();
+        }
 
         if (deployedVersion != null) {
             LOGGER.info("Deleting DecisionVersion '{}' from namespace '{}'", deployment.getVersionName(), deployment.getNamespace());
@@ -170,8 +174,12 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
     @Override
     public void delete(Decision decision) {
         Deployment deployment = decision.getCurrentVersion().getDeployment();
+        org.kie.baaas.ccp.api.Decision deployedDecision = null;
         Resource<org.kie.baaas.ccp.api.Decision> resource = getDecision(deployment);
-        org.kie.baaas.ccp.api.Decision deployedDecision = resource.get();
+        if (resource != null) {
+            deployedDecision = resource.get();
+        }
+
         if (deployedDecision != null) {
             LOGGER.info("Deleting Decision with name '{}' from namespace '{}'...", deployment.getName(), deployment.getNamespace());
             resource.delete();

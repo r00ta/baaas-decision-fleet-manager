@@ -226,6 +226,23 @@ public class DefaultClusterControlPlaneClientTest {
     }
 
     @Test
+    public void deleteVersion_noNamespaceOnDeploymentDueToFailure() {
+        DecisionVersion decisionVersion = createDecisionVersionWithDeployment(false);
+        Deployment deployment = decisionVersion.getDeployment();
+        deployment.setNamespace(null);
+        deployment.setName(null);
+        deployment.setVersionName(null);
+
+        CCPResponseBuilder<org.kie.baaas.ccp.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.ccp.api.DecisionVersion.class);
+        String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisionversions/" + deployment.getVersionName();
+        mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
+
+        client.delete(decisionVersion);
+
+        assertThat(deleteResponse.isInvoked(), is(false));
+    }
+
+    @Test
     public void deleteDecision() {
 
         DecisionVersion decisionVersion = createDecisionVersionWithDeployment(false);
