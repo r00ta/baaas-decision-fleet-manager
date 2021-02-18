@@ -154,8 +154,8 @@ public class DecisionMapperTest {
         assertThat(responseList, is(notNullValue()));
         assertThat(responseList.getItems(), hasSize(2));
 
-        assertDecisionResponse(responseList.getItems().get(0), decision, version, false);
-        assertDecisionResponse(responseList.getItems().get(1), decision, version2, false);
+        assertDecisionResponse(responseList.getItems().get(0), decision, version2, false);
+        assertDecisionResponse(responseList.getItems().get(1), decision, version, false);
     }
 
     @Test
@@ -177,13 +177,17 @@ public class DecisionMapperTest {
 
         Decision decision2 = createDecision("my-second-decision");
         DecisionVersion decisionVersion2 = createDecisionVersion(decision2);
+
+        LocalDateTime latest = LocalDateTime.of(3000, 2, 20, 12, 0, 0, 0);
+        assertThat(latest.getYear(), equalTo(3000));
+        decisionVersion2.setSubmittedAt(latest);
         decision2.setCurrentVersion(decisionVersion2);
 
         DecisionResponseList responseList = decisionMapper.mapToDecisionResponseList(asList(decision, decision2));
         assertThat(responseList, is(notNullValue()));
         assertThat(responseList.getItems(), hasSize(2));
 
-        assertDecisionResponse(responseList.getItems().get(0), decision, decisionVersion, false);
-        assertDecisionResponse(responseList.getItems().get(1), decision2, decisionVersion2, false);
+        assertDecisionResponse(responseList.getItems().get(0), decision2, decisionVersion2, false);
+        assertDecisionResponse(responseList.getItems().get(1), decision, decisionVersion, false);
     }
 }

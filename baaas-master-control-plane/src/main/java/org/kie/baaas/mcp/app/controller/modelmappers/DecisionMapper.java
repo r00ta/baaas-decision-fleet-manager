@@ -15,6 +15,8 @@
 
 package org.kie.baaas.mcp.app.controller.modelmappers;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -91,16 +93,26 @@ public class DecisionMapper {
     public DecisionResponseList mapVersionsToDecisionResponseList(List<DecisionVersion> decisionVersions) {
 
         DecisionResponseList responseList = new DecisionResponseList();
-        List<DecisionResponse> items = decisionVersions.stream().map(this::mapVersionToDecisionResponse).collect(toList());
+        List<DecisionResponse> items = decisionVersions.stream()
+                .map(this::mapVersionToDecisionResponse)
+                .collect(toList());
         responseList.setItems(items);
+        return sort(responseList);
+    }
+
+    private DecisionResponseList sort(DecisionResponseList responseList) {
+        Comparator<DecisionResponse> comparator = Comparator.comparing(DecisionResponse::getSubmittedAt);
+        Collections.sort(responseList.getItems(), comparator.reversed());
         return responseList;
     }
 
     public DecisionResponseList mapToDecisionResponseList(List<Decision> decisions) {
 
         DecisionResponseList responseList = new DecisionResponseList();
-        List<DecisionResponse> items = decisions.stream().map(this::mapToDecisionResponse).collect(toList());
+        List<DecisionResponse> items = decisions.stream()
+                .map(this::mapToDecisionResponse)
+                .collect(toList());
         responseList.setItems(items);
-        return responseList;
+        return sort(responseList);
     }
 }

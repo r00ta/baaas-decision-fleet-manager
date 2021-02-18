@@ -119,16 +119,12 @@ public class DecisionResourceTest {
     public void deleteDecision() {
 
         Decision decision = mock(Decision.class);
-        DecisionResponse decisionResponse = mock(DecisionResponse.class);
         String decisionId = "foo";
 
         when(decisionLifecycle.deleteDecision(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(decision);
-        when(decisionMapper.mapToDecisionResponse(decision)).thenReturn(decisionResponse);
 
         Response response = decisionResource.deleteDecision(decisionId);
         assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
-
-        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
     }
 
     @Test

@@ -94,9 +94,8 @@ public class DecisionResource {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Deleting decision with id or name '{}' for customer id '{}'...", id, customerId);
-        Decision decision = decisionLifecycle.deleteDecision(customerId, id);
-        DecisionResponse response = decisionMapper.mapToDecisionResponse(decision);
-        return Response.ok(response).build();
+        decisionLifecycle.deleteDecision(customerId, id);
+        return Response.ok().build();
     }
 
     @DELETE

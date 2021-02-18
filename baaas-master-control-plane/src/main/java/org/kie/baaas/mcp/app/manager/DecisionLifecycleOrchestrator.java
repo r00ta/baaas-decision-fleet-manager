@@ -63,7 +63,6 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         ClusterControlPlaneClient client = getControlPlaneClient(decision);
         client.delete(decision);
         decisionDMNStorage.deleteDMN(customerId, decision);
-
         return decision;
     }
 
