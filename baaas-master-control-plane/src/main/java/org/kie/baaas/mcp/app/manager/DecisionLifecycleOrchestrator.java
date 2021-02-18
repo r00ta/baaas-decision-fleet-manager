@@ -81,7 +81,6 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         String message = new StringBuilder("Failed to request deployment of Decision with id '")
                 .append(decisionVersion.getDecision().getId())
                 .append("' at version '")
-                .append("'")
                 .append(decisionVersion.getVersion())
                 .append("' for customer '")
                 .append(customerId)

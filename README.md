@@ -93,7 +93,7 @@ To use `quarkus:dev` mode with MCP, we need to setup 2 services:
 - PostgreSQL
 - Localstack with S3 to provide a S3 Bucket implementation
 
-There is a docker-compose file for this purpose: [docker-compse-quarkus-dev.yml](docker-compose-quarkus-dev.yml)
+There is a docker-compose file for this purpose: [docker-compose-quarkus-dev.yml](docker-compose-quarkus-dev.yml)
 To start it use the command below:
 
 ```bash

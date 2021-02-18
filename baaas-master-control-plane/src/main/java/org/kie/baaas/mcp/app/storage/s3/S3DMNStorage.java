@@ -157,7 +157,7 @@ public class S3DMNStorage implements DecisionDMNStorage {
      * Builds a put object request for the given dmn which will be persisted on S3 Bucket.
      *
      * @param decisionName - The decision name to be persisted
-     * @param md5Checksum  - The decision chedksum (MD5)
+     * @param md5Checksum  - The decision checksum (MD5)
      * @return PutObjectRequest with dmn file information.
      */
     private PutObjectRequest putObjectRequest(String decisionName, String md5Checksum) {
@@ -186,7 +186,7 @@ public class S3DMNStorage implements DecisionDMNStorage {
     /**
      * Builds a delete object request for the given dmn.
      *
-     * @param objectKey - The decision chedksum (MD5)
+     * @param objectKey - The decision checksum (MD5)
      * @return DeleteObjectRequest with dmn file information.
      */
     private DeleteObjectRequest deleteObjectRequest(String objectKey) {
