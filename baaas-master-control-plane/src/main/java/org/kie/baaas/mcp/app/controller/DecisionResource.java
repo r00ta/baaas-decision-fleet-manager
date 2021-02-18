@@ -80,7 +80,7 @@ public class DecisionResource {
 
     @PUT
     @Path("{id}/versions/{version}")
-    public Response rollbackToDecisionVersion(String id, long version) {
+    public Response rollbackToDecisionVersion(@PathParam("id") String id, @PathParam("version") long version) {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Rolling back to version '{}' of Decision with id or name '{}' for customer '{}'...", id, version, customerId);
@@ -90,7 +90,7 @@ public class DecisionResource {
 
     @DELETE
     @Path("{id}")
-    public Response deleteDecision(String id) {
+    public Response deleteDecision(@PathParam("id") String id) {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Deleting decision with id or name '{}' for customer id '{}'...", id, customerId);

@@ -18,6 +18,7 @@ package org.kie.baaas.mcp.app.ccp.callbacks;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -61,8 +62,9 @@ public class ClusterControlPlaneCallbackResource {
         return deployment;
     }
 
+    @POST
     @Path("decisions/{id}/versions/{version}")
-    public Response processClusterControlPlaneCallback(@PathParam("id") String decisionIdOrName, @PathParam("version") long version, Webhook webhook) {
+    public Response processClusterControlPlaneCallback(Webhook webhook, @PathParam("id") String decisionIdOrName, @PathParam("version") long version) {
 
         LOGGER.info("Received callback for decision with idOrName '{}' at version '{}' for customer '{}'. Phase: '{}'", decisionIdOrName, version, webhook.getCustomer(), webhook.getPhase());
 

@@ -69,7 +69,7 @@ public class ClusterControlPlaneCallbackResourceTest {
 
         Webhook webhook = createWithPhase(Phase.CURRENT);
 
-        callbackResource.processClusterControlPlaneCallback(webhook.getDecision(), 1l, webhook);
+        callbackResource.processClusterControlPlaneCallback(webhook, webhook.getDecision(), 1l);
 
         verify(decisionManager).deployed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
 
@@ -85,7 +85,7 @@ public class ClusterControlPlaneCallbackResourceTest {
     public void failed() {
 
         Webhook webhook = createWithPhase(Phase.FAILED);
-        callbackResource.processClusterControlPlaneCallback(webhook.getDecision(), 1l, webhook);
+        callbackResource.processClusterControlPlaneCallback(webhook, webhook.getDecision(), 1l);
 
         verify(decisionManager).failed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
 
@@ -101,7 +101,7 @@ public class ClusterControlPlaneCallbackResourceTest {
     public void unsupportedCallback() {
         Webhook webhook = createWithPhase(Phase.READY);
         assertThrows(MasterControlPlaneException.class, () -> {
-            callbackResource.processClusterControlPlaneCallback(webhook.getDecision(), 1l, webhook);
+            callbackResource.processClusterControlPlaneCallback(webhook, webhook.getDecision(), 1l);
         });
     }
 }
