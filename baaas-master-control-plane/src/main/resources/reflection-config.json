@@ -9,6 +9,24 @@
     "allPublicFields": true
   },
   {
+    "name": "org.kie.baaas.ccp.api.DecisionSpec",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name": "org.kie.baaas.ccp.api.DecisionStatus",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredMethods": true,
+    "allPublicMethods": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
     "name": "org.kie.baaas.ccp.api.DecisionRequest",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
@@ -28,15 +46,6 @@
   },
   {
     "name": "org.kie.baaas.ccp.api.DecisionRequestStatus",
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredMethods": true,
-    "allPublicMethods": true,
-    "allDeclaredFields": true,
-    "allPublicFields": true
-  },
-  {
-    "name": "org.kie.baaas.ccp.api.DecisionStatus",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
