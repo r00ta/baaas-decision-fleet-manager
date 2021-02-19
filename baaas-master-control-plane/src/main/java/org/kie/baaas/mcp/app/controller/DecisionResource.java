@@ -135,6 +135,17 @@ public class DecisionResource {
     }
 
     @GET
+    @Path("{id}/building")
+    public Response getBuildingVersion(@PathParam("id") String decisionIdOrName) {
+
+        String customerId = customerIdResolver.getCustomerId();
+        LOGGER.info("Getting details of BUILDING version of Decision with id or name '{}' for customer '{}'...", decisionIdOrName, customerId);
+
+        DecisionVersion decisionVersion = decisionLifecycle.getBuildingVersion(customerId, decisionIdOrName);
+        return mapDecisionVersion(decisionVersion);
+    }
+
+    @GET
     @Path("{id}/versions/{version}")
     public Response getDecisionVersion(@PathParam("id") String id, @PathParam("version") long version) {
 

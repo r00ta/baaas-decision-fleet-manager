@@ -122,6 +122,11 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     }
 
     @Override
+    public DecisionVersion getBuildingVersion(String customerId, String decisionIdOrName) {
+        return decisionManager.getBuildingVersion(customerId, decisionIdOrName);
+    }
+
+    @Override
     public DecisionVersion getVersion(String customerId, String decisionIdOrName, long decisionVersion) {
         return decisionManager.getVersion(customerId, decisionIdOrName, decisionVersion);
     }

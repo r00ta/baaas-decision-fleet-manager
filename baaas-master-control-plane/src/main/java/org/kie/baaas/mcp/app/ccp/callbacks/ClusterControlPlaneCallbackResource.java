@@ -57,8 +57,12 @@ public class ClusterControlPlaneCallbackResource {
         deployment.setName(webhook.getDecision());
         deployment.setNamespace(webhook.getNamespace());
         deployment.setVersionName(webhook.getVersionResource());
-        deployment.setUrl(webhook.getEndpoint().toString());
         deployment.setStatusMessage(webhook.getMessage());
+
+        /* Failed deployments have no endpoint */
+        if (webhook.getEndpoint() != null) {
+            deployment.setUrl(webhook.getEndpoint().toString());
+        }
         return deployment;
     }
 

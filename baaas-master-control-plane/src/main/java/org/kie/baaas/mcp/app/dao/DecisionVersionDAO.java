@@ -47,16 +47,14 @@ public class DecisionVersionDAO implements PanacheRepositoryBase<DecisionVersion
         return find("#DecisionVersion.currentByCustomerAndDecisionIdOrName", params).firstResult();
     }
 
+    public DecisionVersion getBuildingVersion(String customerId, String decisionIdOrName) {
+        Parameters params = customerIdParams(customerId).and("idOrName", decisionIdOrName);
+        return find("#DecisionVersion.buildingByCustomerAndDecisionIdOrName", params).firstResult();
+    }
+
     public DecisionVersion findByCustomerAndDecisionIdOrName(String customerId, String decisionIdOrName, long decisionVersion) {
         Parameters params = customerIdParams(customerId).and("idOrName", decisionIdOrName).and("version", decisionVersion);
         return find("#DecisionVersion.byCustomerDecisionIdOrNameAndVersion", params).firstResult();
-    }
-
-    public DecisionVersion findByCustomerAndDecisionName(String customerId, String decisionName, long decisionVersion) {
-        Parameters params = customerIdParams(customerId)
-                .and("name", decisionName)
-                .and("version", decisionVersion);
-        return find("#DecisionVersion.byCustomerAndNameAndVersion", params).firstResult();
     }
 
     public List<DecisionVersion> listCurrentByCustomerId(String customerId) {

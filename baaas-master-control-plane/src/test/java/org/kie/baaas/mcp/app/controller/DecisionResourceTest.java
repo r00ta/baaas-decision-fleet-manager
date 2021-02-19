@@ -173,6 +173,21 @@ public class DecisionResourceTest {
     }
 
     @Test
+    public void getBuildingVersion() {
+        DecisionVersion version = mock(DecisionVersion.class);
+        DecisionResponse decisionResponse = mock(DecisionResponse.class);
+        String decisionId = "foo";
+
+        when(decisionLifecycle.getBuildingVersion(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(version);
+        when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
+
+        Response response = decisionResource.getBuildingVersion(decisionId);
+        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+
+        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+    }
+
+    @Test
     public void getDecision() {
         DecisionVersion version = mock(DecisionVersion.class);
         DecisionResponse decisionResponse = mock(DecisionResponse.class);

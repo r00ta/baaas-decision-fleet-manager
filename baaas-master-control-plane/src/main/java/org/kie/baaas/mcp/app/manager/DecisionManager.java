@@ -141,6 +141,16 @@ public class DecisionManager implements DecisionLifecycle {
         return decisionVersionDAO.listCurrentByCustomerId(customerId).stream().map((version) -> version.getDecision()).collect(toList());
     }
 
+    @Override
+    public DecisionVersion getBuildingVersion(String customerId, String decisionIdOrName) {
+        DecisionVersion decisionVersion = decisionVersionDAO.getBuildingVersion(customerId, decisionIdOrName);
+        if (decisionVersion == null) {
+            throw new NoSuchDecisionVersionException("There is no BUILDING version of Decision with id '" + decisionIdOrName + "' for customer '" + customerId + "'");
+        }
+
+        return decisionVersion;
+    }
+
     /**
      * @param customerId      - The id of the customer for the Decision
      * @param decisionRequest - The API processed request
@@ -342,11 +352,6 @@ public class DecisionManager implements DecisionLifecycle {
         // Can't delete a version whilst it is current
         if (DecisionVersionStatus.CURRENT == decisionVersion.getStatus()) {
             throw new DecisionLifecycleException("It is not valid to delete the 'CURRENT' version of Decision '" + decisionName + "' for customer id '" + customerId + "'");
-        }
-
-        // Can't delete a version whilst we are building it
-        if (DecisionVersionStatus.BUILDING == decisionVersion.getStatus()) {
-            throw new DecisionLifecycleException("It is not valid to delete a 'BUILDING' version of Decision '" + decisionName + "' for customer id '" + customerId + "'");
         }
 
         // Deleting a DecisionVersion is a logical delete. They should still appear in history.

@@ -375,18 +375,6 @@ public class DecisionManagerTest {
 
     @TestTransaction
     @Test
-    public void deleteVersion_versionInvolvedInLifecycleOperation() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
-        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
-        Decision decision = decisionVersion.getDecision();
-
-        assertThrows(DecisionLifecycleException.class, () -> decisionManager.deleteVersion(customerIdResolver.getCustomerId(), decision.getName(), decisionVersion.getVersion()));
-    }
-
-    @TestTransaction
-    @Test
     public void listDecisionVersions_withDecisionId() {
         createStorageRequest();
         DecisionRequest apiRequest = createApiRequest();
@@ -466,6 +454,41 @@ public class DecisionManagerTest {
 
         DecisionVersion found = decisionManager.getCurrentVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId());
         assertThat(found.getId(), equalTo(decisionVersion.getId()));
+    }
+
+    @Test
+    @TestTransaction
+    public void getBuildingVersion_byDecisionId() {
+        createStorageRequest();
+        DecisionRequest apiRequest = createApiRequest();
+        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+
+        DecisionVersion found = decisionManager.getBuildingVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId());
+        assertThat(found.getId(), equalTo(decisionVersion.getId()));
+    }
+
+    @Test
+    @TestTransaction
+    public void getBuildingVersion_byDecisionName() {
+        createStorageRequest();
+        DecisionRequest apiRequest = createApiRequest();
+        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+
+        DecisionVersion found = decisionManager.getBuildingVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName());
+        assertThat(found.getId(), equalTo(decisionVersion.getId()));
+    }
+
+    @Test
+    @TestTransaction
+    public void getBuildingVersion_noBuildingVersion() {
+        createStorageRequest();
+        DecisionRequest apiRequest = createApiRequest();
+        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), decisionVersion.getVersion(), createDeployment());
+
+        assertThrows(NoSuchDecisionVersionException.class, () -> {
+            decisionManager.getBuildingVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName());
+        });
     }
 
     @Test

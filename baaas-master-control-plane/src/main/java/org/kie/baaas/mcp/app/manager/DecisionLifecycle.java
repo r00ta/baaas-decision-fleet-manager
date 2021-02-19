@@ -64,6 +64,15 @@ public interface DecisionLifecycle {
     List<Decision> listDecisions(String customerId);
 
     /**
+     * Gets the building version of the specified decision owned by the customer id.
+     *
+     * @param customerId       - The customer id that owns the decision
+     * @param decisionIdOrName - The decision id or name to get the building version for
+     * @return - The building version of the Decision.
+     */
+    DecisionVersion getBuildingVersion(String customerId, String decisionIdOrName);
+
+    /**
      * Return details of a specific Decision Version
      *
      * @param customerId       - The id of the customer that owns the Decision

@@ -85,6 +85,7 @@ public class ClusterControlPlaneCallbackResourceTest {
     public void failed() {
 
         Webhook webhook = createWithPhase(Phase.FAILED);
+        webhook.setEndpoint(null);
         callbackResource.processClusterControlPlaneCallback(webhook, webhook.getDecision(), 1l);
 
         verify(decisionManager).failed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
@@ -94,7 +95,6 @@ public class ClusterControlPlaneCallbackResourceTest {
         assertThat(deployment.getNamespace(), equalTo(webhook.getNamespace()));
         assertThat(deployment.getName(), equalTo(webhook.getDecision()));
         assertThat(deployment.getVersionName(), equalTo(webhook.getVersionResource()));
-        assertThat(deployment.getUrl(), equalTo(webhook.getEndpoint().toString()));
     }
 
     @Test

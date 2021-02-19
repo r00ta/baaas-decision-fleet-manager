@@ -49,10 +49,10 @@ import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
  */
 @NamedQueries({
         @NamedQuery(name = "DecisionVersion.countByCustomerAndName", query = "from DecisionVersion dv where dv.decision.customerId=:customerId and dv.decision.name=:name"),
-        @NamedQuery(name = "DecisionVersion.byCustomerAndNameAndVersion", query = "from DecisionVersion dv where dv.decision.customerId=:customerId and dv.decision.name=:name and dv.version=:version"),
         @NamedQuery(name = "DecisionVersion.currentByCustomer", query = "select dv from DecisionVersion dv left join fetch dv.tags left join fetch dv.configuration join fetch dv.decision where dv.id=dv.decision.currentVersion.id and dv.decision.customerId=:customerId order by dv.decision.name"),
         @NamedQuery(name = "DecisionVersion.byCustomerAndDecisionIdOrName", query = "select dv from DecisionVersion dv left join fetch dv.tags left join fetch dv.configuration join fetch dv.decision where dv.decision.customerId=:customerId and (dv.decision.id=:idOrName or dv.decision.name=:idOrName) order by dv.submittedAt desc"),
-        @NamedQuery(name = "DecisionVersion.currentByCustomerAndDecisionIdOrName", query = "select dv from DecisionVersion dv left join fetch dv.tags left join fetch dv.configuration join fetch dv.decision where dv.decision.customerId=:customerId and (dv.decision.id=:idOrName or dv.decision.name=:idOrName)"),
+        @NamedQuery(name = "DecisionVersion.currentByCustomerAndDecisionIdOrName", query = "select dv from DecisionVersion dv left join fetch dv.tags left join fetch dv.configuration join fetch dv.decision where dv.id=dv.decision.currentVersion.id and dv.decision.customerId=:customerId and (dv.decision.id=:idOrName or dv.decision.name=:idOrName)"),
+        @NamedQuery(name = "DecisionVersion.buildingByCustomerAndDecisionIdOrName", query = "select dv from DecisionVersion dv left join fetch dv.tags left join fetch dv.configuration join fetch dv.decision where dv.id=dv.decision.nextVersion.id and dv.decision.customerId=:customerId and (dv.decision.id=:idOrName or dv.decision.name=:idOrName)"),
         @NamedQuery(name = "DecisionVersion.byCustomerDecisionIdOrNameAndVersion", query = "select dv from DecisionVersion dv left join fetch dv.tags left join fetch dv.configuration join fetch dv.decision where dv.version=:version and dv.decision.customerId=:customerId and (dv.decision.id=:idOrName or dv.decision.name=:idOrName)")
 })
 @Entity
