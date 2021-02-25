@@ -264,6 +264,16 @@ public class DecisionManager implements DecisionLifecycle {
         decisionVersion.setStatus(DecisionVersionStatus.FAILED);
         decision.setNextVersion(null);
 
+        /*
+            In the case of multiple failures in a row, make the most recent failure the CURRENT
+            one.
+         */
+        if (DecisionVersionStatus.FAILED == decision.getCurrentVersion().getStatus()) {
+            if (decision.getCurrentVersion().getVersion() != decisionVersion.getVersion()) {
+                decision.setCurrentVersion(decisionVersion);
+            }
+        }
+
         LOGGER.info("Marked version '{}' of Decision '{}' as FAILED for customer id '{}", decisionVersion.getVersion(), decision.getName(), customerId);
 
         return decisionVersion;
@@ -291,6 +301,7 @@ public class DecisionManager implements DecisionLifecycle {
         DecisionVersion currentVersion = decision.getCurrentVersion();
         if (currentVersion.getVersion() != decisionVersion.getVersion()) {
             currentVersion.setStatus(DecisionVersionStatus.READY);
+            currentVersion.getDeployment().setUrl(null);
         }
 
         decision.setCurrentVersion(decisionVersion);

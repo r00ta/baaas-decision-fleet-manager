@@ -248,13 +248,41 @@ public class DecisionManagerTest {
         apiRequest.setDescription("An updated version!");
         apiRequest.getModel().setDmn("fff");
 
-        decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
-        decisionVersion = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
-        assertThat(decisionVersion.getStatus(), equalTo(DecisionVersionStatus.CURRENT));
+        DecisionVersion nextVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        nextVersion = decisionManager.deployed(decision.getCustomerId(), decision.getName(), nextVersion.getVersion(), createDeployment());
+        assertThat(nextVersion.getStatus(), equalTo(DecisionVersionStatus.CURRENT));
+        assertThat(nextVersion.getDeployment().getUrl(), is(notNullValue()));
 
-        decision = decisionVersion.getDecision();
+        decision = nextVersion.getDecision();
         assertThat(decision.getCurrentVersion().getStatus(), equalTo(DecisionVersionStatus.CURRENT));
-        assertThat(decision.getCurrentVersion().getVersion(), equalTo(decisionVersion.getVersion()));
+        assertThat(decision.getCurrentVersion().getVersion(), equalTo(nextVersion.getVersion()));
+        assertThat(decision.getNextVersion(), is(nullValue()));
+
+        decisionVersion = decisionVersionDAO.findById(decisionVersion.getId());
+        assertThat(decisionVersion.getDeployment().getUrl(), is(nullValue()));
+    }
+
+    @TestTransaction
+    @Test
+    public void createNewVersion_twoFailures() {
+
+        createStorageRequest();
+        DecisionRequest apiRequest = createApiRequest();
+
+        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        Decision decision = decisionVersion.getDecision();
+        decisionManager.failed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
+
+        apiRequest.setDescription("An updated version!");
+        apiRequest.getModel().setDmn("fff");
+
+        DecisionVersion failedVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        failedVersion = decisionManager.failed(decision.getCustomerId(), decision.getName(), failedVersion.getVersion(), createDeployment());
+        assertThat(failedVersion.getStatus(), equalTo(DecisionVersionStatus.FAILED));
+
+        decision = failedVersion.getDecision();
+        assertThat(decision.getCurrentVersion().getStatus(), equalTo(DecisionVersionStatus.FAILED));
+        assertThat(decision.getCurrentVersion().getVersion(), equalTo(failedVersion.getVersion()));
         assertThat(decision.getNextVersion(), is(nullValue()));
     }
 

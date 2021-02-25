@@ -140,6 +140,31 @@ public class DefaultClusterControlPlaneClientTest {
     }
 
     @Test
+    public void deploy_withUpperCaseDecisionName() {
+
+        CCPResponseBuilder<DecisionRequest> responseBuilder = expectDecisionRequest();
+        DecisionVersion decisionVersion = createDecisionVersion(false);
+        decisionVersion.getDecision().setName("My-Decision");
+
+        client.deploy(decisionVersion);
+
+        DecisionRequest payload = responseBuilder.getPayload();
+        assertThat(payload, is(notNullValue()));
+
+        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId()));
+        assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
+        assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName()).toLowerCase()));
+
+        assertThat(payload.getSpec().getDefinition().getVersion(), equalTo(String.valueOf(decisionVersion.getVersion())));
+        assertThat(payload.getSpec().getDefinition().getSource(), equalTo(URI.create(decisionVersion.getDmnLocation())));
+        assertThat(payload.getSpec().getDefinition().getKafka(), is(nullValue()));
+
+        Collection<URI> webhooks = payload.getSpec().getWebhooks();
+        assertThat(webhooks, hasSize(1));
+        assertThat(webhooks.iterator().next().toString(), equalTo(config.getApiBaseUrl() + "/callback/decisions/" + decisionVersion.getDecision().getId() + "/versions/" + decisionVersion.getVersion()));
+    }
+
+    @Test
     public void deploy_withKafka() {
 
         CCPResponseBuilder<DecisionRequest> responseBuilder = expectDecisionRequest();

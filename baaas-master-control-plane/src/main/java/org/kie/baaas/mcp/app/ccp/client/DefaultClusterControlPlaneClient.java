@@ -105,7 +105,7 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
 
         DecisionRequestSpec decisionRequestSpec = new DecisionRequestSpec();
         decisionRequestSpec.setDefinition(decisionVersionSpec);
-        decisionRequestSpec.setName(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName()));
+        decisionRequestSpec.setName(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName()).toLowerCase());
         decisionRequestSpec.setCustomerId(decisionVersion.getDecision().getCustomerId());
         decisionRequestSpec.setWebhooks(createCallbackUrl(decisionVersion));
 
