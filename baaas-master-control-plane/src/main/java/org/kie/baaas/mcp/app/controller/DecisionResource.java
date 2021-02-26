@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.kie.baaas.mcp.app.controller;
 
 import java.io.ByteArrayOutputStream;
@@ -62,7 +63,8 @@ public class DecisionResource {
     private final DecisionMapper decisionMapper;
 
     @Inject
-    public DecisionResource(CustomerIdResolver customerIdResolver, DecisionLifecycleOrchestrator decisionLifecycle, DecisionMapper decisionMapper) {
+    public DecisionResource(CustomerIdResolver customerIdResolver, DecisionLifecycleOrchestrator decisionLifecycle,
+                            DecisionMapper decisionMapper) {
 
         requireNonNull(customerIdResolver, "customerIdResolver cannot be null");
         requireNonNull(decisionLifecycle, "decisionLifecycle cannot be null");

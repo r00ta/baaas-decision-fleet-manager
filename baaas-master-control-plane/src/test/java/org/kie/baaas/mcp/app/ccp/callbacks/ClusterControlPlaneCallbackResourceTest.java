@@ -23,7 +23,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.ccp.api.Phase;
 import org.kie.baaas.ccp.api.Webhook;
 import org.kie.baaas.ccp.api.WebhookBuilder;
-import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.mockito.ArgumentCaptor;
@@ -36,7 +35,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
@@ -95,13 +93,5 @@ public class ClusterControlPlaneCallbackResourceTest {
         assertThat(deployment.getNamespace(), equalTo(webhook.getNamespace()));
         assertThat(deployment.getName(), equalTo(webhook.getDecision()));
         assertThat(deployment.getVersionName(), equalTo(webhook.getVersionResource()));
-    }
-
-    @Test
-    public void unsupportedCallback() {
-        Webhook webhook = createWithPhase(Phase.READY);
-        assertThrows(MasterControlPlaneException.class, () -> {
-            callbackResource.processClusterControlPlaneCallback(webhook, webhook.getDecision(), 1l);
-        });
     }
 }
