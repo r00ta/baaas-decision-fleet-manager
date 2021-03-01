@@ -53,7 +53,7 @@ test:
 
 native-compile:
   <<: *cache-definition
-  image: quay.io/kiegroup/kogito-quarkus-ubi8-s2i:1.0.0
+  image: quay.io/kiegroup/kogito-quarkus-ubi8-s2i:1.2.0
   stage: native-compile
   script:
     - "/usr/share/maven/bin/mvn package -Pnative -Dmaven.test.skip=true"

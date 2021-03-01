@@ -34,7 +34,6 @@ public class CustomMetricsConfigurator {
     @ConfigProperty(name = "baaas.metrics.deployment.name", defaultValue = "baaas-mcp")
     String deploymentName;
 
-
     /**
      * Set the Metrics custom tag with baaas app name
      */
