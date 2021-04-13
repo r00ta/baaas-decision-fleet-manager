@@ -1,6 +1,11 @@
 # ide
 .idea
 *.iml
+.project
+.settings
+.factorypath
+.classpath
+.vscode
 
 # builds
 target/
