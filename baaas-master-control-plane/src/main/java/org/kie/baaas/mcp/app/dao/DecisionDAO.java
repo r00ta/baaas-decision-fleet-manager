@@ -18,9 +18,10 @@ package org.kie.baaas.mcp.app.dao;
 import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.Transactional;
 
+import org.kie.baaas.mcp.app.model.Decision;
+
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
-import org.kie.baaas.mcp.app.model.Decision;
 
 /**
  * DAO implementation for working with Decision Entities.

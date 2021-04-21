@@ -22,11 +22,12 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
-import io.quarkus.runtime.ShutdownEvent;
-import io.quarkus.runtime.StartupEvent;
 import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.quarkus.runtime.ShutdownEvent;
+import io.quarkus.runtime.StartupEvent;
 
 @ApplicationScoped
 public class AppLifecycle {
@@ -51,4 +52,3 @@ public class AppLifecycle {
         LOGGER.info("{} is stopping, requests will be no longer processed.", componentName);
     }
 }
-

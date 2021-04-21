@@ -64,7 +64,7 @@ public class DecisionResource {
 
     @Inject
     public DecisionResource(CustomerIdResolver customerIdResolver, DecisionLifecycleOrchestrator decisionLifecycle,
-                            DecisionMapper decisionMapper) {
+            DecisionMapper decisionMapper) {
 
         requireNonNull(customerIdResolver, "customerIdResolver cannot be null");
         requireNonNull(decisionLifecycle, "decisionLifecycle cannot be null");
@@ -106,7 +106,7 @@ public class DecisionResource {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Deleting version '{}' of Decision with id or name '{}' for customer '{}'...",
-                    version, id, customerId);
+                version, id, customerId);
 
         DecisionVersion decisionVersion = decisionLifecycle.deleteVersion(customerId, id, version);
         return mapDecisionVersion(decisionVersion);
@@ -125,7 +125,7 @@ public class DecisionResource {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Requesting Decision version '{}' of with id or name '{}' for customer '{}' to be downloaded...",
-                    version, id, customerId);
+                version, id, customerId);
 
         ByteArrayOutputStream byteArrayOutputStream = decisionLifecycle.getDMN(customerId, id, version);
 

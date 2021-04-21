@@ -21,12 +21,13 @@ import java.util.Arrays;
 import javax.enterprise.inject.Produces;
 import javax.inject.Singleton;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.config.MeterFilterReply;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @Singleton
 public class CustomMetricsConfigurator {
@@ -71,12 +72,12 @@ public class CustomMetricsConfigurator {
                             .percentilesHistogram(true) // histogram buckets
                             // Requested values on https://issues.redhat.com/browse/BAAAS-91
                             .serviceLevelObjectives(
-                                    Duration.ofMillis(1).toNanos(),     // 0.001 s
-                                    Duration.ofMillis(10).toNanos(),    // 0.01 s
-                                    Duration.ofMillis(100).toNanos(),   // 0.1 s
-                                    Duration.ofMillis(500).toNanos(),   // 0.5 s
-                                    Duration.ofMillis(1000).toNanos(),  // 1.0 s
-                                    Duration.ofMillis(5000).toNanos())  // 5.0 s
+                                    Duration.ofMillis(1).toNanos(), // 0.001 s
+                                    Duration.ofMillis(10).toNanos(), // 0.01 s
+                                    Duration.ofMillis(100).toNanos(), // 0.1 s
+                                    Duration.ofMillis(500).toNanos(), // 0.5 s
+                                    Duration.ofMillis(1000).toNanos(), // 1.0 s
+                                    Duration.ofMillis(5000).toNanos()) // 5.0 s
                             .minimumExpectedValue(1000000.0) // 0.001 s
                             .maximumExpectedValue(6.0E9)
 

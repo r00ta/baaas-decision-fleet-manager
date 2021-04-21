@@ -21,7 +21,6 @@ import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
-import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,6 +29,8 @@ import org.kie.baaas.mcp.api.decisions.DecisionBase;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.decisions.Model;
 import org.kie.baaas.mcp.validators.xml.BasicXML;
+
+import io.quarkus.test.junit.QuarkusTest;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @QuarkusTest
@@ -68,8 +69,8 @@ public class BasicXMLValidatorTest {
         Set<ConstraintViolation<DecisionBase>> violations = validator.validate(myDecision);
         Assertions.assertFalse(violations.isEmpty());
         Assertions.assertEquals("[XML document structures must start and end within the same entity.]",
-                                violations.stream()
-                                        .map(violation -> violation.getMessage())
-                                        .collect(Collectors.toList()).toString());
+                violations.stream()
+                        .map(violation -> violation.getMessage())
+                        .collect(Collectors.toList()).toString());
     }
 }

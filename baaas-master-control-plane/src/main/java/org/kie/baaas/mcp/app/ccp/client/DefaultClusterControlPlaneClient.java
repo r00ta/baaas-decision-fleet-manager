@@ -18,11 +18,6 @@ package org.kie.baaas.mcp.app.ccp.client;
 import java.net.URI;
 import java.util.Collection;
 
-import io.fabric8.kubernetes.api.model.Namespace;
-import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.utils.KubernetesResourceUtil;
 import org.kie.baaas.ccp.api.DecisionRequest;
 import org.kie.baaas.ccp.api.DecisionRequestSpec;
 import org.kie.baaas.ccp.api.DecisionVersionSpec;
@@ -36,6 +31,12 @@ import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.utils.KubernetesResourceUtil;
 
 import static java.util.Collections.singleton;
 

@@ -18,13 +18,14 @@ package org.kie.baaas.mcp.app.ccp.client;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
+import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
+import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
-import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 
 import static java.util.Objects.requireNonNull;
 

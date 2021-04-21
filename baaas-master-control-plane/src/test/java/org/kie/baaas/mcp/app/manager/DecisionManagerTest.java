@@ -21,9 +21,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import io.quarkus.test.TestTransaction;
-import io.quarkus.test.junit.QuarkusMock;
-import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
@@ -42,6 +39,10 @@ import org.kie.baaas.mcp.app.storage.DMNStorageRequest;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.kie.baaas.mcp.app.storage.s3.S3DMNStorage;
 import org.mockito.Mockito;
+
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusMock;
+import io.quarkus.test.junit.QuarkusTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anEmptyMap;
@@ -203,8 +204,7 @@ public class DecisionManagerTest {
         apiRequest.setDescription("An updated version!");
         apiRequest.getModel().setDmn("Updated dmn!");
 
-        DecisionLifecycleException thrown = assertThrows(DecisionLifecycleException.class, () ->
-                decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest));
+        DecisionLifecycleException thrown = assertThrows(DecisionLifecycleException.class, () -> decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest));
 
         assertThat(thrown.getMessage(), equalTo("A lifecycle operation is already in progress for Version '1' of Decision 'robs-first-decision'"));
     }

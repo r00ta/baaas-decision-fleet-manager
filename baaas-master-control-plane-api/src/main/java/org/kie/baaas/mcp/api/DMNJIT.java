@@ -19,6 +19,7 @@ import java.net.URL;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**

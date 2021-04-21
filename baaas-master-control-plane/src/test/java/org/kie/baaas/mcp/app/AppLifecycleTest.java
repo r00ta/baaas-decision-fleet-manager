@@ -15,13 +15,14 @@
 
 package org.kie.baaas.mcp.app;
 
-import io.quarkus.runtime.StartupEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import io.quarkus.runtime.StartupEvent;
 
 import static org.mockito.Mockito.verify;
 

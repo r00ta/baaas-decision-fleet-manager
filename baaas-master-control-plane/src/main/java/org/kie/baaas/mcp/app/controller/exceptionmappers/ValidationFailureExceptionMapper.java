@@ -52,6 +52,7 @@ public class ValidationFailureExceptionMapper implements ExceptionMapper<Constra
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity(violations.stream().map(violation -> "Field: '" + DecisionRequest.class.getSimpleName() + "." +
                         violation.getPropertyPath() + "' -> Provided value seems not to be valid, explanation: " +
-                        violation.getMessage() + violation.getRootBeanClass())).build();
+                        violation.getMessage() + violation.getRootBeanClass()))
+                .build();
     }
 }

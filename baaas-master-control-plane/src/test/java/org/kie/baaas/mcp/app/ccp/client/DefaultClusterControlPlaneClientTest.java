@@ -20,15 +20,6 @@ import java.util.Collection;
 
 import javax.inject.Inject;
 
-import io.fabric8.kubernetes.api.model.Namespace;
-import io.fabric8.kubernetes.api.model.NamespaceBuilder;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
-import io.fabric8.kubernetes.client.utils.KubernetesResourceUtil;
-import io.quarkus.test.common.QuarkusTestResource;
-import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.kubernetes.client.KubernetesMockServerTestResource;
-import io.quarkus.test.kubernetes.client.MockServer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kie.baaas.ccp.api.DecisionRequest;
@@ -40,6 +31,16 @@ import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
+
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.NamespaceBuilder;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
+import io.fabric8.kubernetes.client.utils.KubernetesResourceUtil;
+import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.kubernetes.client.KubernetesMockServerTestResource;
+import io.quarkus.test.kubernetes.client.MockServer;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -136,7 +137,8 @@ public class DefaultClusterControlPlaneClientTest {
 
         Collection<URI> webhooks = payload.getSpec().getWebhooks();
         assertThat(webhooks, hasSize(1));
-        assertThat(webhooks.iterator().next().toString(), equalTo(config.getApiBaseUrl() + "/callback/decisions/" + decisionVersion.getDecision().getId() + "/versions/" + decisionVersion.getVersion()));
+        assertThat(webhooks.iterator().next().toString(),
+                equalTo(config.getApiBaseUrl() + "/callback/decisions/" + decisionVersion.getDecision().getId() + "/versions/" + decisionVersion.getVersion()));
     }
 
     @Test
@@ -161,7 +163,8 @@ public class DefaultClusterControlPlaneClientTest {
 
         Collection<URI> webhooks = payload.getSpec().getWebhooks();
         assertThat(webhooks, hasSize(1));
-        assertThat(webhooks.iterator().next().toString(), equalTo(config.getApiBaseUrl() + "/callback/decisions/" + decisionVersion.getDecision().getId() + "/versions/" + decisionVersion.getVersion()));
+        assertThat(webhooks.iterator().next().toString(),
+                equalTo(config.getApiBaseUrl() + "/callback/decisions/" + decisionVersion.getDecision().getId() + "/versions/" + decisionVersion.getVersion()));
     }
 
     @Test
@@ -188,7 +191,8 @@ public class DefaultClusterControlPlaneClientTest {
 
         Collection<URI> webhooks = payload.getSpec().getWebhooks();
         assertThat(webhooks, hasSize(1));
-        assertThat(webhooks.iterator().next().toString(), equalTo(config.getApiBaseUrl() + "/callback/decisions/" + decisionVersion.getDecision().getId() + "/versions/" + decisionVersion.getVersion()));
+        assertThat(webhooks.iterator().next().toString(),
+                equalTo(config.getApiBaseUrl() + "/callback/decisions/" + decisionVersion.getDecision().getId() + "/versions/" + decisionVersion.getVersion()));
     }
 
     private DecisionVersion createDecisionVersionWithDeployment(boolean addKafka) {

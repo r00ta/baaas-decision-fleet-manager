@@ -20,9 +20,10 @@ import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.transaction.Transactional;
 
+import org.kie.baaas.mcp.app.model.DecisionVersion;
+
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
-import org.kie.baaas.mcp.app.model.DecisionVersion;
 
 /**
  * DAO implementation for working with DecisionVersions.

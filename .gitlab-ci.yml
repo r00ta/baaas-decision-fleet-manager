@@ -21,12 +21,7 @@ build:
   image: quay.io/kiegroup/kogito-quarkus-ubi8-s2i:1.0.0
   stage: build
   script:
-    - "/usr/share/maven/bin/mvn compile"
-  artifacts:
-    expire_in: 1 week
-    paths:
-      - baaas-master-control-plane-api/target/checkstyle.log
-      - baaas-master-control-plane/target/checkstyle.log
+    - "/usr/share/maven/bin/mvn compile -Pvalidate-formatting"
   tags:
     - baaas
   only:

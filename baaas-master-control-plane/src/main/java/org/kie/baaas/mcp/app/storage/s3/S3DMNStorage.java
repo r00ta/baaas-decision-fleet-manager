@@ -32,6 +32,7 @@ import org.kie.baaas.mcp.app.storage.DecisionDMNStorageException;
 import org.kie.baaas.mcp.app.storage.hash.DMNHashGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -61,7 +62,7 @@ public class S3DMNStorage implements DecisionDMNStorage {
 
     @Inject
     public S3DMNStorage(MasterControlPlaneConfig config, DMNHashGenerator hashGenerator, S3Client s3Client,
-                        DecisionManager decisionManager) {
+            DecisionManager decisionManager) {
 
         requireNonNull(config, "config cannot be null");
         requireNonNull(s3Client, "s3Client cannot be null");
@@ -93,16 +94,16 @@ public class S3DMNStorage implements DecisionDMNStorage {
         // get objects from bucket
         ListObjectsV2Response objectsInBucket = s3Client
                 .listObjectsV2(ListObjectsV2Request
-                                       .builder()
-                                       .bucket(config.getBucketName())
-                                       .build());
+                        .builder()
+                        .bucket(config.getBucketName())
+                        .build());
 
         if (objectsInBucket.contents().isEmpty()) {
             throw new DecisionDMNStorageException(
                     String.format("There is no object on bucket %s that matches customer id %s and decision name %s",
-                                  config.getBucketName(),
-                                  customerId,
-                                  decision.getId()));
+                            config.getBucketName(),
+                            customerId,
+                            decision.getId()));
         }
 
         objectsInBucket.contents().stream()
@@ -144,8 +145,8 @@ public class S3DMNStorage implements DecisionDMNStorage {
     /**
      * Return the dmnLocation on S3 Bucket based on given inputs
      *
-     * @param customerId      - The customer id associated with the decision
-     * @param decisionId      - The decision name
+     * @param customerId - The customer id associated with the decision
+     * @param decisionId - The decision name
      * @param decisionVersion - The decision version
      * @return full location of the dmn file.
      */
@@ -157,7 +158,7 @@ public class S3DMNStorage implements DecisionDMNStorage {
      * Builds a put object request for the given dmn which will be persisted on S3 Bucket.
      *
      * @param decisionName - The decision name to be persisted
-     * @param md5Checksum  - The decision checksum (MD5)
+     * @param md5Checksum - The decision checksum (MD5)
      * @return PutObjectRequest with dmn file information.
      */
     private PutObjectRequest putObjectRequest(String decisionName, String md5Checksum) {

@@ -49,7 +49,8 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     private DecisionDMNStorage decisionDMNStorage;
 
     @Inject
-    public DecisionLifecycleOrchestrator(ClusterControlPlaneClientFactory clientFactory, ClusterControlPlaneSelector controlPlaneSelector, DecisionManager decisionManager, DecisionDMNStorage decisionDMNStorage) {
+    public DecisionLifecycleOrchestrator(ClusterControlPlaneClientFactory clientFactory, ClusterControlPlaneSelector controlPlaneSelector, DecisionManager decisionManager,
+            DecisionDMNStorage decisionDMNStorage) {
         this.clientFactory = clientFactory;
         this.controlPlaneSelector = controlPlaneSelector;
         this.decisionManager = decisionManager;

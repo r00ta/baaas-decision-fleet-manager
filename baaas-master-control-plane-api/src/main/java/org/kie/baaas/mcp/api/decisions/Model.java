@@ -16,11 +16,13 @@ package org.kie.baaas.mcp.api.decisions;
 
 import java.util.Objects;
 
+import org.kie.baaas.mcp.validators.xml.BasicXML;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import io.quarkus.runtime.annotations.RegisterForReflection;
-import org.kie.baaas.mcp.validators.xml.BasicXML;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({

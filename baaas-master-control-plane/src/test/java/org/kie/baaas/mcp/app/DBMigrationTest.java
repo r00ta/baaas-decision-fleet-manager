@@ -17,10 +17,11 @@ package org.kie.baaas.mcp.app;
 
 import javax.inject.Inject;
 
-import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+
+import io.quarkus.test.junit.QuarkusTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;

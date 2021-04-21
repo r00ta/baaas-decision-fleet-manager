@@ -22,9 +22,11 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import org.kie.baaas.mcp.api.eventing.Eventing;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 @RegisterForReflection
 public abstract class DecisionBase {

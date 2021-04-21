@@ -36,6 +36,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -120,16 +121,16 @@ public class S3DMNStorageTest {
     public void deleteDMNTest() {
         List<S3Object> objLIst = new ArrayList<>();
         objLIst.add(S3Object.builder()
-                            .key("obj1").lastModified(LocalDateTime.now().toInstant(ZoneOffset.MAX))
-                            .eTag("obj1-chacksum")
-                            .storageClass("STANDARD")
-                            .build());
+                .key("obj1").lastModified(LocalDateTime.now().toInstant(ZoneOffset.MAX))
+                .eTag("obj1-chacksum")
+                .storageClass("STANDARD")
+                .build());
 
         objLIst.add(S3Object.builder()
-                            .key("obj2").lastModified(LocalDateTime.now().toInstant(ZoneOffset.MAX))
-                            .eTag("obj2-chacksum")
-                            .storageClass("STANDARD")
-                            .build());
+                .key("obj2").lastModified(LocalDateTime.now().toInstant(ZoneOffset.MAX))
+                .eTag("obj2-chacksum")
+                .storageClass("STANDARD")
+                .build());
 
         ListObjectsV2Response listObjectsV2Response = ListObjectsV2Response.builder().contents(objLIst).build();
 
@@ -159,4 +160,3 @@ public class S3DMNStorageTest {
         assertThat(getObjectRequest.key(), equalTo("customers/1/" + id + "/" + version + "/dmn.xml"));
     }
 }
-

@@ -67,13 +67,14 @@ public class DecisionManager implements DecisionLifecycle {
     }
 
     /*
-        Checks to see that we are not already performing a lifecycle operation for this Decision.
-        Currently we only support sequential lifecycle operations.
+     * Checks to see that we are not already performing a lifecycle operation for this Decision.
+     * Currently we only support sequential lifecycle operations.
      */
     private void checkForExistingLifecycleOperation(Decision decision) {
         if (decision.getNextVersion() != null) {
             if (DecisionVersionStatus.BUILDING.equals(decision.getNextVersion().getStatus())) {
-                throw new DecisionLifecycleException("A lifecycle operation is already in progress for Version '" + decision.getCurrentVersion().getVersion() + "' of Decision '" + decision.getName() + "'");
+                throw new DecisionLifecycleException(
+                        "A lifecycle operation is already in progress for Version '" + decision.getCurrentVersion().getVersion() + "' of Decision '" + decision.getName() + "'");
             }
         }
     }
@@ -91,9 +92,9 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Gets the specified version of the decision for the given customer.
      *
-     * @param customerId       - The customer id
+     * @param customerId - The customer id
      * @param decisionIdOrName - The decision id or name
-     * @param decisionVersion  - The version of the Decision
+     * @param decisionVersion - The version of the Decision
      * @return - The Decision Version
      */
     public DecisionVersion getVersion(String customerId, String decisionIdOrName, long decisionVersion) {
@@ -103,7 +104,7 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Gets the current version of the decision for the given customer and decision id or name
      *
-     * @param customerId       - the customer id
+     * @param customerId - the customer id
      * @param decisionIdOrName - the decision id or name
      * @return - The decision version
      */
@@ -118,7 +119,7 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Lists the known versions of a Decision for the specified customer and Decision id or name
      *
-     * @param customerId       - The customer id
+     * @param customerId - The customer id
      * @param decisionIdOrName - The decision id or name
      * @return - The list of versions.
      */
@@ -152,7 +153,7 @@ public class DecisionManager implements DecisionLifecycle {
     }
 
     /**
-     * @param customerId      - The id of the customer for the Decision
+     * @param customerId - The id of the customer for the Decision
      * @param decisionRequest - The API processed request
      * @return - the updated Decision
      */
@@ -248,10 +249,10 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Callback method invoked when we have failed to deploy the specified version of a Decision.
      *
-     * @param customerId       - The id of the customer that owns the decision
+     * @param customerId - The id of the customer that owns the decision
      * @param decisionIdOrName - The id of the DecisionVersion
-     * @param version          - The version of the decision deployed
-     * @param deployment       - The deployment for the DecisionVersion
+     * @param version - The version of the decision deployed
+     * @param deployment - The deployment for the DecisionVersion
      * @return - The updated Decision with the result of the failure recorded.
      */
     public DecisionVersion failed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
@@ -265,8 +266,8 @@ public class DecisionManager implements DecisionLifecycle {
         decision.setNextVersion(null);
 
         /*
-            In the case of multiple failures in a row, make the most recent failure the CURRENT
-            one.
+         * In the case of multiple failures in a row, make the most recent failure the CURRENT
+         * one.
          */
         if (DecisionVersionStatus.FAILED == decision.getCurrentVersion().getStatus()) {
             if (decision.getCurrentVersion().getVersion() != decisionVersion.getVersion()) {
@@ -282,10 +283,10 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Callback method invoked when we have deployed the specified version of a Decision.
      *
-     * @param customerId       - The id of the customer that owns the decision
+     * @param customerId - The id of the customer that owns the decision
      * @param decisionIdOrName - The id of the decisionVersion that has been deployed
-     * @param version          - The version of the decision deployed
-     * @param deployment       - The deployment record.
+     * @param version - The version of the decision deployed
+     * @param deployment - The deployment record.
      * @return - The updated Decision with the result of the deployment recorded.
      */
     public DecisionVersion deployed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
@@ -315,9 +316,9 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Begin the process of rolling back to the specified version of the decision.
      *
-     * @param customerId       - The customer that owns the decision
+     * @param customerId - The customer that owns the decision
      * @param decisionIdOrName - The id or name of the decision
-     * @param version          - The version to rollback too
+     * @param version - The version to rollback too
      * @return - The Decision Version we are attempting to rollback to.
      */
     public DecisionVersion rollbackToVersion(String customerId, String decisionIdOrName, long version) {
@@ -337,9 +338,9 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Reads the given dmn version and name from associated customerId
      *
-     * @param customerId   - The customer that owns the Decision
+     * @param customerId - The customer that owns the Decision
      * @param decisionName - The name of the decision to be returned
-     * @param version      - The version of the decision to be returned
+     * @param version - The version of the decision to be returned
      * @return - The dmn as String from S3 bucket
      */
     public ByteArrayOutputStream getDMN(String customerId, String decisionName, long version) {
@@ -351,9 +352,9 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Attempts to delete the specified version of a Decision
      *
-     * @param customerId   - The customer that owns the Decision
+     * @param customerId - The customer that owns the Decision
      * @param decisionName - The name of the Decision to delete the version from
-     * @param version      - The version of the Decision to delete.
+     * @param version - The version of the Decision to delete.
      * @return - The deleted version of the Decision.
      */
     public DecisionVersion deleteVersion(String customerId, String decisionName, long version) {
@@ -386,7 +387,7 @@ public class DecisionManager implements DecisionLifecycle {
     /**
      * Deletes the specified decision fully
      *
-     * @param customerId       - The customer that owns the decision
+     * @param customerId - The customer that owns the decision
      * @param decisionNameOrId - The name of the Decision to delete.
      * @return - The deleted decision.
      */
