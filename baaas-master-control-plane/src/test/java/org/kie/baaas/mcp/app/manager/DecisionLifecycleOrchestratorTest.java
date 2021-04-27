@@ -23,6 +23,7 @@ import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
 import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
+import org.kie.baaas.mcp.app.listener.ListenerManager;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
@@ -63,6 +64,9 @@ public class DecisionLifecycleOrchestratorTest {
 
     @Mock
     private ClusterControlPlaneClientFactory clientFactory;
+
+    @Mock
+    private ListenerManager listenerManager;
 
     @InjectMocks
     private DecisionLifecycleOrchestrator orchestrator;

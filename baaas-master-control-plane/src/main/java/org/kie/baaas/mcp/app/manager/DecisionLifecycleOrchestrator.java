@@ -17,6 +17,7 @@ package org.kie.baaas.mcp.app.manager;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Optional;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -25,12 +26,16 @@ import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
 import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
+import org.kie.baaas.mcp.app.event.BeforeCreateOrUpdateVersionEvent;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
+import org.kie.baaas.mcp.app.listener.ListenerManager;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class orchestrates a number of internal components to manage the lifecycle of a Decision.
@@ -40,6 +45,8 @@ import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 @ApplicationScoped
 public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
 
+    private static final Logger LOG = LoggerFactory.getLogger(DecisionLifecycleOrchestrator.class);
+
     private ClusterControlPlaneClientFactory clientFactory;
 
     private ClusterControlPlaneSelector controlPlaneSelector;
@@ -48,13 +55,17 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
 
     private DecisionDMNStorage decisionDMNStorage;
 
+    private ListenerManager listenerManager;
+
     @Inject
     public DecisionLifecycleOrchestrator(ClusterControlPlaneClientFactory clientFactory, ClusterControlPlaneSelector controlPlaneSelector, DecisionManager decisionManager,
-            DecisionDMNStorage decisionDMNStorage) {
+            DecisionDMNStorage decisionDMNStorage,
+            ListenerManager listenerManager) {
         this.clientFactory = clientFactory;
         this.controlPlaneSelector = controlPlaneSelector;
         this.decisionManager = decisionManager;
         this.decisionDMNStorage = decisionDMNStorage;
+        this.listenerManager = listenerManager;
     }
 
     @Override
@@ -91,7 +102,8 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
 
     @Override
     public DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest) {
-
+        Optional<BeforeCreateOrUpdateVersionEvent> emitted = listenerManager.notifyListeners(() -> new BeforeCreateOrUpdateVersionEvent(decisionRequest));
+        LOG.debug("{}", emitted);
         // TODO - chicken and egg problem here.  The DecisionVersion requires information about the DMN
         // storage location, but the storage requires the DecisionVersion. We therefore have the write
         // to storage happening within the DecisionManager implementation. Ideally the write should happen

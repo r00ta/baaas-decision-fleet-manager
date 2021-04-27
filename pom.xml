@@ -22,6 +22,9 @@
         <kogito.version>1.5.0.Final</kogito.version>
         <formatter.plugin.version>2.13.0</formatter.plugin.version>
         <impsort.plugin.version>1.5.0</impsort.plugin.version>
+        <wiremock.version>2.27.2</wiremock.version>
+        <awaitility.version>4.0.3</awaitility.version>
+        <cloudevents.version>2.0.0</cloudevents.version>
 
         <!-- other properties -->
         <maven.compiler.source>11</maven.compiler.source>
