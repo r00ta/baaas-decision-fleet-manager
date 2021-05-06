@@ -1,29 +1,6 @@
 ---
 version: '3.8'
 services:
-  mcp:
-    build:
-      context: baaas-master-control-plane
-      dockerfile: src/main/docker/Dockerfile.jvm
-    environment:
-      BAAAS_MCP_DB_USERNAME: mcp
-      BAAAS_MCP_DB_PASSWORD: mcp
-      BAAAS_MCP_DB_HOST: db
-      BAAAS_MCP_API_BASE_URL: http://localhost:8080
-      BAAAS_CCP_DMN_JIT_URL: http://localhost:9000/jitdmn
-      BAAAS_KAFKA_BOOTSTRAP_SERVERS: ruben-kafk--oc-z--vzwdhkz-yetntfrgzpra.kafka.devshift.org:443
-      BAAAS_KAFKA_CREDENTIALS: baaas-ccp-kafka-credentials
-    ports:
-      - "8080:8080"
-    depends_on:
-      - db
-      - s3
-
-  jit:
-    image: quay.io/kiegroup/kogito-jit-runner-nightly:1.2.x-2021-02-03
-    ports:
-      - "9000:8080"
-
   db:
     image: library/postgres:13.1
     environment:
@@ -37,6 +14,13 @@ services:
     image: localstack/localstack:0.11.5
     environment:
       START_WEB: 0
-      SERVICES: S3
+      SERVICES: s3
     ports:
-      - "4566:8008"
+      - "4566:4566"
+    volumes:
+      - ./dev:/docker-entrypoint-initaws.d
+
+  jit:
+    image: quay.io/kiegroup/kogito-jit-runner-nightly:1.2.x-2021-02-03
+    ports:
+      - "9000:8080"
