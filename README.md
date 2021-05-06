@@ -1,71 +1,16 @@
-# BAaaS Master Control Plane - Initial Development
+# DaaS Fleet Manager
 
-# Endpoints
+This repository stores the code for the DaaS Fleet Manager. The Fleet Manager exposes the API
+for DaaS, allow a user to create Decisions from DMN.
 
-The supported endpoints until now are:
+It exposes the following API: https://gitlab.cee.redhat.com/baaas/baaas-service-api-schema
 
-## /decisions
+# Running the Fleet Manager Locally
 
-- Verb: POST
+The Fleet Manager can be run locally for integration testing with a combination of `quarkus:dev` mode and some local
+dependencies managed by Docker and MiniKube.
 
-Creates a new Decision with the given DMN XML String literal as the model.
-The name uniquely identifies this Decision within the customer account. If the name already exists, then the POST
-will create a new Version of an existing Decision. If the name does not exist, then this will create a new Decision.
-Note: Creation of a Decision is a long-running process. The user should poll/watch the API for updates to the status
-of the Decision Resource. When it enters the READY state, then the user knows that their Decision Service is ready to be
-consumed.
-
-## **Status Codes**
-
-- 201 - Request was accepted and is being processed
-- 400 - Bad Request if:
-  - The payload is missing required parameters
-  - The model is not a valid XML document
-  - We are already in the process of deploying or rolling back a Version of this Decision
-
-
-The supported schema for registering a new decision is:
-
-## **Schema**:
-
-### JSON payload
-
-```json
-{
-  "kind": "Decision",
-  "name": "my-brilliant-decision",
-  "description": "A human readable description of my decision",
-  "model": {
-    "dmn" : "plain text xml properly escaped"
-  },
-  "eventing" : {
-    "kafka": {
-      "source": "Some Kafka Endpoint",
-      "sink": "Some Kafka Endpoint"
-    }
-  },
-  "configuration": {
-    "key": "value"
-  },
-  "tags" : {
-    "key": "value"
-  }
-}
-```
-
-### Responses
-
-If the request payload contains anything wrong, a bad request would be returned and the explanation will be described
-as the example below:
-
-```json
-[
-  "Field: 'decisionsRequest.model.dmn' -> Provided value seems not to be valid, explanation: The element type \"dmn:definitions\" must be terminated by the matching end-tag \"</dmn:definitions>\"."
-]
-```
-## Running the Master Control Plane Locally
-
-### Pre-requisites
+## Pre-requisites
 
 Local development is supported on Unix or Mac environments. Windows is not supported.
 
@@ -73,74 +18,133 @@ You will need the following installed:
 
 * Docker
 * Docker-Compose
+* MiniKube  
 * Maven
 
 The latest versions of these dependencies is fine.
 
-### Running the MCP
+### MiniKube Configuration
 
-The MCP can be run locally using either `quarkus:dev` mode or through the `docker-compose` setup in the root of this repository.
-
-Generally, the choice as to which one you want to use will be:
-
-- `quarkus:dev` if you're doing iterative development on the MCP
-- `docker-compose` if you want to test or integrate something against the MCP
-
-#### quarkus:dev
-
-To use `quarkus:dev` mode with MCP, we need to setup 2 services:
-
-- PostgreSQL
-- Localstack with S3 to provide a S3 Bucket implementation
-
-There is a docker-compose file for this purpose: [docker-compose-quarkus-dev.yml](docker-compose-quarkus-dev.yml)
-To start it use the command below:
-
-```bash
-$ podman|docker-compose -f docker-compose-quarkus-dev.yml up
-```
-
-After S3 is available, configure it as the following example:
-
-```bash
-$ aws configure --profile localstack
-AWS Access Key ID [None]: test-key
-AWS Secret Access Key [None]: test-secret
-Default region name [None]: us-east-1
-Default output format [None]:
-```
-
-And create the `decisions-bucket`:
-
-```bash
-$ aws s3 mb s3://decisions-bucket --profile localstack --endpoint-url=http://localhost:8008
-make_bucket: decisions-bucket
-```
-
+It is recommended to give Minikube a little more resource than the default. You can do this with the following
+commands on your machine:
 
 ```shell
-mvn clean install quarkus:dev
-```
-This will start the MCP on `http://localhost:8080` and will support live-reload of the code as you develop.
-
-And when you're done developing with dev mode:
-
-```bash
-$ podman|docker-compose -f docker-compose-quarkus-dev.yml down
+minikube config set cpu <num_cpus>
+minikube config set memory <memory_in_mb>
 ```
 
+## Install Fleet Shard CRDs and Namespace into MiniKube
 
-#### docker-compose
+Ensure that you have minikube running with `minikube start`. This may take a few minutes if this is your first install.
 
-You can run the MCP using docker-compose if you just want to test or develop against the API. You can start the MCP
-(and the DMN JIT) using the following:
+The Fleet Manager will be configured with a single Fleet Shard which will be represented by the Minikube install on your machine.
+
+We need to install the CRDs for the Fleet Shard and create the namespace. To do that, use the following:
 
 ```shell
-docker-compose up -d db jit
-docker-compose build
-docker-compose up mcp
+kubectl apply -f dev/integration-resources.yml
 ```
-This will connect you to the terminal of the MCP, so you can watch the logs to help you debug any issues you may be having.
+
+To verify, use `kubectl get namespace baaas-fleetshard`
+
+## Create a Proxy to MiniKube Kubernetes API
+
+_In a new terminal_, create a proxy to the Kubernetes API for your running Minikube install. In the terminal issue the following
+command
+
+```shell
+kubectl proxy --port=8443
+```
+
+The port is important as the `application.properties` for the `dev` profile are configured to expect a Kubernetes API
+at this location on your local machine.
+
+To verify that the proxy is working as expected, using the following `curl http://localhost:8443/apis`. This should list you all
+of the known Kinds within your MiniKube cluster.
+
+## Create Supporting Resources with Docker-Compose
+
+The Fleet Manager has a dependency on the following other resources:
+
+* Postgres Database for state storage
+* Amazon S3 for DMN storage
+* DMN JIT instance (exposed by the Fleet Shard)
+
+We provide local versions of all these resources using Docker.
+
+_In another terminal_, use the following command from the root of the Git repository:
+
+```shell
+docker-compose up
+```
+
+This should boot all dependencies. Watch the logs to ensure everything boots OK.
+
+To verify, once the boot sequence has finished, a `docker ps` should show you something similar to this:
+
+```shell
+rblake-mac:baaas-master-control-plane robpblake$ docker ps
+CONTAINER ID   IMAGE                                                         COMMAND                  CREATED          STATUS          PORTS                                             NAMES
+60a5e4d11f4c   localstack/localstack:0.11.5                                  "docker-entrypoint.sh"   14 minutes ago   Up 14 minutes   4567-4597/tcp, 0.0.0.0:4566->4566/tcp, 8080/tcp   baaas-master-control-plane_s3_1
+c5b920da1d64   quay.io/kiegroup/kogito-jit-runner-nightly:1.2.x-2021-02-03   "/home/kogito/kogito…"   14 minutes ago   Up 14 minutes   0.0.0.0:9000->8080/tcp                            baaas-master-control-plane_jit_1
+8d736a5b1d91   postgres:13.1                                                 "docker-entrypoint.s…"   14 minutes ago   Up 14 minutes   0.0.0.0:5432->5432/tcp                            baaas-master-control-plane_db_1
+```
+
+## Compile the Fleet Manager and launch quarkus:dev
+
+_In another terminal_, use the following to first compile the Fleet Manager and then run it in `quarkus:dev` mode
+
+```shell
+mvn clean install
+cd baaas-master-control-plane
+mvn quarkus:dev
+```
+
+The Fleet Manager will now boot on your local machine in `quarkus:dev` mode. Once the boot sequence has finished, invoke the API
+using the following to ensure it is working as expected:
+
+```shell
+curl http://localhost:8080/decisions/jit
+```
+
+You should get back the following response:
+
+```json
+{
+  "kind":"DMNJITList",
+  "items":[
+    {
+      "kind":"DMNJIT",
+      "url":"http://localhost:9000/jitdmn"
+    }
+  ]
+}
+```
+
+At this point, you are ready to start using the Fleet Manager API.
+
+## Invoking the API
+
+It is highly recommended to use a tool like [Postman](https://postman.com) to work with the API.
+
+Please refer to the [API Schema](https://gitlab.cee.redhat.com/baaas/baaas-service-api-schema) to see the supported endpoints.
+
+## Cleaning up
+
+To clean up all resources, first terminate all terminal processes.
+
+Next, use the following:
+
+```shell
+docker-compose down -v 
+minikube stop
+```
+
+# Development Practices
+
+Please read the general team working principles: https://docs.google.com/document/d/1dbjDDX8nAxOLSMw-UP6ufqsIko0bIZagdG_wtD814aw/edit
+
+Specifics relating to the Fleet Manager are documented below.
 
 ## Database Development
 
@@ -148,7 +152,7 @@ Our Production Database is Postgres. For testing we use H2 in-memory database.
 
 ### Database Configuration Variables
 
-The database for the Master Control Plane is configured with the following ENV variables:
+The database for the Fleet Manager is configured with the following ENV variables:
 
 * `BAAAS_MCP_DB_HOST`: hostname of the database
 * `BAAAS_MCP_DB_PORT`: Port of the database (defaults to 5432)
