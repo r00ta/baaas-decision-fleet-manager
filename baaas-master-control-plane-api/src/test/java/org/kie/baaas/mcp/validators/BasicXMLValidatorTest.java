@@ -34,7 +34,7 @@ import io.quarkus.test.junit.QuarkusTest;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @QuarkusTest
-public class BasicXMLValidatorTest {
+class BasicXMLValidatorTest {
 
     DecisionRequest myDecision;
 
@@ -48,7 +48,7 @@ public class BasicXMLValidatorTest {
     String myInvalidXML = "<xml><test>\"hello\"</test>";
 
     @BeforeAll
-    public void createBasePayload() {
+    void createBasePayload() {
         myDecision = new DecisionRequest();
         myDecision.setKind("Decision");
         myDecision.setName("Quarkus Test");
@@ -57,20 +57,20 @@ public class BasicXMLValidatorTest {
     }
 
     @Test
-    public void testValidXML() {
+    void testValidXML() {
         myDecision.getModel().setDmn(myValidXml);
         Set<ConstraintViolation<DecisionBase>> violations = validator.validate(myDecision);
         Assertions.assertTrue(violations.isEmpty());
     }
 
     @Test
-    public void testInvalidXML() {
+    void testInvalidXML() {
         myDecision.getModel().setDmn(myInvalidXML);
         Set<ConstraintViolation<DecisionBase>> violations = validator.validate(myDecision);
         Assertions.assertFalse(violations.isEmpty());
         Assertions.assertEquals("[XML document structures must start and end within the same entity.]",
                 violations.stream()
-                        .map(violation -> violation.getMessage())
+                        .map(ConstraintViolation::getMessage)
                         .collect(Collectors.toList()).toString());
     }
 }

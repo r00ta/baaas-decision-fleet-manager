@@ -16,7 +16,6 @@ import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
 import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
-import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.mockito.Mockito;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -49,9 +48,6 @@ public class WebhookResourceTest {
 
     @InjectMock
     DecisionManager decisionManager;
-
-    @InjectMock
-    DecisionDMNStorage decisionDMNStorage;
 
     @Inject
     WebhookResource service;
