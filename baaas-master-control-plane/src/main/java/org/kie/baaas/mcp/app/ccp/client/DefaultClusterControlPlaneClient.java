@@ -18,10 +18,10 @@ package org.kie.baaas.mcp.app.ccp.client;
 import java.net.URI;
 import java.util.Collection;
 
-import org.kie.baaas.ccp.api.DecisionRequest;
-import org.kie.baaas.ccp.api.DecisionRequestSpec;
-import org.kie.baaas.ccp.api.DecisionVersionSpec;
-import org.kie.baaas.ccp.api.Kafka;
+import org.kie.baaas.dfs.api.DecisionRequest;
+import org.kie.baaas.dfs.api.DecisionRequestSpec;
+import org.kie.baaas.dfs.api.DecisionVersionSpec;
+import org.kie.baaas.dfs.api.Kafka;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
@@ -122,12 +122,12 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
         return singleton(URI.create(callbackPath));
     }
 
-    private Resource<org.kie.baaas.ccp.api.DecisionVersion> getDecisionVersion(Deployment deployment) {
+    private Resource<org.kie.baaas.dfs.api.DecisionVersion> getDecisionVersion(Deployment deployment) {
 
         if (deployment != null) {
             Namespace namespace = getDeploymentNamespace(deployment);
             if (namespace != null) {
-                return kubernetesClient.customResources(org.kie.baaas.ccp.api.DecisionVersion.class).inNamespace(namespace.getMetadata().getName()).withName(deployment.getVersionName());
+                return kubernetesClient.customResources(org.kie.baaas.dfs.api.DecisionVersion.class).inNamespace(namespace.getMetadata().getName()).withName(deployment.getVersionName());
             }
         }
 
@@ -142,11 +142,11 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
         return null;
     }
 
-    private Resource<org.kie.baaas.ccp.api.Decision> getDecision(Deployment deployment) {
+    private Resource<org.kie.baaas.dfs.api.Decision> getDecision(Deployment deployment) {
         if (deployment != null) {
             Namespace namespace = getDeploymentNamespace(deployment);
             if (namespace != null) {
-                return kubernetesClient.customResources(org.kie.baaas.ccp.api.Decision.class).inNamespace(namespace.getMetadata().getName()).withName(deployment.getName());
+                return kubernetesClient.customResources(org.kie.baaas.dfs.api.Decision.class).inNamespace(namespace.getMetadata().getName()).withName(deployment.getName());
             }
         }
 
@@ -157,8 +157,8 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
     public void delete(DecisionVersion decisionVersion) {
 
         Deployment deployment = decisionVersion.getDeployment();
-        org.kie.baaas.ccp.api.DecisionVersion deployedVersion = null;
-        Resource<org.kie.baaas.ccp.api.DecisionVersion> resource = getDecisionVersion(deployment);
+        org.kie.baaas.dfs.api.DecisionVersion deployedVersion = null;
+        Resource<org.kie.baaas.dfs.api.DecisionVersion> resource = getDecisionVersion(deployment);
 
         if (resource != null) {
             deployedVersion = resource.get();
@@ -175,8 +175,8 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
     @Override
     public void delete(Decision decision) {
         Deployment deployment = decision.getCurrentVersion().getDeployment();
-        org.kie.baaas.ccp.api.Decision deployedDecision = null;
-        Resource<org.kie.baaas.ccp.api.Decision> resource = getDecision(deployment);
+        org.kie.baaas.dfs.api.Decision deployedDecision = null;
+        Resource<org.kie.baaas.dfs.api.Decision> resource = getDecision(deployment);
         if (resource != null) {
             deployedDecision = resource.get();
         }

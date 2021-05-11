@@ -25,8 +25,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.kie.baaas.ccp.api.Phase;
-import org.kie.baaas.ccp.api.Webhook;
+import org.kie.baaas.dfs.api.Phase;
+import org.kie.baaas.dfs.api.Webhook;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;

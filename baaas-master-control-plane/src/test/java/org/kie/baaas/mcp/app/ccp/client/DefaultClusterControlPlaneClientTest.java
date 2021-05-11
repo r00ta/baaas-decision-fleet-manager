@@ -22,7 +22,7 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.kie.baaas.ccp.api.DecisionRequest;
+import org.kie.baaas.dfs.api.DecisionRequest;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
 import org.kie.baaas.mcp.app.model.Decision;
@@ -210,13 +210,13 @@ public class DefaultClusterControlPlaneClientTest {
     }
 
     private void createDecision(Deployment deployment) {
-        org.kie.baaas.ccp.api.Decision decision = new org.kie.baaas.ccp.api.Decision();
+        org.kie.baaas.dfs.api.Decision decision = new org.kie.baaas.dfs.api.Decision();
         String path = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisions/" + deployment.getName();
         mockServer.expect().get().withPath(path).andReturn(200, decision).once();
     }
 
     private void createDecisionVersion(Deployment deployment) {
-        org.kie.baaas.ccp.api.DecisionVersion dv = new org.kie.baaas.ccp.api.DecisionVersion();
+        org.kie.baaas.dfs.api.DecisionVersion dv = new org.kie.baaas.dfs.api.DecisionVersion();
         String path = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisionversions/" + deployment.getVersionName();
         mockServer.expect().get().withPath(path).andReturn(200, dv).once();
     }
@@ -229,7 +229,7 @@ public class DefaultClusterControlPlaneClientTest {
         createDeploymentNamespace(deployment);
         createDecisionVersion(deployment);
 
-        CCPResponseBuilder<org.kie.baaas.ccp.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.ccp.api.DecisionVersion.class);
+        CCPResponseBuilder<org.kie.baaas.dfs.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.dfs.api.DecisionVersion.class);
         String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisionversions/" + deployment.getVersionName();
         mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
 
@@ -245,7 +245,7 @@ public class DefaultClusterControlPlaneClientTest {
         Deployment deployment = decisionVersion.getDeployment();
         createDeploymentNamespace(deployment);
 
-        CCPResponseBuilder<org.kie.baaas.ccp.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.ccp.api.DecisionVersion.class);
+        CCPResponseBuilder<org.kie.baaas.dfs.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.dfs.api.DecisionVersion.class);
         String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisionversions/" + deployment.getVersionName();
         mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
 
@@ -262,7 +262,7 @@ public class DefaultClusterControlPlaneClientTest {
         deployment.setName(null);
         deployment.setVersionName(null);
 
-        CCPResponseBuilder<org.kie.baaas.ccp.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.ccp.api.DecisionVersion.class);
+        CCPResponseBuilder<org.kie.baaas.dfs.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.dfs.api.DecisionVersion.class);
         String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisionversions/" + deployment.getVersionName();
         mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
 
@@ -279,7 +279,7 @@ public class DefaultClusterControlPlaneClientTest {
         createDeploymentNamespace(deployment);
         createDecision(deployment);
 
-        CCPResponseBuilder<org.kie.baaas.ccp.api.Decision> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.ccp.api.Decision.class);
+        CCPResponseBuilder<org.kie.baaas.dfs.api.Decision> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.dfs.api.Decision.class);
         String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisions/" + deployment.getName();
         mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
 
@@ -295,7 +295,7 @@ public class DefaultClusterControlPlaneClientTest {
         Deployment deployment = decisionVersion.getDeployment();
         createDeploymentNamespace(deployment);
 
-        CCPResponseBuilder<org.kie.baaas.ccp.api.Decision> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.ccp.api.Decision.class);
+        CCPResponseBuilder<org.kie.baaas.dfs.api.Decision> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.dfs.api.Decision.class);
         String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisions/" + deployment.getName();
         mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
 

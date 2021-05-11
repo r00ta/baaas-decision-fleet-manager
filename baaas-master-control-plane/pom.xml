@@ -67,8 +67,8 @@
             <artifactId>netty-nio-client</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.kie.baaas.ccp</groupId>
-            <artifactId>baaas-cluster-control-plane-api</artifactId>
+            <groupId>org.kie.baaas.dfs</groupId>
+            <artifactId>baaas-decision-fleet-shard-api</artifactId>
         </dependency>
 
         <dependency>
