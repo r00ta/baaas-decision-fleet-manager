@@ -22,6 +22,7 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
@@ -100,16 +101,18 @@ public class DecisionResourceTest {
     }
 
     @Test
+    @Disabled("https://issues.redhat.com/browse/BAAAS-156")
     public void rollbackToVersion() {
         DecisionVersion version = mock(DecisionVersion.class);
         DecisionResponse decisionResponse = mock(DecisionResponse.class);
         String decisionId = "foo";
-        long decisionVersion = 1l;
+        long decisionVersion = 1L;
 
-        when(decisionLifecycle.rollbackToVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
+        Response response = decisionResource.setCurrentVersion(decisionId, decisionVersion);
+
+        when(decisionLifecycle.setCurrentVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
         when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
 
-        Response response = decisionResource.rollbackToDecisionVersion(decisionId, decisionVersion);
         assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
 
         assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));

@@ -599,15 +599,15 @@ public class DecisionManagerTest {
 
     @TestTransaction
     @Test
-    public void rollback_decisionDoesNotExist() {
+    public void newDecision_decisionDoesNotExist() {
         assertThrows(NoSuchDecisionException.class, () -> {
-            decisionManager.rollbackToVersion(customerIdResolver.getCustomerId(), "foo", 1);
+            decisionManager.setCurrentVersion(customerIdResolver.getCustomerId(), "foo", 1);
         });
     }
 
     @TestTransaction
     @Test
-    public void rollback_decisionVersionDoesNotExist() {
+    public void newDecision_decisionVersionDoesNotExist() {
 
         createStorageRequest();
 
@@ -615,13 +615,13 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
 
         assertThrows(NoSuchDecisionVersionException.class, () -> {
-            decisionManager.rollbackToVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion() + 1l);
+            decisionManager.setCurrentVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion() + 1l);
         });
     }
 
     @Test
     @TestTransaction
-    public void rollback_decisionVersionNotInReadyState() {
+    public void newDecision_decisionVersionNotInReadyState() {
 
         createStorageRequest();
 
@@ -630,14 +630,12 @@ public class DecisionManagerTest {
 
         DecisionVersion deployed = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());
 
-        assertThrows(DecisionLifecycleException.class, () -> {
-            decisionManager.rollbackToVersion(customerIdResolver.getCustomerId(), deployed.getDecision().getId(), deployed.getVersion());
-        });
+        assertThrows(DecisionLifecycleException.class, () -> decisionManager.setCurrentVersion(customerIdResolver.getCustomerId(), deployed.getDecision().getId(), deployed.getVersion()));
     }
 
     @TestTransaction
     @Test
-    public void rollback_lifecycleOperationAlreadyInProgress() {
+    public void newDecision_lifecycleOperationAlreadyInProgress() {
 
         createStorageRequest();
 
@@ -660,14 +658,12 @@ public class DecisionManagerTest {
         DecisionVersion firstVersion = decisionManager.getVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), 1l);
         assertThat(firstVersion.getStatus(), equalTo(DecisionVersionStatus.READY));
 
-        assertThrows(DecisionLifecycleException.class, () -> {
-            decisionManager.rollbackToVersion(customerIdResolver.getCustomerId(), firstVersion.getDecision().getId(), firstVersion.getVersion());
-        });
+        assertThrows(DecisionLifecycleException.class, () -> decisionManager.setCurrentVersion(customerIdResolver.getCustomerId(), firstVersion.getDecision().getId(), firstVersion.getVersion()));
     }
 
     @TestTransaction
     @Test
-    public void rollback() {
+    public void newVersion() {
 
         createStorageRequest();
 
@@ -691,10 +687,10 @@ public class DecisionManagerTest {
         DecisionVersion firstVersion = decisionManager.getVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), 1l);
         assertThat(firstVersion.getStatus(), equalTo(DecisionVersionStatus.READY));
 
-        DecisionVersion rollback = decisionManager.rollbackToVersion(customerIdResolver.getCustomerId(), firstVersion.getDecision().getId(), firstVersion.getVersion());
-        assertThat(rollback.getStatus(), equalTo(DecisionVersionStatus.BUILDING));
-        assertThat(rollback.getDecision().getNextVersion().getVersion(), equalTo(rollback.getVersion()));
-        assertThat(rollback.getDecision().getCurrentVersion().getVersion(), equalTo(decisionVersion.getVersion()));
-        assertThat(rollback.getDecision().getCurrentVersion().getStatus(), equalTo(DecisionVersionStatus.CURRENT));
+        DecisionVersion newVersion = decisionManager.setCurrentVersion(customerIdResolver.getCustomerId(), firstVersion.getDecision().getId(), firstVersion.getVersion());
+        assertThat(newVersion.getStatus(), equalTo(DecisionVersionStatus.BUILDING));
+        assertThat(newVersion.getDecision().getNextVersion().getVersion(), equalTo(newVersion.getVersion()));
+        assertThat(newVersion.getDecision().getCurrentVersion().getVersion(), equalTo(decisionVersion.getVersion()));
+        assertThat(newVersion.getDecision().getCurrentVersion().getStatus(), equalTo(DecisionVersionStatus.CURRENT));
     }
 }

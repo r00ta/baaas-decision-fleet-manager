@@ -46,14 +46,14 @@ public interface DecisionLifecycle {
     DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest);
 
     /**
-     * Rollback to a specific version of a Decision.
+     * Sets new current version of a Decision.
      *
      * @param customerId - The id of the customer that owns the Decision
      * @param decisionIdOrName - The id or name of the Decision
-     * @param version - The version to rollback to
-     * @return - The DecisionVersion that has been rolled back to
+     * @param version - The new current version
+     * @return - The DecisionVersion that has been deployed
      */
-    DecisionVersion rollbackToVersion(String customerId, String decisionIdOrName, long version);
+    DecisionVersion setCurrentVersion(String customerId, String decisionIdOrName, long version);
 
     /**
      * List all Decisions for the specified Customer

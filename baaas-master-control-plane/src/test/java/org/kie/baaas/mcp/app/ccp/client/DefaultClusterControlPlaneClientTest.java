@@ -127,7 +127,7 @@ public class DefaultClusterControlPlaneClientTest {
         DecisionRequest payload = responseBuilder.getPayload();
         assertThat(payload, is(notNullValue()));
 
-        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId()));
+        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId() + "-1"));
         assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName())));
 
@@ -153,7 +153,7 @@ public class DefaultClusterControlPlaneClientTest {
         DecisionRequest payload = responseBuilder.getPayload();
         assertThat(payload, is(notNullValue()));
 
-        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId()));
+        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId() + "-1"));
         assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName()).toLowerCase()));
 
@@ -178,7 +178,7 @@ public class DefaultClusterControlPlaneClientTest {
         DecisionRequest payload = responseBuilder.getPayload();
         assertThat(payload, is(notNullValue()));
 
-        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId()));
+        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId() + "-1"));
         assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName())));
 

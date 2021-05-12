@@ -82,7 +82,7 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
     }
 
     private String getDecisionRequestName(DecisionVersion decisionVersion) {
-        return decisionVersion.getDecision().getCustomerId() + "-" + decisionVersion.getDecision().getId();
+        return decisionVersion.getDecision().getCustomerId() + "-" + decisionVersion.getDecision().getId() + "-" + decisionVersion.getVersion();
     }
 
     private DecisionRequest from(DecisionVersion decisionVersion) {
@@ -155,7 +155,6 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
 
     @Override
     public void delete(DecisionVersion decisionVersion) {
-
         Deployment deployment = decisionVersion.getDeployment();
         org.kie.baaas.dfs.api.DecisionVersion deployedVersion = null;
         Resource<org.kie.baaas.dfs.api.DecisionVersion> resource = getDecisionVersion(deployment);
@@ -167,8 +166,6 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
         if (deployedVersion != null) {
             LOGGER.info("Deleting DecisionVersion '{}' from namespace '{}'", deployment.getVersionName(), deployment.getNamespace());
             resource.delete();
-        } else {
-            LOGGER.warn("DecisionVersion '{}' does not exist in namespace '{}'. Nothing to delete.", deployment.getVersionName(), deployment.getNamespace());
         }
     }
 
@@ -184,6 +181,8 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
         if (deployedDecision != null) {
             LOGGER.info("Deleting Decision with name '{}' from namespace '{}'...", deployment.getName(), deployment.getNamespace());
             resource.delete();
+        } else {
+            LOGGER.warn("Could not delete Decision with name '{}' from the fleet shard", decision.getName());
         }
     }
 }

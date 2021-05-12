@@ -314,20 +314,20 @@ public class DecisionManager implements DecisionLifecycle {
     }
 
     /**
-     * Begin the process of rolling back to the specified version of the decision.
+     * Begin the process of moving the "current" endpoint to the specified decision version.
      *
      * @param customerId - The customer that owns the decision
      * @param decisionIdOrName - The id or name of the decision
-     * @param version - The version to rollback too
-     * @return - The Decision Version we are attempting to rollback to.
+     * @param version - The version to use in the CURRENT endpoint
+     * @return - The Decision Version we are attempting to use as current one.
      */
-    public DecisionVersion rollbackToVersion(String customerId, String decisionIdOrName, long version) {
-
+    public DecisionVersion setCurrentVersion(String customerId, String decisionIdOrName, long version) {
         DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
         checkForExistingLifecycleOperation(decisionVersion.getDecision());
 
         if (!DecisionVersionStatus.READY.equals(decisionVersion.getStatus())) {
-            throw new DecisionLifecycleException("Cannot rollback to version '" + version + "' of decision '" + decisionIdOrName + "' as it is in state '" + decisionVersion.getStatus() + "'");
+            throw new DecisionLifecycleException(
+                    "Cannot move the current pointer to version '" + version + "' of decision '" + decisionIdOrName + "' as it is in state '" + decisionVersion.getStatus() + "'");
         }
 
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
@@ -358,7 +358,6 @@ public class DecisionManager implements DecisionLifecycle {
      * @return - The deleted version of the Decision.
      */
     public DecisionVersion deleteVersion(String customerId, String decisionName, long version) {
-
         DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionName, version);
 
         // Can't delete a version whilst it is current
