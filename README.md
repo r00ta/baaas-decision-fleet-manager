@@ -129,6 +129,34 @@ It is highly recommended to use a tool like [Postman](https://postman.com) to wo
 
 Please refer to the [API Schema](https://gitlab.cee.redhat.com/baaas/baaas-service-api-schema) to see the supported endpoints.
 
+### Creating a Decision Version
+
+`POST` the example payload in [dev/example-requests/create-decision.json](dev/example-requests/create-decision.json) to `http://localhost:8080/decisions`.
+
+You may want to change the `name`, `description` and `model` fields to suit your needs.
+
+This _should_ create a version of your Decision that you can now retrieve from the Fleet Manager API. 
+
+### Mocking the Fleet Shard Callback
+
+An instance of a `DecisionRequest` CR for your new Decision Version will be created in the namespace for the
+Fleet Shard on Minikube. However, we do not deploy the Fleet Shard for local dev of the Fleet Manager, so nothing
+will operate on that CR instance.
+
+Instead, we can mock the callback from the Fleet Shard to set the outcome of the deploy operation to either
+`CURRENT` or `FAILED`.
+
+The Fleet Manager expects to be called back at a specific endpoint by the Fleet Shard for each Decision Version. The URL
+for callback is `/callback/decisions/{id}/versions/{version}`. So to set the status for a decision with id `foo` at version `1`,
+`POST` a callback to `http://localhost:8080/callback/decisions/foo/versions/1`
+
+You can set the status of the deployment to either `CURRENT` or `FAILED` depending on what you want to test. See the
+[dev/example-requests/create-callback-from-fleet-shard.json](dev/example-requests/create-callback-from-fleet-shard.json) for the
+example payload. 
+
+Be sure to update the `decision`, `version` and `phase` fields of the callback JSON payload you send to the API.
+
+
 ## Cleaning up
 
 To clean up all resources, first terminate all terminal processes.
