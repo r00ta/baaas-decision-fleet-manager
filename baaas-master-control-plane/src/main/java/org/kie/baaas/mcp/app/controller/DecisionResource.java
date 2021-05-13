@@ -82,12 +82,12 @@ public class DecisionResource {
 
     @PUT
     @Path("{id}/versions/{version}")
-    public Response rollbackToDecisionVersion(@PathParam("id") String id, @PathParam("version") long version) {
-
-        String customerId = customerIdResolver.getCustomerId();
-        LOGGER.info("Rolling back to version '{}' of Decision with id or name '{}' for customer '{}'...", id, version, customerId);
-        DecisionVersion decisionVersion = decisionLifecycle.rollbackToVersion(customerId, id, version);
-        return mapDecisionVersion(decisionVersion);
+    public Response setCurrentVersion(@PathParam("id") String id, @PathParam("version") long version) {
+        return Response.status(400).entity("This endpoint/feature has been temporary disabled. See https://issues.redhat.com/browse/BAAAS-156").build();
+        //        String customerId = customerIdResolver.getCustomerId();
+        //        LOGGER.info("Setting new current version '{}' of Decision with id or name '{}' for customer '{}'...", id, version, customerId);
+        //        DecisionVersion decisionVersion = decisionLifecycle.setCurrentVersion(customerId, id, version);
+        //        return mapDecisionVersion(decisionVersion);
     }
 
     @DELETE

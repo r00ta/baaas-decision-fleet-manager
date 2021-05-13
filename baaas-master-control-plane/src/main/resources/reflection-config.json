@@ -1,6 +1,6 @@
 [
   {
-    "name": "org.kie.baaas.ccp.api.Decision",
+    "name": "org.kie.baaas.dfs.api.Decision",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -9,7 +9,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.DecisionSpec",
+    "name": "org.kie.baaas.dfs.api.DecisionSpec",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -18,7 +18,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.DecisionStatus",
+    "name": "org.kie.baaas.dfs.api.DecisionStatus",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -27,7 +27,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.DecisionRequest",
+    "name": "org.kie.baaas.dfs.api.DecisionRequest",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -36,7 +36,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.DecisionRequestSpec",
+    "name": "org.kie.baaas.dfs.api.DecisionRequestSpec",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -45,7 +45,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.DecisionRequestStatus",
+    "name": "org.kie.baaas.dfs.api.DecisionRequestStatus",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -54,7 +54,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.DecisionVersion",
+    "name": "org.kie.baaas.dfs.api.DecisionVersion",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -63,7 +63,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.DecisionVersionRef",
+    "name": "org.kie.baaas.dfs.api.DecisionVersionRef",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -72,7 +72,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.DecisionVersionSpec",
+    "name": "org.kie.baaas.dfs.api.DecisionVersionSpec",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -81,7 +81,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.DecisionVersionStatus",
+    "name": "org.kie.baaas.dfs.api.DecisionVersionStatus",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -90,7 +90,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.Kafka",
+    "name": "org.kie.baaas.dfs.api.Kafka",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,
@@ -99,7 +99,7 @@
     "allPublicFields": true
   },
   {
-    "name": "org.kie.baaas.ccp.api.Webhook",
+    "name": "org.kie.baaas.dfs.api.Webhook",
     "allDeclaredConstructors": true,
     "allPublicConstructors": true,
     "allDeclaredMethods": true,

@@ -20,9 +20,9 @@ import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kie.baaas.ccp.api.Phase;
-import org.kie.baaas.ccp.api.Webhook;
-import org.kie.baaas.ccp.api.WebhookBuilder;
+import org.kie.baaas.dfs.api.Phase;
+import org.kie.baaas.dfs.api.Webhook;
+import org.kie.baaas.dfs.api.WebhookBuilder;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.mockito.ArgumentCaptor;

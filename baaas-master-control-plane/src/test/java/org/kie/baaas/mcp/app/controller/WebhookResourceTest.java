@@ -16,7 +16,6 @@ import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
 import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
-import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.mockito.Mockito;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -25,6 +24,8 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
@@ -32,6 +33,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -47,9 +49,6 @@ public class WebhookResourceTest {
     @InjectMock
     DecisionManager decisionManager;
 
-    @InjectMock
-    DecisionDMNStorage decisionDMNStorage;
-
     @Inject
     WebhookResource service;
 
@@ -60,6 +59,7 @@ public class WebhookResourceTest {
 
     @BeforeAll
     public static void init() {
+        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
         wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().notifier(new ConsoleNotifier(true)));
         wireMockServer.start();
 
@@ -84,7 +84,15 @@ public class WebhookResourceTest {
     public void testBasic() throws Exception {
         WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
         webhook.setUrl(new URL(wireMockServer.baseUrl() + "/mywebhook"));
-        service.registerWebhook(webhook);
+        final String w1id = given()
+                .body(webhook)
+                .contentType(ContentType.JSON)
+                .when()
+                .post("/webhooks")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("id");
 
         DecisionVersion decisionVersion = new DecisionVersion();
         Mockito.when(decisionManager.createOrUpdateVersion(any(), any())).thenReturn(decisionVersion);
@@ -100,19 +108,40 @@ public class WebhookResourceTest {
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> verify(1, postRequestedFor(urlEqualTo("/mywebhook"))));
 
-        // unregister webhook #1, and register webhook #2
-        service.unregisterForWebhook(webhook.getUrl().toString());
+        // unregister webhook #1 via ID, and register webhook #2
+        given()
+                .when()
+                .delete("/webhooks/{path}", w1id)
+                .then()
+                .statusCode(200);
         WebhookRegistrationRequest webhook2 = new WebhookRegistrationRequest();
-        webhook2.setUrl(new URL(wireMockServer.baseUrl() + "/mywebhook2"));
-        service.registerWebhook(webhook2);
+        final String webhook2url = wireMockServer.baseUrl() + "/mywebhook2";
+        webhook2.setUrl(new URL(webhook2url));
+        given()
+                .body(webhook2)
+                .contentType(ContentType.JSON)
+                .when()
+                .post("/webhooks")
+                .then()
+                .statusCode(200);
         decisionLifeCycleOrchestrator.createOrUpdateVersion("myCustomer", decisionRequest);
         await().atMost(5, TimeUnit.SECONDS)
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> verify(1, postRequestedFor(urlEqualTo("/mywebhook2"))));
 
-        // unregister webhook #2, and register again webhook #1
-        service.unregisterForWebhook(webhook2.getUrl().toString());
-        service.registerWebhook(webhook);
+        // unregister webhook #2 via URL, and register again webhook #1
+        given()
+                .when()
+                .delete("/webhooks/{path}", webhook2url)
+                .then()
+                .statusCode(200);
+        given()
+                .body(webhook)
+                .contentType(ContentType.JSON)
+                .when()
+                .post("/webhooks")
+                .then()
+                .statusCode(200);
         decisionLifeCycleOrchestrator.createOrUpdateVersion("myCustomer", decisionRequest);
         await().atMost(5, TimeUnit.SECONDS)
                 .pollInterval(1, TimeUnit.SECONDS)

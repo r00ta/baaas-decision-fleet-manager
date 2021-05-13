@@ -124,8 +124,8 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     }
 
     @Override
-    public DecisionVersion rollbackToVersion(String customerId, String decisionIdOrName, long version) {
-        DecisionVersion decisionVersion = decisionManager.rollbackToVersion(customerId, decisionIdOrName, version);
+    public DecisionVersion setCurrentVersion(String customerId, String decisionIdOrName, long version) {
+        DecisionVersion decisionVersion = decisionManager.setCurrentVersion(customerId, decisionIdOrName, version);
         return requestDeployment(customerId, decisionVersion);
     }
 

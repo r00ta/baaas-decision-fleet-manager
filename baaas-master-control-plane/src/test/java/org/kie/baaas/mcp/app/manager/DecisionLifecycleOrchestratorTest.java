@@ -165,11 +165,11 @@ public class DecisionLifecycleOrchestratorTest {
         Decision decision = mock(Decision.class);
         when(decisionVersion.getDecision()).thenReturn(decision);
 
-        when(decisionManager.rollbackToVersion(customerId, decisionName, version)).thenReturn(decisionVersion);
+        when(decisionManager.setCurrentVersion(customerId, decisionName, version)).thenReturn(decisionVersion);
         when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
         when(clientFactory.createClientFor(clusterControlPlane)).thenReturn(client);
 
-        DecisionVersion rollback = orchestrator.rollbackToVersion(customerId, decisionName, version);
+        DecisionVersion rollback = orchestrator.setCurrentVersion(customerId, decisionName, version);
         assertThat(rollback, is(notNullValue()));
         assertThat(rollback, equalTo(decisionVersion));
 

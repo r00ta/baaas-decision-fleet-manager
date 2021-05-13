@@ -11,7 +11,7 @@
 
     <properties>
 
-        <baaas.ccp.version>1.0-SNAPSHOT</baaas.ccp.version>
+        <baaas.dfs.version>1.0-SNAPSHOT</baaas.dfs.version>
 
         <!-- dependencies version properties -->
         <compiler-plugin.version>3.8.1</compiler-plugin.version>
@@ -43,9 +43,9 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.kie.baaas.ccp</groupId>
-                <artifactId>baaas-cluster-control-plane-api</artifactId>
-                <version>${baaas.ccp.version}</version>
+                <groupId>org.kie.baaas.dfs</groupId>
+                <artifactId>baaas-decision-fleet-shard-api</artifactId>
+                <version>${baaas.dfs.version}</version>
             </dependency>
             <dependency>
                 <groupId>${quarkus.platform.group-id}</groupId>
