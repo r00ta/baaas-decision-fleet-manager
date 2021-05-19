@@ -15,7 +15,10 @@
 
 package org.kie.baaas.mcp.app.controller.modelmappers;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,8 +78,8 @@ public class DecisionMapperTest {
         decisionVersion.setDecision(decision);
         decisionVersion.setVersion(1l);
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
-        decisionVersion.setSubmittedAt(LocalDateTime.now());
-        decisionVersion.setPublishedAt(LocalDateTime.now());
+        decisionVersion.setSubmittedAt(ZonedDateTime.now(ZoneOffset.UTC));
+        decisionVersion.setPublishedAt(ZonedDateTime.now(ZoneOffset.UTC));
         decisionVersion.setDmnLocation("s3://dmn-location");
         decisionVersion.setDmnMd5("md5");
 
@@ -178,7 +181,7 @@ public class DecisionMapperTest {
         Decision decision2 = createDecision("my-second-decision");
         DecisionVersion decisionVersion2 = createDecisionVersion(decision2);
 
-        LocalDateTime latest = LocalDateTime.of(3000, 2, 20, 12, 0, 0, 0);
+        ZonedDateTime latest = ZonedDateTime.of(LocalDate.of(3000, 2, 20), LocalTime.of(12, 0, 0), ZoneOffset.UTC);
         assertThat(latest.getYear(), equalTo(3000));
         decisionVersion2.setSubmittedAt(latest);
         decision2.setCurrentVersion(decisionVersion2);

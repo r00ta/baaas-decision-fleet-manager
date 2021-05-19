@@ -16,7 +16,8 @@
 package org.kie.baaas.mcp.app.ccp.callbacks;
 
 import java.net.URI;
-import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +52,7 @@ public class ClusterControlPlaneCallbackResourceTest {
     ArgumentCaptor<Deployment> deploymentCap;
 
     private Webhook createWithPhase(Phase phase) {
-        return new WebhookBuilder().withAt(LocalDateTime.now().toString())
+        return new WebhookBuilder().withAt(ZonedDateTime.now(ZoneOffset.UTC).toString())
                 .withCustomer("1")
                 .withDecision("my-decision")
                 .withEndpoint(URI.create("https://mydecision.baaas.redhat.com"))
