@@ -8,9 +8,9 @@ import java.net.http.HttpResponse;
 import java.util.UUID;
 
 import org.eclipse.microprofile.context.ManagedExecutor;
-import org.kie.baaas.mcp.api.webhook.Webhook;
 import org.kie.baaas.mcp.app.listener.Event;
 import org.kie.baaas.mcp.app.listener.Listener;
+import org.kie.baaas.mcp.app.model.webhook.Webhook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

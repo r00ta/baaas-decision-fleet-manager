@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 @RegisterForReflection
-public class Webhook {
+public class WebhookResponse {
 
     @JsonProperty("kind")
     private final String kind = "WebHook";
@@ -49,8 +49,8 @@ public class Webhook {
         this.url = url;
     }
 
-    public static Webhook from(String id, URL url) {
-        Webhook result = new Webhook();
+    public static WebhookResponse from(String id, URL url) {
+        WebhookResponse result = new WebhookResponse();
         result.setId(id);
         result.setUrl(url);
         result.setHref(String.format("/webhooks/%s", id));

@@ -19,8 +19,6 @@ import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.mockito.Mockito;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
@@ -60,9 +58,16 @@ public class WebhookResourceTest {
     @BeforeAll
     public static void init() {
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-        wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().notifier(new ConsoleNotifier(true)));
+        wireMockServer = new WireMockServer(); // or new WireMockServer(WireMockConfiguration.wireMockConfig().notifier(new ConsoleNotifier(true)));
         wireMockServer.start();
 
+        // Configure WireMockServer to react also to the built-in test webhook if wiremock binds to localhost:8080 (coming from the persistence configuration test data)
+        stubFor(post(urlEqualTo("/test-builtin-webhook"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"response\":\"ok\"}")));
+
+        // webhook for testing purposes
         stubFor(post(urlEqualTo("/mywebhook"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
@@ -83,7 +88,8 @@ public class WebhookResourceTest {
     @Test
     public void testBasic() throws Exception {
         WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
-        webhook.setUrl(new URL(wireMockServer.baseUrl() + "/mywebhook"));
+        String webhook1url = wireMockServer.baseUrl() + "/mywebhook";
+        webhook.setUrl(new URL(webhook1url));
         final String w1id = given()
                 .body(webhook)
                 .contentType(ContentType.JSON)
@@ -147,5 +153,35 @@ public class WebhookResourceTest {
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> verify(2, postRequestedFor(urlEqualTo("/mywebhook"))));
         verify(1, postRequestedFor(urlEqualTo("/mywebhook2")));
+
+        // unregister webhook #1 via URL.
+        given()
+                .when()
+                .delete("/webhooks/{path}", webhook1url)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    public void testNotFoundWebhook() {
+        given()
+                .when()
+                .delete("/webhooks/{path}", "http://redhat.com/not-existing-webhook")
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    public void testAlreadyExistingWebhook() throws Exception {
+        WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
+        String webhook1url = "http://localhost:8080/test-builtin-webhook"; // taken from test data
+        webhook.setUrl(new URL(webhook1url));
+        given()
+                .body(webhook)
+                .contentType(ContentType.JSON)
+                .when()
+                .post("/webhooks")
+                .then()
+                .statusCode(400);
     }
 }
