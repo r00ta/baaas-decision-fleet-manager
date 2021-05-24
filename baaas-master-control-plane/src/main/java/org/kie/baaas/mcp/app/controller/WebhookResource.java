@@ -1,10 +1,13 @@
 package org.kie.baaas.mcp.app.controller;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -12,6 +15,7 @@ import javax.ws.rs.core.Response;
 
 import org.kie.baaas.mcp.api.webhook.WebhookRegistrationRequest;
 import org.kie.baaas.mcp.api.webhook.WebhookResponse;
+import org.kie.baaas.mcp.api.webhook.WebhookResponseList;
 import org.kie.baaas.mcp.app.manager.WebhookManager;
 import org.kie.baaas.mcp.app.model.webhook.Webhook;
 import org.slf4j.Logger;
@@ -46,5 +50,13 @@ public class WebhookResource {
         LOG.debug("unregisterForWebhook {}", lookupRef);
         webhookManager.unregisterForWebhook(lookupRef);
         return Response.ok().build();
+    }
+
+    @GET
+    public Response getWebooks() {
+        List<WebhookResponse> webhooks = webhookManager.listAll().stream().map(e -> WebhookResponse.from(e.getId(), e.getUrl())).collect(Collectors.toList());
+        WebhookResponseList result = new WebhookResponseList();
+        result.setItems(webhooks);
+        return Response.ok().entity(result).build();
     }
 }

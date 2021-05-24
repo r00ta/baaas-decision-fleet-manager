@@ -10,6 +10,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.webhook.WebhookRegistrationRequest;
+import org.kie.baaas.mcp.api.webhook.WebhookResponse;
+import org.kie.baaas.mcp.api.webhook.WebhookResponseList;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
 import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
@@ -33,7 +35,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 
 @QuarkusTest
 public class WebhookResourceTest {
@@ -183,5 +187,19 @@ public class WebhookResourceTest {
                 .post("/webhooks")
                 .then()
                 .statusCode(400);
+    }
+
+    @Test
+    public void testListWebhooks() {
+        WebhookResponseList webhooks = given()
+                .when()
+                .get("/webhooks")
+                .then()
+                .statusCode(200)
+                .extract().as(WebhookResponseList.class);
+        assertEquals(1, webhooks.getItems().size());
+        WebhookResponse webhook0 = webhooks.getItems().get(0);
+        assertEquals("test-builtin-webhook", webhook0.getId()); // taken from test data
+        assertEquals("http://localhost:8080/test-builtin-webhook", webhook0.getUrl().toString());
     }
 }
