@@ -9,6 +9,9 @@ stages:
   - native-compile
   - build-and-push-container
 
+include:
+  - local: '.cd-allowlist.yml'
+
 .cache-definition: &cache-definition
   cache:
     key: ${CI_COMMIT_REF_SLUG}
@@ -25,8 +28,9 @@ build:
   tags:
     - baaas
   only:
-    - main@baaas/baaas-master-control-plane
-    - merge_requests@baaas/baaas-master-control-plane
+    refs:
+      - main@baaas/baaas-master-control-plane
+      - merge_requests@baaas/baaas-master-control-plane
 
 test:
   <<: *cache-definition
@@ -43,13 +47,15 @@ test:
   tags:
     - baaas
   only:
-    - main@baaas/baaas-master-control-plane
-    - merge_requests@baaas/baaas-master-control-plane
+    refs:
+      - main@baaas/baaas-master-control-plane
+      - merge_requests@baaas/baaas-master-control-plane
 
 native-compile:
   <<: *cache-definition
   image: quay.io/kiegroup/kogito-quarkus-ubi8-s2i:1.2.0
   stage: native-compile
+  extends: .cd-allowlist
   script:
     - "/usr/share/maven/bin/mvn package -Pnative -Dmaven.test.skip=true"
   artifacts:
@@ -59,12 +65,14 @@ native-compile:
   tags:
     - baaas
   only:
-    - main@baaas/baaas-master-control-plane
-    - merge_requests@baaas/baaas-master-control-plane
+    refs:
+      - main@baaas/baaas-master-control-plane
+      - merge_requests@baaas/baaas-master-control-plane
 
 build-and-push-container:
   image: docker:19.03.12
   stage: build-and-push-container
+  extends: .cd-allowlist
   before_script:
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login quay.io --username $CONTAINER_REGISTRY_USER --password-stdin
   script:
@@ -75,4 +83,5 @@ build-and-push-container:
   tags:
     - baaas
   only:
-    - main@baaas/baaas-master-control-plane
+    refs:
+      - main@baaas/baaas-master-control-plane

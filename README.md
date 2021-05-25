@@ -227,3 +227,28 @@ H2 database instance.
 
 Your migrations will also be tested as part of our CI pipeline. You will not be able to merge your Merge Request if your migrations
 do not apply cleanly. 
+
+# Continuous Delivery (CD)
+
+Decision Fleet Manager is migrating to a model of continuous delivery in that any change merged to `main` branch
+will be automatically proposed as a change to our demo environment.
+
+## Controlling the Changes that Trigger the CD Pipeline
+
+It is possible to control which resources trigger the full continuous delivery pipeline. It is not
+always desirable for the pipeline to run if only certain files have been changed e.g. the change only
+impacts `README.md`.
+
+To add a file to the list that causes the CD pipeline to execute, you need to ensure it is contained
+in the `changes` directive within the [.cd-allowlist.yml](.cd-allowlist.yml).
+
+So for example, to add the file `foo.txt` to the list of files that will trigger the CD pipeline, ensure
+you have the following in `.cd-allowlist.yml`:
+
+```yaml
+.cd-allowlist:
+  only:
+    changes:
+      - pom.xml
+      - foo.txt     
+```

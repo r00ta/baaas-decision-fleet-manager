@@ -1,0 +1,11 @@
+#
+# List of file pattern globs that will allow the full continuous delivery pipeline to trigger
+#
+.cd-allowlist:
+  only:
+    changes:
+      - baaas-master-control-plane-api/src/main/**
+      - baaas-master-control-plane-/pom.xml
+      - baaas-master-control-plane/src/main/**
+      - baaas-master-control-plane/pom.xml
+      - pom.xml
