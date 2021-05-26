@@ -22,6 +22,7 @@ import org.kie.baaas.mcp.app.webhook.WebhookListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import io.quarkus.runtime.Startup;
 
 @Startup
@@ -33,16 +34,19 @@ public class WebhookManager {
     private final WebhookDAO webhookDAO;
     private final ListenerManager listenerManager;
     private final ManagedExecutor executorService;
+    private final MeterRegistry meterRegistry;
 
     @Inject
-    public WebhookManager(WebhookDAO webhookDAO, ListenerManager listenerManager, ManagedExecutor executorService) {
+    public WebhookManager(WebhookDAO webhookDAO, ListenerManager listenerManager, ManagedExecutor executorService, MeterRegistry meterRegistry) {
         Objects.requireNonNull(webhookDAO, "webhookDAO cannot be null");
         Objects.requireNonNull(listenerManager, "listenerManager cannot be null");
         Objects.requireNonNull(executorService, "executorService cannot be null");
+        Objects.requireNonNull(meterRegistry, "meterRegistry cannot be null");
 
         this.webhookDAO = webhookDAO;
         this.listenerManager = listenerManager;
         this.executorService = executorService;
+        this.meterRegistry = meterRegistry;
     }
 
     @PostConstruct
@@ -50,7 +54,7 @@ public class WebhookManager {
         List<Webhook> listAll = listAll();
         LOG.info("init() with {}", listAll);
         for (Webhook e : listAll) {
-            listenerManager.addListener(new WebhookListener(e, executorService));
+            listenerManager.addListener(new WebhookListener(e, executorService, meterRegistry));
         }
     }
 
@@ -66,7 +70,7 @@ public class WebhookManager {
         }
         Webhook webhook = new Webhook();
         webhook.setUrl(webhookReq.getUrl());
-        listenerManager.addListener(new WebhookListener(webhook, executorService));
+        listenerManager.addListener(new WebhookListener(webhook, executorService, meterRegistry));
         webhookDAO.persist(webhook);
         LOG.info("Persisted new Webhook with id '{}' for URL '{}'", webhook.getId(), webhook.getUrl());
         return webhook;
