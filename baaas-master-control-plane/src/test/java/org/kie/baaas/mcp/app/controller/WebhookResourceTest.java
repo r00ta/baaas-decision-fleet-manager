@@ -9,12 +9,14 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
+import org.kie.baaas.mcp.api.decisions.DecisionResponse;
 import org.kie.baaas.mcp.api.webhook.WebhookRegistrationRequest;
 import org.kie.baaas.mcp.api.webhook.WebhookResponse;
 import org.kie.baaas.mcp.api.webhook.WebhookResponseList;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
 import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
+import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
 import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
@@ -37,7 +39,7 @@ import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.anyLong;
 
 @QuarkusTest
 public class WebhookResourceTest {
@@ -56,6 +58,9 @@ public class WebhookResourceTest {
 
     @Inject
     DecisionLifecycleOrchestrator decisionLifeCycleOrchestrator;
+
+    @InjectMock
+    DecisionMapper decisionMapper;
 
     private static WireMockServer wireMockServer;
 
@@ -106,6 +111,10 @@ public class WebhookResourceTest {
 
         DecisionVersion decisionVersion = new DecisionVersion();
         Mockito.when(decisionManager.createOrUpdateVersion(any(), any())).thenReturn(decisionVersion);
+        Mockito.when(decisionManager.deployed(any(), any(), anyLong(), any())).thenReturn(decisionVersion);
+        Mockito.when(decisionManager.failed(any(), any(), anyLong(), any())).thenReturn(decisionVersion);
+        DecisionResponse decisionResponse = new DecisionResponse();
+        Mockito.when(decisionMapper.mapVersionToDecisionResponse(any())).thenReturn(decisionResponse);
         Mockito.when(controlPlaneSelector.selectControlPlaneForDeployment(any())).thenReturn(null);
         ClusterControlPlaneClient clientMock = Mockito.mock(ClusterControlPlaneClient.class);
         Mockito.when(clientFactory.createClientFor(any())).thenReturn(clientMock);
@@ -157,6 +166,18 @@ public class WebhookResourceTest {
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> verify(2, postRequestedFor(urlEqualTo("/mywebhook"))));
         verify(1, postRequestedFor(urlEqualTo("/mywebhook2")));
+
+        // one more callback for .deployed()
+        decisionLifeCycleOrchestrator.deployed("x", "x", 1L, null);
+        await().atMost(5, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(3, postRequestedFor(urlEqualTo("/mywebhook"))));
+
+        // one more callback for .failed()
+        decisionLifeCycleOrchestrator.failed("x", "x", 1L, null);
+        await().atMost(5, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(4, postRequestedFor(urlEqualTo("/mywebhook"))));
 
         // unregister webhook #1 via URL.
         given()

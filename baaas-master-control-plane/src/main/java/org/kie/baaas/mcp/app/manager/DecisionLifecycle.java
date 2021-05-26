@@ -21,6 +21,7 @@ import java.util.List;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
+import org.kie.baaas.mcp.app.model.deployment.Deployment;
 
 /**
  * Core interface for working with the lifecycle of a Decision.
@@ -121,4 +122,26 @@ public interface DecisionLifecycle {
      * @return the request dmn file as ByteArrayOutputStream
      */
     ByteArrayOutputStream getDMN(String customerId, String decisionIdOrName, long version);
+
+    /**
+     * Callback method invoked when we have failed to deploy the specified version of a Decision.
+     *
+     * @param customerId - The id of the customer that owns the decision
+     * @param decisionIdOrName - The id of the DecisionVersion
+     * @param version - The version of the decision deployed
+     * @param deployment - The deployment for the DecisionVersion
+     * @return - The updated Decision with the result of the failure recorded.
+     */
+    DecisionVersion failed(String customerId, String decisionIdOrName, long version, Deployment deployment);
+
+    /**
+     * Callback method invoked when we have deployed the specified version of a Decision.
+     *
+     * @param customerId - The id of the customer that owns the decision
+     * @param decisionIdOrName - The id of the decisionVersion that has been deployed
+     * @param version - The version of the decision deployed
+     * @param deployment - The deployment record.
+     * @return - The updated Decision with the result of the deployment recorded.
+     */
+    DecisionVersion deployed(String customerId, String decisionIdOrName, long version, Deployment deployment);
 }
