@@ -15,6 +15,8 @@
 
 package org.kie.baaas.mcp.app.manager;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -140,6 +142,9 @@ public class DecisionManagerTest {
         assertThat(decisionVersion.getSubmittedAt(), is(notNullValue()));
         assertThat(decisionVersion.getDmnMd5(), equalTo(request.getMd5Hash()));
         assertThat(decisionVersion.getDmnLocation(), equalTo((request.getProviderUrl())));
+
+        ZonedDateTime zdt = ZonedDateTime.parse(decisionVersion.getSubmittedAt().toString(), DateTimeFormatter.ISO_ZONED_DATE_TIME);
+        assertThat(zdt, is(notNullValue()));
     }
 
     private Deployment createDeployment() {

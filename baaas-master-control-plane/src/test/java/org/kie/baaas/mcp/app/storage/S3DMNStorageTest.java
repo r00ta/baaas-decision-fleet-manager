@@ -16,8 +16,8 @@
 package org.kie.baaas.mcp.app.storage;
 
 import java.io.ByteArrayOutputStream;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -121,13 +121,13 @@ public class S3DMNStorageTest {
     public void deleteDMNTest() {
         List<S3Object> objLIst = new ArrayList<>();
         objLIst.add(S3Object.builder()
-                .key("obj1").lastModified(LocalDateTime.now().toInstant(ZoneOffset.MAX))
+                .key("obj1").lastModified(ZonedDateTime.now(ZoneOffset.MAX).toInstant())
                 .eTag("obj1-chacksum")
                 .storageClass("STANDARD")
                 .build());
 
         objLIst.add(S3Object.builder()
-                .key("obj2").lastModified(LocalDateTime.now().toInstant(ZoneOffset.MAX))
+                .key("obj2").lastModified(ZonedDateTime.now(ZoneOffset.MAX).toInstant())
                 .eTag("obj2-chacksum")
                 .storageClass("STANDARD")
                 .build());

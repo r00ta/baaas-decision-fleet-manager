@@ -16,8 +16,8 @@
 package org.kie.baaas.mcp.app.manager;
 
 import java.io.ByteArrayOutputStream;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -174,7 +174,7 @@ public class DecisionManager implements DecisionLifecycle {
         // will be held open.
 
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
-        decisionVersion.setSubmittedAt(LocalDateTime.now(ZoneOffset.UTC));
+        decisionVersion.setSubmittedAt(ZonedDateTime.now(ZoneOffset.UTC));
         decisionVersion.setVersion(decisionVersionDAO.getNextVersionId(customerId, decisionRequest.getName()));
         decisionVersion.setConfiguration(decisionRequest.getConfiguration());
         decisionVersion.setTags(decisionRequest.getTags());
@@ -297,7 +297,7 @@ public class DecisionManager implements DecisionLifecycle {
 
         decisionVersion.setDeployment(deployment);
         decisionVersion.setStatus(DecisionVersionStatus.CURRENT);
-        decisionVersion.setPublishedAt(LocalDateTime.now());
+        decisionVersion.setPublishedAt(ZonedDateTime.now(ZoneOffset.UTC));
 
         DecisionVersion currentVersion = decision.getCurrentVersion();
         if (currentVersion.getVersion() != decisionVersion.getVersion()) {

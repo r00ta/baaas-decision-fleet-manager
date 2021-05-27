@@ -15,7 +15,7 @@
 
 package org.kie.baaas.mcp.app.model;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -83,10 +83,10 @@ public class DecisionVersion {
     private long version;
 
     @Column(name = "submitted_at", updatable = false, nullable = false, columnDefinition = "TIMESTAMP")
-    private LocalDateTime submittedAt;
+    private ZonedDateTime submittedAt;
 
     @Column(name = "published_at", columnDefinition = "TIMESTAMP")
-    private LocalDateTime publishedAt;
+    private ZonedDateTime publishedAt;
 
     @Version
     @Column(name = "lock_version", nullable = false)
@@ -165,11 +165,11 @@ public class DecisionVersion {
         return version;
     }
 
-    public LocalDateTime getSubmittedAt() {
+    public ZonedDateTime getSubmittedAt() {
         return submittedAt;
     }
 
-    public LocalDateTime getPublishedAt() {
+    public ZonedDateTime getPublishedAt() {
         return publishedAt;
     }
 
@@ -193,11 +193,11 @@ public class DecisionVersion {
         this.version = version;
     }
 
-    public void setSubmittedAt(LocalDateTime submittedAt) {
+    public void setSubmittedAt(ZonedDateTime submittedAt) {
         this.submittedAt = submittedAt;
     }
 
-    public void setPublishedAt(LocalDateTime publishedAt) {
+    public void setPublishedAt(ZonedDateTime publishedAt) {
         this.publishedAt = publishedAt;
     }
 

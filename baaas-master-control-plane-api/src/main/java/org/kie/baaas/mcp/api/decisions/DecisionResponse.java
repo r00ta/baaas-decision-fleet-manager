@@ -15,7 +15,7 @@
 
 package org.kie.baaas.mcp.api.decisions;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -61,13 +61,13 @@ public class DecisionResponse extends DecisionBase {
     @JsonProperty("model")
     private ResponseModel responseModel;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSSSSS'Z'")
     @JsonProperty("submitted_at")
-    private LocalDateTime submittedAt;
+    private ZonedDateTime submittedAt;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSSSSS'Z'")
     @JsonProperty("published_at")
-    private LocalDateTime publishedAt;
+    private ZonedDateTime publishedAt;
 
     @JsonProperty("status")
     private String status;
@@ -115,19 +115,19 @@ public class DecisionResponse extends DecisionBase {
         this.responseModel = responseModel;
     }
 
-    public LocalDateTime getSubmittedAt() {
+    public ZonedDateTime getSubmittedAt() {
         return submittedAt;
     }
 
-    public void setSubmittedAt(LocalDateTime submittedAt) {
+    public void setSubmittedAt(ZonedDateTime submittedAt) {
         this.submittedAt = submittedAt;
     }
 
-    public LocalDateTime getPublishedAt() {
+    public ZonedDateTime getPublishedAt() {
         return publishedAt;
     }
 
-    public void setPublishedAt(LocalDateTime publishedAt) {
+    public void setPublishedAt(ZonedDateTime publishedAt) {
         this.publishedAt = publishedAt;
     }
 
