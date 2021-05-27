@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
 import io.cloudevents.jackson.JsonFormat;
+import io.micrometer.core.instrument.MeterRegistry;
 
 public class WebhookListener implements Listener {
 
@@ -27,9 +28,11 @@ public class WebhookListener implements Listener {
 
     private final HttpClient httpClient;
     private final Webhook webhook;
+    private final MeterRegistry meterRegistry;
 
-    public WebhookListener(Webhook webhook, ManagedExecutor executorService) {
+    public WebhookListener(Webhook webhook, ManagedExecutor executorService, MeterRegistry meterRegistry) {
         this.webhook = webhook;
+        this.meterRegistry = meterRegistry;
         this.httpClient = HttpClient.newBuilder()
                 .executor(executorService)
                 .version(HttpClient.Version.HTTP_2)
@@ -55,13 +58,24 @@ public class WebhookListener implements Listener {
         LOG.debug("webhook: {} event: {}", webhook.getUrl(), event);
         try {
             CloudEvent ce = toCloudEvent(event);
+            meterRegistry.counter("daaas.webhook.invocations", "url", webhook.getUrl().toString()).increment();
             httpClient.sendAsync(
                     HttpRequest.newBuilder()
                             .POST(BodyPublishers.ofString(MAPPER.writeValueAsString(ce)))
                             .uri(URI.create(webhook.getUrl().toString()))
                             .header("Accept", "application/json")
                             .build(),
-                    HttpResponse.BodyHandlers.ofString());
+                    HttpResponse.BodyHandlers.ofString())
+                    .thenApplyAsync(r -> {
+                        int status = r.statusCode();
+                        if (status != 200) {
+                            LOG.error("response status {} for webhook {}: {}", status, webhook, r);
+                            meterRegistry.counter("daaas.webhook.failure", "url", webhook.getUrl().toString()).increment();
+                        } else {
+                            meterRegistry.counter("daaas.webhook.success", "url", webhook.getUrl().toString()).increment();
+                        }
+                        return r;
+                    });
         } catch (Exception e) {
             LOG.error("Unable to build CloudEvent to notify webhook", e);
         }

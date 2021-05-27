@@ -28,7 +28,7 @@ import javax.ws.rs.core.Response;
 import org.kie.baaas.dfs.api.Phase;
 import org.kie.baaas.dfs.api.Webhook;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
-import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,11 +45,11 @@ public class ClusterControlPlaneCallbackResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterControlPlaneCallbackResource.class);
 
-    private final DecisionManager decisionManager;
+    private final DecisionLifecycleOrchestrator decisionLifecycleOrch;
 
     @Inject
-    public ClusterControlPlaneCallbackResource(DecisionManager decisionManager) {
-        this.decisionManager = decisionManager;
+    public ClusterControlPlaneCallbackResource(DecisionLifecycleOrchestrator decisionLifecycleOrch) {
+        this.decisionLifecycleOrch = decisionLifecycleOrch;
     }
 
     private Deployment createDeployment(Webhook webhook) {
@@ -74,9 +74,9 @@ public class ClusterControlPlaneCallbackResource {
 
         Deployment deployment = createDeployment(webhook);
         if (Phase.CURRENT.equals(webhook.getPhase())) {
-            decisionManager.deployed(webhook.getCustomer(), decisionIdOrName, version, deployment);
+            decisionLifecycleOrch.deployed(webhook.getCustomer(), decisionIdOrName, version, deployment);
         } else if (Phase.FAILED.equals(webhook.getPhase())) {
-            decisionManager.failed(webhook.getCustomer(), decisionIdOrName, version, deployment);
+            decisionLifecycleOrch.failed(webhook.getCustomer(), decisionIdOrName, version, deployment);
         } else {
             throw new MasterControlPlaneException("Received unsupported phase '" + webhook.getPhase() + "' in callback.");
         }

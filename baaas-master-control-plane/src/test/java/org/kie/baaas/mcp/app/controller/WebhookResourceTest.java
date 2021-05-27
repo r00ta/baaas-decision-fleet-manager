@@ -7,14 +7,17 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
+import org.kie.baaas.mcp.api.decisions.DecisionResponse;
 import org.kie.baaas.mcp.api.webhook.WebhookRegistrationRequest;
 import org.kie.baaas.mcp.api.webhook.WebhookResponse;
 import org.kie.baaas.mcp.api.webhook.WebhookResponseList;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
 import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
+import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
 import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
@@ -36,8 +39,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.contains;
 
 @QuarkusTest
 public class WebhookResourceTest {
@@ -56,6 +61,9 @@ public class WebhookResourceTest {
 
     @Inject
     DecisionLifecycleOrchestrator decisionLifeCycleOrchestrator;
+
+    @InjectMock
+    DecisionMapper decisionMapper;
 
     private static WireMockServer wireMockServer;
 
@@ -82,6 +90,11 @@ public class WebhookResourceTest {
                         .withBody("{\"response\":\"ok from mywebhook2\"}")));
     }
 
+    @BeforeEach
+    public void start() {
+        wireMockServer.resetRequests();
+    }
+
     @AfterAll
     public static void shutdown() {
         if (null != wireMockServer) {
@@ -106,6 +119,10 @@ public class WebhookResourceTest {
 
         DecisionVersion decisionVersion = new DecisionVersion();
         Mockito.when(decisionManager.createOrUpdateVersion(any(), any())).thenReturn(decisionVersion);
+        Mockito.when(decisionManager.deployed(any(), any(), anyLong(), any())).thenReturn(decisionVersion);
+        Mockito.when(decisionManager.failed(any(), any(), anyLong(), any())).thenReturn(decisionVersion);
+        DecisionResponse decisionResponse = new DecisionResponse();
+        Mockito.when(decisionMapper.mapVersionToDecisionResponse(any())).thenReturn(decisionResponse);
         Mockito.when(controlPlaneSelector.selectControlPlaneForDeployment(any())).thenReturn(null);
         ClusterControlPlaneClient clientMock = Mockito.mock(ClusterControlPlaneClient.class);
         Mockito.when(clientFactory.createClientFor(any())).thenReturn(clientMock);
@@ -158,6 +175,18 @@ public class WebhookResourceTest {
                 .untilAsserted(() -> verify(2, postRequestedFor(urlEqualTo("/mywebhook"))));
         verify(1, postRequestedFor(urlEqualTo("/mywebhook2")));
 
+        // one more callback for .deployed()
+        decisionLifeCycleOrchestrator.deployed("x", "x", 1L, null);
+        await().atMost(5, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(3, postRequestedFor(urlEqualTo("/mywebhook"))));
+
+        // one more callback for .failed()
+        decisionLifeCycleOrchestrator.failed("x", "x", 1L, null);
+        await().atMost(5, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(4, postRequestedFor(urlEqualTo("/mywebhook"))));
+
         // unregister webhook #1 via URL.
         given()
                 .when()
@@ -201,5 +230,51 @@ public class WebhookResourceTest {
         WebhookResponse webhook0 = webhooks.getItems().get(0);
         assertEquals("test-builtin-webhook", webhook0.getId()); // taken from test data
         assertEquals("http://localhost:8080/test-builtin-webhook", webhook0.getUrl().toString());
+    }
+
+    @Test
+    public void testMetrics() throws Exception {
+        WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
+        String webhook1url = wireMockServer.baseUrl() + "/mywebhook";
+        webhook.setUrl(new URL(webhook1url));
+        final String w1id = given()
+                .body(webhook)
+                .contentType(ContentType.JSON)
+                .when()
+                .post("/webhooks")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("id");
+
+        DecisionVersion decisionVersion = new DecisionVersion();
+        Mockito.when(decisionManager.createOrUpdateVersion(any(), any())).thenReturn(decisionVersion);
+        Mockito.when(controlPlaneSelector.selectControlPlaneForDeployment(any())).thenReturn(null);
+        ClusterControlPlaneClient clientMock = Mockito.mock(ClusterControlPlaneClient.class);
+        Mockito.when(clientFactory.createClientFor(any())).thenReturn(clientMock);
+        DecisionRequest decisionRequest = new DecisionRequest();
+        decisionRequest.setDescription("Mocked DecisionRequest");
+        decisionLifeCycleOrchestrator.createOrUpdateVersion("myCustomer", decisionRequest);
+
+        // a total of 1 webhook is currently registered
+        await().atMost(5, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(1, postRequestedFor(urlEqualTo("/mywebhook"))));
+
+        String qMetrics = given()
+                .when()
+                .get("/q/metrics")
+                .then()
+                .statusCode(200)
+                .extract().asString();
+        assertTrue(qMetrics.contains("daaas_webhook_invocations"));
+        assertTrue(qMetrics.contains("daaas_webhook_success"));
+
+        // unregister webhook #1 via URL.
+        given()
+                .when()
+                .delete("/webhooks/{path}", webhook1url)
+                .then()
+                .statusCode(200);
     }
 }

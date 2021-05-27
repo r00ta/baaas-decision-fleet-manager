@@ -17,7 +17,6 @@ package org.kie.baaas.mcp.app.manager;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
-import java.util.Optional;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -26,6 +25,9 @@ import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
 import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
+import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
+import org.kie.baaas.mcp.app.event.AfterDeployedEvent;
+import org.kie.baaas.mcp.app.event.AfterFailedEvent;
 import org.kie.baaas.mcp.app.event.BeforeCreateOrUpdateVersionEvent;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.listener.ListenerManager;
@@ -57,15 +59,19 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
 
     private ListenerManager listenerManager;
 
+    private DecisionMapper decisionMapper;
+
     @Inject
     public DecisionLifecycleOrchestrator(ClusterControlPlaneClientFactory clientFactory, ClusterControlPlaneSelector controlPlaneSelector, DecisionManager decisionManager,
             DecisionDMNStorage decisionDMNStorage,
-            ListenerManager listenerManager) {
+            ListenerManager listenerManager,
+            DecisionMapper decisionMapper) {
         this.clientFactory = clientFactory;
         this.controlPlaneSelector = controlPlaneSelector;
         this.decisionManager = decisionManager;
         this.decisionDMNStorage = decisionDMNStorage;
         this.listenerManager = listenerManager;
+        this.decisionMapper = decisionMapper;
     }
 
     @Override
@@ -102,8 +108,7 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
 
     @Override
     public DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest) {
-        Optional<BeforeCreateOrUpdateVersionEvent> emitted = listenerManager.notifyListeners(() -> new BeforeCreateOrUpdateVersionEvent(decisionRequest));
-        LOG.debug("{}", emitted);
+        listenerManager.notifyListeners(() -> new BeforeCreateOrUpdateVersionEvent(decisionRequest));
         // TODO - chicken and egg problem here.  The DecisionVersion requires information about the DMN
         // storage location, but the storage requires the DecisionVersion. We therefore have the write
         // to storage happening within the DecisionManager implementation. Ideally the write should happen
@@ -165,5 +170,17 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     @Override
     public ByteArrayOutputStream getDMN(String customerId, String decisionIdOrName, long version) {
         return decisionManager.getDMN(customerId, decisionIdOrName, version);
+    }
+
+    public DecisionVersion failed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
+        DecisionVersion decisionVersion = decisionManager.failed(customerId, decisionIdOrName, version, deployment);
+        listenerManager.notifyListeners(() -> new AfterFailedEvent(decisionMapper.mapVersionToDecisionResponse(decisionVersion)));
+        return decisionVersion;
+    }
+
+    public DecisionVersion deployed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
+        DecisionVersion decisionVersion = decisionManager.deployed(customerId, decisionIdOrName, version, deployment);
+        listenerManager.notifyListeners(() -> new AfterDeployedEvent(decisionMapper.mapVersionToDecisionResponse(decisionVersion)));
+        return decisionVersion;
     }
 }

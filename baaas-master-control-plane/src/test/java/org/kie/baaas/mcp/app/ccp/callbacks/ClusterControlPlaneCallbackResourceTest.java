@@ -23,7 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.dfs.api.Phase;
 import org.kie.baaas.dfs.api.Webhook;
 import org.kie.baaas.dfs.api.WebhookBuilder;
-import org.kie.baaas.mcp.app.manager.DecisionManager;
+import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.verify;
 public class ClusterControlPlaneCallbackResourceTest {
 
     @Mock
-    private DecisionManager decisionManager;
+    private DecisionLifecycleOrchestrator decisionLifecycleOrch;
 
     @InjectMocks
     private ClusterControlPlaneCallbackResource callbackResource;
@@ -69,7 +69,7 @@ public class ClusterControlPlaneCallbackResourceTest {
 
         callbackResource.processClusterControlPlaneCallback(webhook, webhook.getDecision(), 1l);
 
-        verify(decisionManager).deployed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
+        verify(decisionLifecycleOrch).deployed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
 
         Deployment deployment = deploymentCap.getValue();
         assertThat(deployment, is(notNullValue()));
@@ -86,7 +86,7 @@ public class ClusterControlPlaneCallbackResourceTest {
         webhook.setEndpoint(null);
         callbackResource.processClusterControlPlaneCallback(webhook, webhook.getDecision(), 1l);
 
-        verify(decisionManager).failed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
+        verify(decisionLifecycleOrch).failed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
 
         Deployment deployment = deploymentCap.getValue();
         assertThat(deployment, is(notNullValue()));
