@@ -1,6 +1,7 @@
 package org.kie.baaas.mcp.app.controller;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -21,6 +22,7 @@ import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
 import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
+import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.mockito.Mockito;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -42,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.Mockito.verify;
 
 @QuarkusTest
 public class WebhookResourceTest {
@@ -122,6 +124,7 @@ public class WebhookResourceTest {
         Mockito.when(decisionManager.deployed(any(), any(), anyLong(), any())).thenReturn(decisionVersion);
         Mockito.when(decisionManager.failed(any(), any(), anyLong(), any())).thenReturn(decisionVersion);
         DecisionResponse decisionResponse = new DecisionResponse();
+        decisionResponse.setSubmittedAt(ZonedDateTime.now());
         Mockito.when(decisionMapper.mapVersionToDecisionResponse(any())).thenReturn(decisionResponse);
         Mockito.when(controlPlaneSelector.selectControlPlaneForDeployment(any())).thenReturn(null);
         ClusterControlPlaneClient clientMock = Mockito.mock(ClusterControlPlaneClient.class);
@@ -176,13 +179,13 @@ public class WebhookResourceTest {
         verify(1, postRequestedFor(urlEqualTo("/mywebhook2")));
 
         // one more callback for .deployed()
-        decisionLifeCycleOrchestrator.deployed("x", "x", 1L, null);
+        decisionLifeCycleOrchestrator.deployed("x", "x", 1L, new Deployment());
         await().atMost(5, TimeUnit.SECONDS)
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> verify(3, postRequestedFor(urlEqualTo("/mywebhook"))));
 
         // one more callback for .failed()
-        decisionLifeCycleOrchestrator.failed("x", "x", 1L, null);
+        decisionLifeCycleOrchestrator.failed("x", "x", 1L, new Deployment());
         await().atMost(5, TimeUnit.SECONDS)
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> verify(4, postRequestedFor(urlEqualTo("/mywebhook"))));

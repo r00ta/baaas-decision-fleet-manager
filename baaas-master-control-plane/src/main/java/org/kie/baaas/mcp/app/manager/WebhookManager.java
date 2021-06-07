@@ -22,6 +22,8 @@ import org.kie.baaas.mcp.app.webhook.WebhookListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.quarkus.runtime.Startup;
 
@@ -35,18 +37,21 @@ public class WebhookManager {
     private final ListenerManager listenerManager;
     private final ManagedExecutor executorService;
     private final MeterRegistry meterRegistry;
+    private final ObjectMapper objectMapper;
 
     @Inject
-    public WebhookManager(WebhookDAO webhookDAO, ListenerManager listenerManager, ManagedExecutor executorService, MeterRegistry meterRegistry) {
+    public WebhookManager(WebhookDAO webhookDAO, ListenerManager listenerManager, ManagedExecutor executorService, MeterRegistry meterRegistry, ObjectMapper objectMapper) {
         Objects.requireNonNull(webhookDAO, "webhookDAO cannot be null");
         Objects.requireNonNull(listenerManager, "listenerManager cannot be null");
         Objects.requireNonNull(executorService, "executorService cannot be null");
         Objects.requireNonNull(meterRegistry, "meterRegistry cannot be null");
+        Objects.requireNonNull(objectMapper, "objectMapper cannot be null");
 
         this.webhookDAO = webhookDAO;
         this.listenerManager = listenerManager;
         this.executorService = executorService;
         this.meterRegistry = meterRegistry;
+        this.objectMapper = objectMapper;
     }
 
     @PostConstruct
@@ -54,7 +59,7 @@ public class WebhookManager {
         List<Webhook> listAll = listAll();
         LOG.info("init() with {}", listAll);
         for (Webhook e : listAll) {
-            listenerManager.addListener(new WebhookListener(e, executorService, meterRegistry));
+            listenerManager.addListener(new WebhookListener(e, executorService, meterRegistry, objectMapper));
         }
     }
 
@@ -70,7 +75,7 @@ public class WebhookManager {
         }
         Webhook webhook = new Webhook();
         webhook.setUrl(webhookReq.getUrl());
-        listenerManager.addListener(new WebhookListener(webhook, executorService, meterRegistry));
+        listenerManager.addListener(new WebhookListener(webhook, executorService, meterRegistry, objectMapper));
         webhookDAO.persist(webhook);
         LOG.info("Persisted new Webhook with id '{}' for URL '{}'", webhook.getId(), webhook.getUrl());
         return webhook;
