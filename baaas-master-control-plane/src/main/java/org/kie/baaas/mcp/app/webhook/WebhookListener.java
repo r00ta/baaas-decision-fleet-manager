@@ -18,21 +18,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.cloudevents.CloudEvent;
 import io.cloudevents.core.builder.CloudEventBuilder;
-import io.cloudevents.jackson.JsonFormat;
 import io.micrometer.core.instrument.MeterRegistry;
 
 public class WebhookListener implements Listener {
 
     private static final Logger LOG = LoggerFactory.getLogger(WebhookListener.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(JsonFormat.getCloudEventJacksonModule());
 
+    private final ObjectMapper MAPPER;
     private final HttpClient httpClient;
     private final Webhook webhook;
     private final MeterRegistry meterRegistry;
 
-    public WebhookListener(Webhook webhook, ManagedExecutor executorService, MeterRegistry meterRegistry) {
+    public WebhookListener(Webhook webhook, ManagedExecutor executorService, MeterRegistry meterRegistry, ObjectMapper objectMapper) {
         this.webhook = webhook;
         this.meterRegistry = meterRegistry;
+        this.MAPPER = objectMapper;
         this.httpClient = HttpClient.newBuilder()
                 .executor(executorService)
                 .version(HttpClient.Version.HTTP_2)
@@ -43,12 +43,12 @@ public class WebhookListener implements Listener {
         return webhook;
     }
 
-    private static CloudEvent toCloudEvent(Event e) throws Exception {
+    private CloudEvent toCloudEvent(Event e) throws Exception {
         CloudEvent build = CloudEventBuilder.v1()
                 .withId(e.getEventId().orElse(UUID.randomUUID().toString()))
                 .withSource(URI.create("daaswebhook"))
                 .withType(e.getClass().getCanonicalName())
-                .withData(new ObjectMapper().writeValueAsString(e).getBytes())
+                .withData(MAPPER.writeValueAsString(e).getBytes())
                 .build();
         return build;
     }
