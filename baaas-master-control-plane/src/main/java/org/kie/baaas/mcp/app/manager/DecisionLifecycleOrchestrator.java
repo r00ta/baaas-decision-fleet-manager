@@ -31,11 +31,14 @@ import org.kie.baaas.mcp.app.event.AfterFailedEvent;
 import org.kie.baaas.mcp.app.event.BeforeCreateOrUpdateVersionEvent;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.listener.ListenerManager;
+import org.kie.baaas.mcp.app.managedservices.ManagedServicesClient;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
+import org.kie.baaas.mcp.app.vault.Secret;
+import org.kie.baaas.mcp.app.vault.VaultService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +51,7 @@ import org.slf4j.LoggerFactory;
 public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
 
     private static final Logger LOG = LoggerFactory.getLogger(DecisionLifecycleOrchestrator.class);
+    private static final String CREDENTIALS_NAME = "daas-%s-credentials";
 
     private ClusterControlPlaneClientFactory clientFactory;
 
@@ -61,17 +65,25 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
 
     private DecisionMapper decisionMapper;
 
+    private final VaultService vaultService;
+
+    private final ManagedServicesClient managedServicesClient;
+
     @Inject
     public DecisionLifecycleOrchestrator(ClusterControlPlaneClientFactory clientFactory, ClusterControlPlaneSelector controlPlaneSelector, DecisionManager decisionManager,
             DecisionDMNStorage decisionDMNStorage,
             ListenerManager listenerManager,
-            DecisionMapper decisionMapper) {
+            DecisionMapper decisionMapper,
+            VaultService vaultService,
+            ManagedServicesClient managedServicesClient) {
         this.clientFactory = clientFactory;
         this.controlPlaneSelector = controlPlaneSelector;
         this.decisionManager = decisionManager;
         this.decisionDMNStorage = decisionDMNStorage;
         this.listenerManager = listenerManager;
         this.decisionMapper = decisionMapper;
+        this.vaultService = vaultService;
+        this.managedServicesClient = managedServicesClient;
     }
 
     @Override
@@ -109,6 +121,7 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     @Override
     public DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest) {
         listenerManager.notifyListeners(() -> new BeforeCreateOrUpdateVersionEvent(decisionRequest));
+        createCustomerSecret(customerId, decisionRequest);
         // TODO - chicken and egg problem here.  The DecisionVersion requires information about the DMN
         // storage location, but the storage requires the DecisionVersion. We therefore have the write
         // to storage happening within the DecisionManager implementation. Ideally the write should happen
@@ -182,5 +195,15 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         DecisionVersion decisionVersion = decisionManager.deployed(customerId, decisionIdOrName, version, deployment);
         listenerManager.notifyListeners(() -> new AfterDeployedEvent(decisionMapper.mapVersionToDecisionResponse(decisionVersion)));
         return decisionVersion;
+    }
+
+    private void createCustomerSecret(String customerId, DecisionRequest decisionRequest) {
+        if (decisionRequest.getEventing() != null) {
+            String secretName = String.format(CREDENTIALS_NAME, customerId);
+            if (vaultService.get(secretName) == null) {
+                Secret secret = managedServicesClient.createOrReplaceServiceAccount(secretName);
+                vaultService.create(secret);
+            }
+        }
     }
 }

@@ -13,17 +13,21 @@ import org.kie.baaas.mcp.app.vault.VaultService;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 
+import software.amazon.awssdk.http.SdkHttpResponse;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
+import software.amazon.awssdk.services.secretsmanager.model.CreateSecretResponse;
 import software.amazon.awssdk.services.secretsmanager.model.DeleteSecretResponse;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
 import software.amazon.awssdk.services.secretsmanager.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.secretsmanager.model.SecretsManagerException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.kie.baaas.mcp.app.managedservices.ManagedServicesClient.CLIENT_ID;
+import static org.kie.baaas.mcp.app.managedservices.ManagedServicesClient.CLIENT_SECRET;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -40,7 +44,13 @@ class AWSVaultServiceTest {
 
     @Test
     void testCreate() {
-        var secret = new Secret().setId("foo").setValues(Map.of("clientId", "svc-acc-001", "clientSecret", "super-secret-pwd"));
+        var secret = new Secret()
+                .setId("foo")
+                .setValues(Map.of(CLIENT_ID, "svc-acc-001", CLIENT_SECRET, "super-secret-pwd"));
+
+        CreateSecretResponse.Builder builder = CreateSecretResponse.builder().name(secret.getId());
+        builder.sdkHttpResponse(SdkHttpResponse.builder().statusCode(200).build());
+        when(client.createSecret(any(Consumer.class))).thenReturn(builder.build());
 
         vault.create(secret);
 
@@ -49,7 +59,7 @@ class AWSVaultServiceTest {
 
     @Test
     void testCreateWithException() {
-        var secret = new Secret().setId("foo").setValues(Map.of("clientId", "svc-acc-001", "clientSecret", "super-secret-pwd"));
+        var secret = new Secret().setId("foo").setValues(Map.of(CLIENT_ID, "svc-acc-001", CLIENT_SECRET, "super-secret-pwd"));
         when(client.createSecret(any(Consumer.class))).thenThrow(SecretsManagerException.builder().message("some error").build());
 
         assertThrows(VaultException.class, () -> vault.create(secret), "Unable to create secret foo in vault");
@@ -79,8 +89,8 @@ class AWSVaultServiceTest {
 
         assertThat(secret, notNullValue());
         assertThat(secret.getId(), is("foo"));
-        assertThat(secret.getValues().get("clientId"), is("svc-acc-001"));
-        assertThat(secret.getValues().get("clientSecret"), is("super-secret-pwd"));
+        assertThat(secret.getValues().get(CLIENT_ID), is("svc-acc-001"));
+        assertThat(secret.getValues().get(CLIENT_SECRET), is("super-secret-pwd"));
     }
 
     @Test

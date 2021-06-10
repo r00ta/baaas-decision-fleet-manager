@@ -60,7 +60,8 @@ public class DecisionManager implements DecisionLifecycle {
     @Inject
     public DecisionManager(DecisionDAO decisionDAO, DecisionVersionDAO decisionVersionDAO, DecisionDMNStorage decisionDMNStorage) {
         Objects.requireNonNull(decisionDAO, "decisionDAO cannot be null");
-        Objects.requireNonNull(decisionDAO, "decisionVersionDAO cannot be null");
+        Objects.requireNonNull(decisionVersionDAO, "decisionVersionDAO cannot be null");
+        Objects.requireNonNull(decisionDMNStorage, "decisionDMNStorage cannot be null");
         this.decisionDAO = decisionDAO;
         this.decisionVersionDAO = decisionVersionDAO;
         this.decisionDMNStorage = decisionDMNStorage;
@@ -158,7 +159,6 @@ public class DecisionManager implements DecisionLifecycle {
      * @return - the updated Decision
      */
     public DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest) {
-
         Decision decision = decisionDAO.findByCustomerAndName(customerId, decisionRequest.getName());
         if (decision == null) {
             return createDecision(customerId, decisionRequest);

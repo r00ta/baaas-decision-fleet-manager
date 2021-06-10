@@ -13,17 +13,13 @@
  *
  */
 
-package org.kie.baaas.mcp.app.vault;
+package org.kie.baaas.mcp.app.managedservices;
 
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 
-public class VaultException extends MasterControlPlaneException {
+public class ManagedServicesException extends MasterControlPlaneException {
 
-    public VaultException(String message) {
-        super(message);
-    }
-
-    public VaultException(String message, Exception e) {
-        super(message, e);
+    public ManagedServicesException(String message, Throwable t) {
+        super(message, t);
     }
 }

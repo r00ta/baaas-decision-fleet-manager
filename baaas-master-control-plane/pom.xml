@@ -61,6 +61,14 @@
             <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-oidc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-apache-httpclient</artifactId>
+        </dependency>
+        <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>url-connection-client</artifactId>
         </dependency>
@@ -82,8 +90,12 @@
             <artifactId>cloudevents-json-jackson</artifactId>
             <version>${cloudevents.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.openshift.cloud</groupId>
+            <artifactId>managed-services-api</artifactId>
+        </dependency>
 
-        <!--
+         <!--
             Testing Dependencies
         -->
         <dependency>
@@ -132,6 +144,11 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-inline</artifactId>
             <version>${org.mockito.inline.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-test-oidc-server</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

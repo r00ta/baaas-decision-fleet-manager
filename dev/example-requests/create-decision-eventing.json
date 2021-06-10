@@ -1,0 +1,14 @@
+{
+  "kind": "Decision",
+  "name": "testing",
+  "description": "my-testing-decision",
+  "eventing": {
+    "kafka": {
+      "source": "thesource",
+      "sink": "thesink"
+    }
+  },
+  "model" :{
+    "dmn": "<xml></xml>"
+  }
+}

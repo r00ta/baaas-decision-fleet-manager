@@ -21,10 +21,10 @@ include:
 
 build:
   <<: *cache-definition
-  image: quay.io/kiegroup/kogito-quarkus-ubi8-s2i:1.0.0
+  image: quay.io/rblake/baaas-maven-kogito-s2i:035ee68167c1b553019b988af24d68622f70df4e
   stage: build
   script:
-    - "/usr/share/maven/bin/mvn compile -Pvalidate-formatting"
+    - "/usr/share/maven/bin/mvn compile -s .gitlab-ci-settings.xml -Pvalidate-formatting,github"
   tags:
     - baaas
   only:
@@ -34,10 +34,10 @@ build:
 
 test:
   <<: *cache-definition
-  image: quay.io/kiegroup/kogito-quarkus-ubi8-s2i:1.0.0
+  image: quay.io/rblake/baaas-maven-kogito-s2i:035ee68167c1b553019b988af24d68622f70df4e
   stage: test
   script:
-    - "/usr/share/maven/bin/mvn test"
+    - "/usr/share/maven/bin/mvn test -s .gitlab-ci-settings.xml"
   artifacts:
     expire_in: 1 week
     reports:
@@ -53,10 +53,10 @@ test:
 
 native-compile:
   <<: *cache-definition
-  image: quay.io/kiegroup/kogito-quarkus-ubi8-s2i:1.2.0
+  image: quay.io/rblake/baaas-maven-kogito-s2i:035ee68167c1b553019b988af24d68622f70df4e
   stage: native-compile
   script:
-    - "/usr/share/maven/bin/mvn package -Pnative -Dmaven.test.skip=true"
+    - "/usr/share/maven/bin/mvn package -s .gitlab-ci-settings.xml -Pnative,github -Dmaven.test.skip=true"
   artifacts:
     expire_in: 1 week
     paths:
