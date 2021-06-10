@@ -55,7 +55,6 @@ native-compile:
   <<: *cache-definition
   image: quay.io/kiegroup/kogito-quarkus-ubi8-s2i:1.2.0
   stage: native-compile
-  extends: .cd-allowlist
   script:
     - "/usr/share/maven/bin/mvn package -Pnative -Dmaven.test.skip=true"
   artifacts:
@@ -72,7 +71,6 @@ native-compile:
 build-and-push-container:
   image: docker:19.03.12
   stage: build-and-push-container
-  extends: .cd-allowlist
   before_script:
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login quay.io --username $CONTAINER_REGISTRY_USER --password-stdin
   script:

@@ -235,6 +235,8 @@ will be automatically proposed as a change to our demo environment.
 
 ## Controlling the Changes that Trigger the CD Pipeline
 
+**NOTE: This is temporarily disabled pending our migration to GitHub**
+
 It is possible to control which resources trigger the full continuous delivery pipeline. It is not
 always desirable for the pipeline to run if only certain files have been changed e.g. the change only
 impacts `README.md`.
