@@ -1,3 +1,18 @@
+/*
+ * Copyright 2021 Red Hat, Inc. and/or its affiliates.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package org.kie.baaas.mcp.app.controller;
 
 import java.net.URL;
@@ -23,12 +38,15 @@ import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
+import org.kie.baaas.mcp.app.vault.VaultService;
 import org.mockito.Mockito;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
+import io.quarkus.test.oidc.server.OidcWiremockTestResource;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
@@ -44,9 +62,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.verify;
 
 @QuarkusTest
+@QuarkusTestResource(OidcWiremockTestResource.class)
 public class WebhookResourceTest {
 
     @InjectMock
@@ -66,6 +84,9 @@ public class WebhookResourceTest {
 
     @InjectMock
     DecisionMapper decisionMapper;
+
+    @InjectMock
+    VaultService vaultService;
 
     private static WireMockServer wireMockServer;
 

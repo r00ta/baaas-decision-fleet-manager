@@ -1,0 +1,59 @@
+---
+version: '3.8'
+services:
+  db:
+    image: library/postgres:13.1
+    container_name: baaas-postgres
+    environment:
+      POSTGRES_USER: mcp
+      POSTGRES_PASSWORD: mcp
+      POSTGRES_DB: baaas-mcp
+    ports:
+      - "5432:5432"
+
+  s3:
+    image: localstack/localstack:0.11.5
+    container_name: baaas-localstack
+    environment:
+      START_WEB: 0
+      SERVICES: s3,secretsmanager
+      AWS_ACCESS_KEY_ID: test-key
+      AWS_SECRET_ACCESS_KEY: test-secret
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./s3:/docker-entrypoint-initaws.d
+
+  jit:
+    image: quay.io/kiegroup/kogito-jit-runner-nightly:1.2.x-2021-02-03
+    container_name: baaas-jit
+    ports:
+      - "9000:9000"
+    environment:
+      QUARKUS_HTTP_PORT: 9000
+
+  keycloak:
+    image: jboss/keycloak:10.0.1
+    command: "-b 0.0.0.0 -Djboss.socket.binding.port-offset=100 -Dkeycloak.import=/keycloak-config/baaas-realm-sample.json"
+    container_name: baaas-keycloak
+    ports:
+      - "8180:8180"
+    volumes:
+      # Adding the "z" flag to get SELinux configured automatically
+      - ./keycloak-config:/keycloak-config:z
+    environment:
+      KEYCLOAK_USER: "admin"
+      KEYCLOAK_PASSWORD: "123"
+
+  managed-services:
+    # https://github.com/ruromero/dummy-managed-services
+    image: quay.io/ruben/dummy-managed-services:latest
+    container_name: baaas-managed-services
+    ports:
+      - "9001:9001"
+    environment:
+      SSO_URL: http://localhost:8180/auth/realms/baaas/
+      SSO_CLIENT_ID: cloud-services
+      SSO_CLIENT_SECRET: secret
+      QUARKUS_HTTP_PORT: 9001
+      QUARKUS_OIDC_CONNECTION-DELAY: 20S

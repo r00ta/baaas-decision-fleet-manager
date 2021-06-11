@@ -18,7 +18,6 @@ package org.kie.baaas.mcp.app.controller;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.validation.Valid;
 import javax.ws.rs.Consumes;
@@ -51,7 +50,6 @@ import static java.util.Objects.requireNonNull;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/decisions")
-@ApplicationScoped
 public class DecisionResource {
 
     private final Logger LOGGER = LoggerFactory.getLogger(DecisionResource.class);
@@ -65,7 +63,6 @@ public class DecisionResource {
     @Inject
     public DecisionResource(CustomerIdResolver customerIdResolver, DecisionLifecycleOrchestrator decisionLifecycle,
             DecisionMapper decisionMapper) {
-
         requireNonNull(customerIdResolver, "customerIdResolver cannot be null");
         requireNonNull(decisionLifecycle, "decisionLifecycle cannot be null");
         requireNonNull(decisionMapper, "decisionMapper cannot be null");
@@ -193,7 +190,6 @@ public class DecisionResource {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Decision with name '{}' received for processing for customer id '{}'...", decisionsRequest.getName(), customerId);
-
         DecisionVersion decisionVersion = decisionLifecycle.createOrUpdateVersion(customerId, decisionsRequest);
         DecisionResponse decisionResponse = decisionMapper.mapVersionToDecisionResponse(decisionVersion);
         return Response.status(Response.Status.CREATED).entity(decisionResponse).build();

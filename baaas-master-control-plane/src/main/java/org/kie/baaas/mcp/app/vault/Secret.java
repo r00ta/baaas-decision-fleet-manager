@@ -15,6 +15,7 @@
 
 package org.kie.baaas.mcp.app.vault;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Secret {
@@ -37,6 +38,14 @@ public class Secret {
 
     public Secret setValues(Map<String, String> values) {
         this.values = values;
+        return this;
+    }
+
+    public Secret value(String key, String value) {
+        if (this.values == null) {
+            this.values = new HashMap<>();
+        }
+        this.values.put(key, value);
         return this;
     }
 }

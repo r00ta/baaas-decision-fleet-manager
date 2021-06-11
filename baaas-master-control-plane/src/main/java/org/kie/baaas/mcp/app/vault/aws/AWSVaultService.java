@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import io.vertx.core.json.Json;
 
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
+import software.amazon.awssdk.services.secretsmanager.model.CreateSecretResponse;
 import software.amazon.awssdk.services.secretsmanager.model.DeleteSecretResponse;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
 import software.amazon.awssdk.services.secretsmanager.model.ResourceNotFoundException;
@@ -45,10 +46,16 @@ public class AWSVaultService implements VaultService {
     @Override
     public void create(Secret secret) {
         try {
-            client.createSecret(b -> b
+            CreateSecretResponse response = client.createSecret(b -> b
                     .name(secret.getId())
                     .secretString(Json.encode(secret.getValues())));
-            LOGGER.debug("Secret {} created in AWS Vault", secret.getId());
+            if (response.sdkHttpResponse().isSuccessful()) {
+                LOGGER.debug("Secret {} created in AWS Vault", secret.getId());
+            } else {
+                String message = "Unable to create secret " + secret.getId() + " in AWS Vault. " + response.sdkHttpResponse().statusText();
+                LOGGER.error(message);
+                throw new VaultException(message);
+            }
         } catch (SecretsManagerException e) {
             LOGGER.error("Unable to create secret {} in AWS Vault", secret.getId(), e);
             throw new VaultException("Unable to create secret " + secret.getId() + " in vault", e);
@@ -56,17 +63,17 @@ public class AWSVaultService implements VaultService {
     }
 
     @Override
-    public Secret get(String id) {
+    public Secret get(String name) {
         try {
-            GetSecretValueResponse resp = client.getSecretValue(b -> b.secretId(id));
-            LOGGER.debug("Secret {} found in AWS Vault", id);
-            return toSecret(id, resp);
+            GetSecretValueResponse resp = client.getSecretValue(b -> b.secretId(name));
+            LOGGER.debug("Secret {} found in AWS Vault", name);
+            return new Secret().setId(name).setValues(Json.decodeValue(resp.secretString(), Map.class));
         } catch (ResourceNotFoundException e) {
-            LOGGER.info("Secret {} not found in AWS Vault", id);
+            LOGGER.info("Secret {} not found in AWS Vault", name);
             return null;
         } catch (SecretsManagerException e) {
-            LOGGER.error("Unable to get secret {} from AWS Vault", id, e);
-            throw new VaultException("Unable to get secret " + id + " from vault", e);
+            LOGGER.error("Unable to get secret {} from AWS Vault", name, e);
+            throw new VaultException("Unable to get secret " + name + " from vault", e);
         }
     }
 
@@ -85,8 +92,4 @@ public class AWSVaultService implements VaultService {
         }
     }
 
-    private Secret toSecret(String name, GetSecretValueResponse response) {
-        Map<String, String> values = Json.decodeValue(response.secretString(), Map.class);
-        return new Secret().setId(name).setValues(values);
-    }
 }

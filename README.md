@@ -92,6 +92,33 @@ c5b920da1d64   quay.io/kiegroup/kogito-jit-runner-nightly:1.2.x-2021-02-03   "/h
 
 ## Compile the Fleet Manager and launch quarkus:dev
 
+### Set up your settings.xml first
+
+The Fleet Manager depends on the managed-services Java SDK and the libraries
+are not yet officially public so we will need to fetch them
+from [Red Hat Developer GitHub Packages](https://maven.pkg.github.com/redhat-developer/)
+
+You can use as reference the [./.gitlab-ci-settings.xml](./.gitlab-ci-settings.xml) file
+and add the necessary configuration to your local ~/.m2/settings.xml replacing the
+`GITHUB_REPOS_USER` and `GITHUB_REPOS_TOKEN` variables with your GitHub username
+and a serviceAccount token that only requires `read:packages` permission.
+
+You can create here your [Personal Access Token](https://github.com/settings/tokens)
+
+Example:
+
+```xml
+    <servers>
+        <server>
+            <id>redhat-developer</id>
+            <username>ruromero</username>
+            <password>ghp_xxxxxxxxxxxxxxxxxxxxx</password>
+        </server>
+    </servers>
+```
+
+### Compile and build
+
 _In another terminal_, use the following to first compile the Fleet Manager and then run it in `quarkus:dev` mode
 
 ```shell
@@ -234,6 +261,8 @@ Decision Fleet Manager is migrating to a model of continuous delivery in that an
 will be automatically proposed as a change to our demo environment.
 
 ## Controlling the Changes that Trigger the CD Pipeline
+
+**NOTE: This is temporarily disabled pending our migration to GitHub**
 
 It is possible to control which resources trigger the full continuous delivery pipeline. It is not
 always desirable for the pipeline to run if only certain files have been changed e.g. the change only
