@@ -133,6 +133,13 @@
                 <updatePolicy>interval:30</updatePolicy>
             </snapshots>
         </repository>
+        <repository>
+            <id>redhat-developer</id>
+            <url>https://maven.pkg.github.com/redhat-developer/*</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
     </repositories>
     <profiles>
         <profile>
