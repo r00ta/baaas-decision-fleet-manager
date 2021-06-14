@@ -302,7 +302,6 @@ public class DecisionManager implements DecisionLifecycle {
         DecisionVersion currentVersion = decision.getCurrentVersion();
         if (currentVersion.getVersion() != decisionVersion.getVersion()) {
             currentVersion.setStatus(DecisionVersionStatus.READY);
-            currentVersion.getDeployment().setUrl(null);
         }
 
         decision.setCurrentVersion(decisionVersion);

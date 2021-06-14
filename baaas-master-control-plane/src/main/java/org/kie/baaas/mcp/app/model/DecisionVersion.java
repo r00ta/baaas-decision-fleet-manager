@@ -124,7 +124,8 @@ public class DecisionVersion {
             @AttributeOverride(name = "namespace", column = @Column(name = "ccp_namespace")),
             @AttributeOverride(name = "name", column = @Column(name = "ccp_name")),
             @AttributeOverride(name = "versionName", column = @Column(name = "ccp_version_name")),
-            @AttributeOverride(name = "url", column = @Column(name = "ccp_exposed_url")),
+            @AttributeOverride(name = "versionUrl", column = @Column(name = "version_url")),
+            @AttributeOverride(name = "currentUrl", column = @Column(name = "current_url")),
             @AttributeOverride(name = "statusMessage", column = @Column(name = "status_message"))
     })
     private Deployment deployment;

@@ -1,0 +1,2 @@
+ALTER TABLE DECISION_VERSION RENAME COLUMN ccp_exposed_url TO version_url;
+ALTER TABLE DECISION_VERSION ADD current_url varchar(255);
