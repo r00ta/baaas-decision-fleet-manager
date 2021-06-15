@@ -75,8 +75,15 @@ public class DecisionResponse extends DecisionBase {
     @JsonProperty("status_message")
     private String statusMessage;
 
+    @Deprecated
     @JsonProperty("url")
     private String url;
+
+    @JsonProperty("version_endpoint")
+    private String versionEndpoint;
+
+    @JsonProperty("current_endpoint")
+    private String currentEndpoint;
 
     @Override
     public String getKind() {
@@ -153,6 +160,22 @@ public class DecisionResponse extends DecisionBase {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getVersionEndpoint() {
+        return versionEndpoint;
+    }
+
+    public void setVersionEndpoint(String versionEndpoint) {
+        this.versionEndpoint = versionEndpoint;
+    }
+
+    public String getCurrentEndpoint() {
+        return currentEndpoint;
+    }
+
+    public void setCurrentEndpoint(String currentEndpoint) {
+        this.currentEndpoint = currentEndpoint;
     }
 
     @Override

@@ -29,6 +29,7 @@ import org.kie.baaas.mcp.api.eventing.Eventing;
 import org.kie.baaas.mcp.api.eventing.kafka.Kafka;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
+import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -59,7 +60,11 @@ public class DecisionMapper {
         decisionResponse.setSubmittedAt(decisionVersion.getSubmittedAt());
         decisionResponse.setPublishedAt(decisionVersion.getPublishedAt());
         if (decisionVersion.getDeployment() != null) {
-            decisionResponse.setUrl(decisionVersion.getDeployment().getUrl());
+            if (DecisionVersionStatus.CURRENT.equals(decisionVersion.getStatus())) {
+                decisionResponse.setCurrentEndpoint(decisionVersion.getDeployment().getCurrentUrl());
+            }
+            decisionResponse.setUrl(decisionVersion.getDeployment().getVersionUrl()); // to be removed once the modeler is updated to use versionEndpoint and currentEndpoint
+            decisionResponse.setVersionEndpoint(decisionVersion.getDeployment().getVersionUrl());
             decisionResponse.setStatusMessage(decisionVersion.getDeployment().getStatusMessage());
         }
         decisionResponse.setStatus(decisionVersion.getStatus().name());

@@ -55,7 +55,8 @@ public class ClusterControlPlaneCallbackResourceTest {
         return new WebhookBuilder().withAt(ZonedDateTime.now(ZoneOffset.UTC).toString())
                 .withCustomer("1")
                 .withDecision("my-decision")
-                .withEndpoint(URI.create("https://mydecision.baaas.redhat.com"))
+                .withCurrentEndpoint(URI.create("https://mydecision.baaas.redhat.com"))
+                .withVersionEndpoint(URI.create("https://mydecision-1.baaas.redhat.com"))
                 .withMessage("message")
                 .withNamespace("namespace")
                 .withPhase(phase)
@@ -77,14 +78,15 @@ public class ClusterControlPlaneCallbackResourceTest {
         assertThat(deployment.getNamespace(), equalTo(webhook.getNamespace()));
         assertThat(deployment.getName(), equalTo(webhook.getDecision()));
         assertThat(deployment.getVersionName(), equalTo(webhook.getVersionResource()));
-        assertThat(deployment.getUrl(), equalTo(webhook.getEndpoint().toString()));
+        assertThat(deployment.getVersionUrl(), equalTo(webhook.getVersionEndpoint().toString()));
     }
 
     @Test
     public void failed() {
 
         Webhook webhook = createWithPhase(Phase.FAILED);
-        webhook.setEndpoint(null);
+        webhook.setVersionEndpoint(null);
+        webhook.setCurrentEndpoint(null);
         callbackResource.processClusterControlPlaneCallback(webhook, webhook.getDecision(), 1l);
 
         verify(decisionLifecycleOrch).failed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());

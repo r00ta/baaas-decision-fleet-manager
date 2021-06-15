@@ -150,7 +150,8 @@ public class DecisionManagerTest {
 
     private Deployment createDeployment() {
         Deployment deployment = new Deployment();
-        deployment.setUrl("http://foo");
+        deployment.setVersionUrl("http://foo-1");
+        deployment.setCurrentUrl("http://foo-current");
         deployment.setVersionName("my-version");
         deployment.setNamespace("my-namespace");
         deployment.setName("my-name");
@@ -252,7 +253,8 @@ public class DecisionManagerTest {
         DecisionVersion nextVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         nextVersion = decisionManager.deployed(decision.getCustomerId(), decision.getName(), nextVersion.getVersion(), createDeployment());
         assertThat(nextVersion.getStatus(), equalTo(DecisionVersionStatus.CURRENT));
-        assertThat(nextVersion.getDeployment().getUrl(), is(notNullValue()));
+        assertThat(nextVersion.getDeployment().getVersionUrl(), is(notNullValue()));
+        assertThat(nextVersion.getDeployment().getCurrentUrl(), is(notNullValue()));
 
         decision = nextVersion.getDecision();
         assertThat(decision.getCurrentVersion().getStatus(), equalTo(DecisionVersionStatus.CURRENT));
@@ -260,7 +262,8 @@ public class DecisionManagerTest {
         assertThat(decision.getNextVersion(), is(nullValue()));
 
         decisionVersion = decisionVersionDAO.findById(decisionVersion.getId());
-        assertThat(decisionVersion.getDeployment().getUrl(), is(nullValue()));
+        assertThat(decisionVersion.getDeployment().getVersionUrl(), is(notNullValue()));
+        assertThat(decisionVersion.getDeployment().getCurrentUrl(), is(notNullValue()));
     }
 
     @TestTransaction

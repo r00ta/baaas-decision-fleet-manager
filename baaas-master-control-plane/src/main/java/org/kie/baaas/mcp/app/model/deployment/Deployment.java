@@ -20,7 +20,9 @@ import javax.persistence.Embeddable;
 @Embeddable
 public class Deployment {
 
-    String url;
+    String versionUrl;
+
+    String currentUrl;
 
     String namespace;
 
@@ -30,12 +32,20 @@ public class Deployment {
 
     String statusMessage;
 
-    public String getUrl() {
-        return url;
+    public String getVersionUrl() {
+        return versionUrl;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setVersionUrl(String versionUrl) {
+        this.versionUrl = versionUrl;
+    }
+
+    public String getCurrentUrl() {
+        return currentUrl;
+    }
+
+    public void setCurrentUrl(String currentUrl) {
+        this.currentUrl = currentUrl;
     }
 
     public String getNamespace() {

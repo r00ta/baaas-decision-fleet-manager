@@ -92,7 +92,8 @@ public class DecisionMapperTest {
         decisionVersion.setTags(tags);
 
         Deployment deployment = new Deployment();
-        deployment.setUrl("my.url");
+        deployment.setVersionUrl("my.url");
+        deployment.setCurrentUrl("my-current.url");
         deployment.setStatusMessage("Deployment status");
         decisionVersion.setDeployment(deployment);
         return decisionVersion;
@@ -105,7 +106,8 @@ public class DecisionMapperTest {
         assertThat(response.getPublishedAt(), equalTo(decisionVersion.getPublishedAt()));
         assertThat(response.getSubmittedAt(), equalTo(decisionVersion.getSubmittedAt()));
         assertThat(response.getVersion(), equalTo(decisionVersion.getVersion()));
-        assertThat(response.getUrl(), equalTo(decisionVersion.getDeployment().getUrl()));
+        assertThat(response.getUrl(), equalTo(decisionVersion.getDeployment().getVersionUrl()));
+        assertThat(response.getVersionEndpoint(), equalTo(decisionVersion.getDeployment().getVersionUrl()));
         assertThat(response.getResponseModel().getHref(), equalTo(DECISION_VERSION_DMN_HREF));
         assertThat(response.getResponseModel().getMd5(), equalTo(decisionVersion.getDmnMd5()));
         assertThat(response.getHref(), equalTo(DECISION_VERSION_HREF));
