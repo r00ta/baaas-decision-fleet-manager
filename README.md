@@ -67,15 +67,17 @@ of the known Kinds within your MiniKube cluster.
 The Fleet Manager has a dependency on the following other resources:
 
 * Postgres Database for state storage
-* Amazon S3 for DMN storage
+* Amazon AWS S3 for DMN storage
+* Amazon AWS Secrets Manager  
 * DMN JIT instance (exposed by the Fleet Shard)
+* Mock API for the Kafka Managed Services
 
 We provide local versions of all these resources using Docker.
 
 _In another terminal_, use the following command from the root of the Git repository:
 
 ```shell
-docker-compose up
+docker-compose -f dev/docker-compose.yml up
 ```
 
 This should boot all dependencies. Watch the logs to ensure everything boots OK.
@@ -191,7 +193,7 @@ To clean up all resources, first terminate all terminal processes.
 Next, use the following:
 
 ```shell
-docker-compose down -v 
+docker-compose -f dev/docker-compose.yml down -v 
 minikube stop
 ```
 

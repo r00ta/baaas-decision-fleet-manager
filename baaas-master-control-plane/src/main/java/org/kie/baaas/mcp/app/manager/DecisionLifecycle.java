@@ -16,11 +16,11 @@
 package org.kie.baaas.mcp.app.manager;
 
 import java.io.ByteArrayOutputStream;
-import java.util.List;
 
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
+import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 
 /**
@@ -62,7 +62,7 @@ public interface DecisionLifecycle {
      * @param customerId - The id of the customer that owns the Decisions
      * @return - The List of Decisions for this customer (can be empty)
      */
-    List<Decision> listDecisions(String customerId);
+    ListResult<Decision> listDecisions(String customerId, int page, int pageSize);
 
     /**
      * Gets the building version of the specified decision owned by the customer id.
@@ -111,7 +111,7 @@ public interface DecisionLifecycle {
      * @param decisionIdOrName - The id or name of the Decision
      * @return - The list of versions for this decision.
      */
-    List<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName);
+    ListResult<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName, int page, int pageSize);
 
     /**
      * Retrieve the requested dmn file from S3 Bucket as ByteArrayOutputStream

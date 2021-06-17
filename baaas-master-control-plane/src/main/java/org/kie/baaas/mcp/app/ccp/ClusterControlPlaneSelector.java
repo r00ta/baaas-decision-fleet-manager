@@ -20,5 +20,5 @@ import org.kie.baaas.mcp.app.model.Decision;
 
 public interface ClusterControlPlaneSelector {
 
-    public ClusterControlPlane selectControlPlaneForDeployment(Decision decision);
+    ClusterControlPlane selectControlPlaneForDeployment(Decision decision);
 }

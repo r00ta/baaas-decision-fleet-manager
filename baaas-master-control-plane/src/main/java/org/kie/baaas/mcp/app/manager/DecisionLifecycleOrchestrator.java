@@ -16,7 +16,6 @@
 package org.kie.baaas.mcp.app.manager;
 
 import java.io.ByteArrayOutputStream;
-import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -35,6 +34,7 @@ import org.kie.baaas.mcp.app.managedservices.ManagedServicesClient;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
+import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.kie.baaas.mcp.app.vault.Secret;
@@ -53,17 +53,17 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     private static final Logger LOG = LoggerFactory.getLogger(DecisionLifecycleOrchestrator.class);
     private static final String CREDENTIALS_NAME = "daas-%s-credentials";
 
-    private ClusterControlPlaneClientFactory clientFactory;
+    private final ClusterControlPlaneClientFactory clientFactory;
 
-    private ClusterControlPlaneSelector controlPlaneSelector;
+    private final ClusterControlPlaneSelector controlPlaneSelector;
 
-    private DecisionManager decisionManager;
+    private final DecisionManager decisionManager;
 
-    private DecisionDMNStorage decisionDMNStorage;
+    private final DecisionDMNStorage decisionDMNStorage;
 
-    private ListenerManager listenerManager;
+    private final ListenerManager listenerManager;
 
-    private DecisionMapper decisionMapper;
+    private final DecisionMapper decisionMapper;
 
     private final VaultService vaultService;
 
@@ -148,8 +148,8 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     }
 
     @Override
-    public List<Decision> listDecisions(String customerId) {
-        return decisionManager.listDecisions(customerId);
+    public ListResult<Decision> listDecisions(String customerId, int page, int pageSize) {
+        return decisionManager.listDecisions(customerId, page, pageSize);
     }
 
     @Override
@@ -176,8 +176,8 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     }
 
     @Override
-    public List<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName) {
-        return decisionManager.listDecisionVersions(customerId, decisionIdOrName);
+    public ListResult<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName, int page, int pageSize) {
+        return decisionManager.listDecisionVersions(customerId, decisionIdOrName, page, pageSize);
     }
 
     @Override

@@ -32,6 +32,7 @@ import org.kie.baaas.mcp.app.dao.DecisionVersionDAO;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
+import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
 import org.kie.baaas.mcp.app.storage.DMNStorageRequest;
@@ -124,10 +125,10 @@ public class DecisionManager implements DecisionLifecycle {
      * @param decisionIdOrName - The decision id or name
      * @return - The list of versions.
      */
-    public List<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName) {
+    public ListResult<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName, int page, int pageSize) {
 
-        List<DecisionVersion> versions = decisionVersionDAO.listByCustomerAndDecisionIdOrName(customerId, decisionIdOrName);
-        if (versions.isEmpty()) {
+        ListResult<DecisionVersion> versions = decisionVersionDAO.listByCustomerAndDecisionIdOrName(customerId, decisionIdOrName, page, pageSize);
+        if (versions.getItems().isEmpty()) {
             throw decisionDoesNotExist(customerId, decisionIdOrName);
         }
         return versions;
@@ -139,8 +140,10 @@ public class DecisionManager implements DecisionLifecycle {
      * @param customerId - The customer id to find decisions for
      * @return - The list of decisions for this customer.
      */
-    public List<Decision> listDecisions(String customerId) {
-        return decisionVersionDAO.listCurrentByCustomerId(customerId).stream().map((version) -> version.getDecision()).collect(toList());
+    public ListResult<Decision> listDecisions(String customerId, int page, int pageSize) {
+        ListResult<DecisionVersion> versions = decisionVersionDAO.listCurrentByCustomerId(customerId, page, pageSize);
+        List<Decision> decisions = versions.getItems().stream().map((version) -> version.getDecision()).collect(toList());
+        return new ListResult<>(decisions, versions.getPage(), versions.getTotal());
     }
 
     @Override
@@ -169,10 +172,6 @@ public class DecisionManager implements DecisionLifecycle {
     private DecisionVersion createDecisionVersion(String customerId, DecisionRequest decisionRequest) {
 
         DecisionVersion decisionVersion = new DecisionVersion();
-
-        //TODO - this is occurring within a transaction. If the write to storage takes a long time, the transaction
-        // will be held open.
-
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
         decisionVersion.setSubmittedAt(ZonedDateTime.now(ZoneOffset.UTC));
         decisionVersion.setVersion(decisionVersionDAO.getNextVersionId(customerId, decisionRequest.getName()));
@@ -203,6 +202,8 @@ public class DecisionManager implements DecisionLifecycle {
         decision.setNextVersion(decisionVersion);
         decision.setCurrentVersion(decisionVersion);
 
+        //TODO - this is occurring within a transaction. If the write to storage takes a long time, the transaction
+        // will be held open.
         DMNStorageRequest dmnStorageRequest = decisionDMNStorage.writeDMN(customerId, decisionRequest, decisionVersion);
         decisionVersion.setDmnMd5(dmnStorageRequest.getMd5Hash());
         decisionVersion.setDmnLocation(dmnStorageRequest.getProviderUrl());

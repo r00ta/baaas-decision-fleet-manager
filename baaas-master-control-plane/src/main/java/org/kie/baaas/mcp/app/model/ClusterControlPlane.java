@@ -31,6 +31,8 @@ import javax.persistence.Table;
 @Table(name = "CLUSTER_CONTROL_PLANE")
 public class ClusterControlPlane {
 
+    public static final String DMN_JIT_URL_PARAM = "dmn_jit_url";
+
     @Id
     private int id;
 

@@ -15,90 +15,54 @@
 
 package org.kie.baaas.mcp.app.dao;
 
-import javax.persistence.EntityManager;
+import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.kie.baaas.mcp.app.model.ListResult;
+
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 public class ClusterControlPlaneDAOTest {
 
-    private static final String KUBERNETES_URL = "https://kubernetes.default";
+    @Inject
+    MasterControlPlaneConfig controlPlaneConfig;
 
-    private static final String DMN_JIT_URL = "https://my-favourite-dmn-jit.com";
+    @Inject
+    ClusterControlPlaneDAO controlPlaneDAO;
 
-    private static final String NAMESPACE = "baaas-ccp";
-
-    @Mock
-    private EntityManager em;
-
-    @Mock
-    private ClusterControlPlane controlPlane;
-
-    @Captor
-    private ArgumentCaptor<ClusterControlPlane> captor;
-
-    @Mock
-    private MasterControlPlaneConfig controlPlaneConfig;
-
-    @InjectMocks
-    private ClusterControlPlaneDAO controlPlaneDAO;
-
+    @TestTransaction
     @Test
-    public void findOne() {
-        when(em.find(ClusterControlPlane.class, 1)).thenReturn(controlPlane);
-
-        ClusterControlPlane ccp = controlPlaneDAO.findOne();
-        assertThat(ccp, is(notNullValue()));
-        assertThat(ccp, equalTo(controlPlane));
+    public void init_createsNewControlPlane() {
+        ClusterControlPlane fleetShard = controlPlaneDAO.findById(1);
+        assertFleetShard(fleetShard);
     }
 
     @Test
-    public void init_createsNewControlPlane() throws Exception {
+    @TestTransaction
+    public void listAll() {
+        ListResult<ClusterControlPlane> listResult = controlPlaneDAO.listAll(0, 100);
+        assertThat(listResult.getPage(), equalTo(0L));
+        assertThat(listResult.getTotal(), equalTo(1L));
+        assertThat(listResult.getSize(), equalTo(1L));
 
-        when(controlPlaneConfig.getCcpDmnJitUrl()).thenReturn(DMN_JIT_URL);
-        when(controlPlaneConfig.getCcpKubernetesApiUrl()).thenReturn(KUBERNETES_URL);
-        when(controlPlaneConfig.getCcpNamespace()).thenReturn(NAMESPACE);
-        when(em.find(ClusterControlPlane.class, 1)).thenReturn(null);
-
-        controlPlaneDAO.init();
-
-        verify(em).merge(captor.capture());
-
-        ClusterControlPlane ccp = captor.getValue();
-        assertThat(ccp.getId(), equalTo(1));
-        assertThat(ccp, is(notNullValue()));
-        assertThat(ccp.getKubernetesApiUrl(), equalTo(KUBERNETES_URL));
-        assertThat(ccp.getDmnJitUrl(), equalTo(DMN_JIT_URL));
-        assertThat(ccp.getNamespace(), equalTo(NAMESPACE));
+        ClusterControlPlane fleetShard = listResult.getItems().get(0);
+        assertFleetShard(fleetShard);
     }
 
-    @Test
-    public void init_updatesExistingControlPlane() throws Exception {
-        when(controlPlaneConfig.getCcpDmnJitUrl()).thenReturn(DMN_JIT_URL);
-        when(controlPlaneConfig.getCcpKubernetesApiUrl()).thenReturn(KUBERNETES_URL);
-        when(controlPlaneConfig.getCcpNamespace()).thenReturn(NAMESPACE);
-        when(em.find(ClusterControlPlane.class, 1)).thenReturn(controlPlane);
-
-        controlPlaneDAO.init();
-
-        verify(controlPlane).setDmnJitUrl(DMN_JIT_URL);
-        verify(controlPlane).setKubernetesApiUrl(KUBERNETES_URL);
-        verify(controlPlane).setNamespace(NAMESPACE);
-        verify(em).merge(controlPlane);
+    private void assertFleetShard(ClusterControlPlane fleetShard) {
+        assertThat(fleetShard.getId(), equalTo(1));
+        assertThat(fleetShard, is(notNullValue()));
+        assertThat(fleetShard.getKubernetesApiUrl(), equalTo(controlPlaneConfig.getCcpKubernetesApiUrl()));
+        assertThat(fleetShard.getDmnJitUrl(), equalTo(controlPlaneConfig.getCcpDmnJitUrl()));
+        assertThat(fleetShard.getNamespace(), equalTo(controlPlaneConfig.getCcpNamespace()));
     }
 }

@@ -13,6 +13,8 @@ import javax.persistence.Table;
 @Table(name = "WEBHOOK")
 public class Webhook {
 
+    public static final String URL_PARAM = "url";
+
     @Id
     private String id = UUID.randomUUID().toString();
 

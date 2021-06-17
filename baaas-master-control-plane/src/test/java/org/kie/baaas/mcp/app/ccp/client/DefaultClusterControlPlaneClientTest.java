@@ -72,7 +72,7 @@ public class DefaultClusterControlPlaneClientTest {
 
     @BeforeEach
     public void before() {
-        client = new DefaultClusterControlPlaneClient(config, kubernetesClient, controlPlaneDAO.findOne());
+        client = new DefaultClusterControlPlaneClient(config, kubernetesClient, controlPlaneDAO.findById(ClusterControlPlaneDAO.DEFAULT_CCP_ID));
     }
 
     private void createNamespace(String name) {
