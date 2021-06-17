@@ -15,68 +15,37 @@
 
 package org.kie.baaas.mcp.app.dao;
 
-import java.net.URL;
+import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.mcp.api.DMNJIT;
-import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
+import org.kie.baaas.mcp.app.model.ListResult;
+
+import io.quarkus.test.TestTransaction;
+import io.quarkus.test.junit.QuarkusTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 public class DMNJITDAOTest {
 
-    @Mock
-    private ClusterControlPlaneDAO controlPlaneDAO;
+    @Inject
+    DMNJITDAO dmnjitdao;
 
-    @Mock
-    private ClusterControlPlane clusterControlPlane;
+    @Inject
+    MasterControlPlaneConfig config;
 
-    @InjectMocks
-    private DMNJITDAO dmnjitdao;
-
+    @TestTransaction
     @Test
-    public void findOne() throws Exception {
-        String dmnJitUrl = "https://my-favourite-dmn-jit.com";
-        configureClusterControlPlane(dmnJitUrl);
+    public void listAll() {
+        ListResult<DMNJIT> listResult = dmnjitdao.listAll(0, 100);
+        assertThat(listResult.getSize(), equalTo(1L));
+        assertThat(listResult.getTotal(), equalTo(1L));
+        assertThat(listResult.getPage(), equalTo(0L));
 
-        DMNJIT dmnjit = dmnjitdao.findOne();
-        assertThat(dmnjit.getUrl(), equalTo(new URL(dmnJitUrl)));
-    }
-
-    @Test
-    public void findOne_noControlPlaneRegistered() {
-
-        when(controlPlaneDAO.findOne()).thenReturn(null);
-
-        MasterControlPlaneException thrown = assertThrows(MasterControlPlaneException.class, () -> {
-            dmnjitdao.findOne();
-        });
-
-        assertThat(thrown.getMessage(), equalTo("There are zero registered Cluster Control Planes. Unable to retrieve DMN JIT details."));
-    }
-
-    @Test
-    public void findOne_dmnJitUrlIsMalformed() {
-        configureClusterControlPlane("not-an-url");
-
-        MasterControlPlaneException thrown = assertThrows(MasterControlPlaneException.class, () -> {
-            dmnjitdao.findOne();
-        });
-
-        assertThat(thrown.getMessage(), equalTo("The DMN JIT URL 'not-an-url' is malformed."));
-    }
-
-    private void configureClusterControlPlane(String url) {
-        when(clusterControlPlane.getDmnJitUrl()).thenReturn(url);
-        when(controlPlaneDAO.findOne()).thenReturn(clusterControlPlane);
+        DMNJIT dmnjit = listResult.getItems().get(0);
+        assertThat(dmnjit.getUrl().toExternalForm(), equalTo(config.getCcpDmnJitUrl()));
     }
 }

@@ -30,6 +30,7 @@ import org.kie.baaas.mcp.api.eventing.kafka.Kafka;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
+import org.kie.baaas.mcp.app.model.ListResult;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -95,13 +96,14 @@ public class DecisionMapper {
         return mapVersionToDecisionResponse(decision.getCurrentVersion());
     }
 
-    public DecisionResponseList mapVersionsToDecisionResponseList(List<DecisionVersion> decisionVersions) {
+    public DecisionResponseList mapVersionsToDecisionResponseList(ListResult<DecisionVersion> decisionVersions) {
 
         DecisionResponseList responseList = new DecisionResponseList();
-        List<DecisionResponse> items = decisionVersions.stream()
+        List<DecisionResponse> items = decisionVersions.getItems().stream()
                 .map(this::mapVersionToDecisionResponse)
                 .collect(toList());
         responseList.setItems(items);
+        setPaginationData(decisionVersions, responseList);
         return sort(responseList);
     }
 
@@ -111,13 +113,20 @@ public class DecisionMapper {
         return responseList;
     }
 
-    public DecisionResponseList mapToDecisionResponseList(List<Decision> decisions) {
+    private void setPaginationData(ListResult<?> listResult, DecisionResponseList responseList) {
+        responseList.setPage(listResult.getPage());
+        responseList.setSize(listResult.getSize());
+        responseList.setTotal(listResult.getTotal());
+    }
+
+    public DecisionResponseList mapToDecisionResponseList(ListResult<Decision> decisions) {
 
         DecisionResponseList responseList = new DecisionResponseList();
-        List<DecisionResponse> items = decisions.stream()
+        List<DecisionResponse> items = decisions.getItems().stream()
                 .map(this::mapToDecisionResponse)
                 .collect(toList());
         responseList.setItems(items);
+        setPaginationData(decisions, responseList);
         return sort(responseList);
     }
 }

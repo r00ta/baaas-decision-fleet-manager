@@ -15,45 +15,47 @@
 
 package org.kie.baaas.mcp.app.dao;
 
+import java.util.List;
 import java.util.Objects;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+import org.kie.baaas.mcp.app.model.ListResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Page;
+
+import static io.quarkus.panache.common.Sort.ascending;
 
 /**
  * DAO Implementation for working with ClusterControlPlane instances.
  */
 @ApplicationScoped
 @Transactional
-public class ClusterControlPlaneDAO {
+public class ClusterControlPlaneDAO implements PanacheRepositoryBase<ClusterControlPlane, Integer> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterControlPlaneDAO.class);
 
-    private static final int DEFAULT_CCP_ID = 1;
+    public static final int DEFAULT_CCP_ID = 1;
 
     private final MasterControlPlaneConfig controlPlaneConfig;
 
-    private final EntityManager em;
-
     @Inject
-    public ClusterControlPlaneDAO(MasterControlPlaneConfig controlPlaneConfig, EntityManager em) {
+    public ClusterControlPlaneDAO(MasterControlPlaneConfig controlPlaneConfig) {
 
         Objects.requireNonNull(controlPlaneConfig, "controlPlaneConfig cannot be null");
-        Objects.requireNonNull(controlPlaneConfig, "em cannot be null");
-
         this.controlPlaneConfig = controlPlaneConfig;
-        this.em = em;
     }
 
     public void init() {
-        ClusterControlPlane ccp = em.find(ClusterControlPlane.class, DEFAULT_CCP_ID);
+        ClusterControlPlane ccp = findById(DEFAULT_CCP_ID);
         if (ccp == null) {
             ccp = new ClusterControlPlane();
             ccp.setId(DEFAULT_CCP_ID);
@@ -64,10 +66,13 @@ public class ClusterControlPlaneDAO {
         ccp.setKubernetesApiUrl(controlPlaneConfig.getCcpKubernetesApiUrl());
         ccp.setDmnJitUrl(controlPlaneConfig.getCcpDmnJitUrl());
         ccp.setNamespace(controlPlaneConfig.getCcpNamespace());
-        em.merge(ccp);
+        persist(ccp);
     }
 
-    public ClusterControlPlane findOne() {
-        return em.find(ClusterControlPlane.class, DEFAULT_CCP_ID);
+    public ListResult<ClusterControlPlane> listAll(int page, int size) {
+        PanacheQuery<ClusterControlPlane> pagedQuery = findAll(ascending(ClusterControlPlane.DMN_JIT_URL_PARAM)).page(Page.of(page, size));
+        List<ClusterControlPlane> webhooks = pagedQuery.list();
+        long count = pagedQuery.count();
+        return new ListResult<>(webhooks, page, count);
     }
 }

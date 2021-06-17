@@ -18,7 +18,6 @@ package org.kie.baaas.mcp.app.manager;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -34,6 +33,7 @@ import org.kie.baaas.mcp.app.dao.DecisionVersionDAO;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
+import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
@@ -49,7 +49,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.anEmptyMap;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -161,7 +160,7 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void deployed_withFirstVersionOfDecision() {
-        DMNStorageRequest request = createStorageRequest();
+        createStorageRequest();
         DecisionRequest apiRequest = createApiRequest();
 
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
@@ -229,7 +228,7 @@ public class DecisionManagerTest {
 
         decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         assertThat(decisionVersion.getStatus(), equalTo(DecisionVersionStatus.BUILDING));
-        assertThat(decisionVersion.getVersion(), equalTo(2l));
+        assertThat(decisionVersion.getVersion(), equalTo(2L));
 
         decision = decisionVersion.getDecision();
         assertThat(decision.getCurrentVersion().getStatus(), equalTo(DecisionVersionStatus.CURRENT));
@@ -329,9 +328,7 @@ public class DecisionManagerTest {
 
     @Test
     public void deleteDecision_decisionDoesNotExist() {
-        assertThrows(NoSuchDecisionException.class, () -> {
-            decisionManager.deleteDecision(customerIdResolver.getCustomerId(), "foo");
-        });
+        assertThrows(NoSuchDecisionException.class, () -> decisionManager.deleteDecision(customerIdResolver.getCustomerId(), "foo"));
     }
 
     @TestTransaction
@@ -343,7 +340,7 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         Decision decision = decisionVersion.getDecision();
 
-        assertThrows(NoSuchDecisionVersionException.class, () -> decisionManager.deleteVersion(customerIdResolver.getCustomerId(), decision.getName(), decisionVersion.getVersion() + 1l));
+        assertThrows(NoSuchDecisionVersionException.class, () -> decisionManager.deleteVersion(customerIdResolver.getCustomerId(), decision.getName(), decisionVersion.getVersion() + 1L));
     }
 
     @TestTransaction
@@ -365,7 +362,7 @@ public class DecisionManagerTest {
         assertThat(decision.getCurrentVersion().getVersion(), equalTo(2L));
         assertThat(decision.getCurrentVersion().getStatus(), equalTo(DecisionVersionStatus.CURRENT));
 
-        DecisionVersion deletedVersion = decisionManager.deleteVersion(customerIdResolver.getCustomerId(), decision.getName(), 1l);
+        DecisionVersion deletedVersion = decisionManager.deleteVersion(customerIdResolver.getCustomerId(), decision.getName(), 1L);
         assertThat(deletedVersion.getStatus(), equalTo(DecisionVersionStatus.DELETED));
     }
 
@@ -405,16 +402,17 @@ public class DecisionManagerTest {
         DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
 
-        List<DecisionVersion> versions = decisionManager.listDecisionVersions(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId());
-        assertThat(versions, hasSize(1));
-        assertThat(versions.get(0).getId(), equalTo(decisionVersion.getId()));
+        ListResult<DecisionVersion> versions = decisionManager.listDecisionVersions(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), 0, 100);
+        assertThat(versions.getSize(), equalTo(1L));
+        assertThat(versions.getItems().get(0).getId(), equalTo(decisionVersion.getId()));
+        assertThat(versions.getTotal(), equalTo(1L));
     }
 
     @TestTransaction
     @Test
     public void getVersion_decisionDoesNotExist() {
         NoSuchDecisionException thrown = assertThrows(NoSuchDecisionException.class, () -> {
-            decisionManager.getVersion(customerIdResolver.getCustomerId(), "foo", 1l);
+            decisionManager.getVersion(customerIdResolver.getCustomerId(), "foo", 1L);
         });
 
         assertThat(thrown.getMessage(), equalTo("Decision with id or name 'foo' does not exist for customer '1'"));
@@ -428,7 +426,7 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
 
         assertThrows(NoSuchDecisionVersionException.class, () -> {
-            decisionManager.getVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), decisionVersion.getVersion() + 1l);
+            decisionManager.getVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), decisionVersion.getVersion() + 1L);
         });
     }
 
@@ -528,9 +526,10 @@ public class DecisionManagerTest {
         DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
 
-        List<DecisionVersion> versions = decisionManager.listDecisionVersions(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName());
-        assertThat(versions, hasSize(1));
-        assertThat(versions.get(0).getId(), equalTo(decisionVersion.getId()));
+        ListResult<DecisionVersion> versions = decisionManager.listDecisionVersions(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), 0, 100);
+        assertThat(versions.getSize(), equalTo(1L));
+        assertThat(versions.getItems().get(0).getId(), equalTo(decisionVersion.getId()));
+        assertThat(versions.getTotal(), equalTo(1L));
     }
 
     @TestTransaction
@@ -538,7 +537,7 @@ public class DecisionManagerTest {
     public void listDecisionVersions_noSuchIdOrName() {
 
         NoSuchDecisionException thrown = assertThrows(NoSuchDecisionException.class, () -> {
-            decisionManager.listDecisionVersions(customerIdResolver.getCustomerId(), "foo");
+            decisionManager.listDecisionVersions(customerIdResolver.getCustomerId(), "foo", 0, 100);
         });
 
         assertThat(thrown.getMessage(), equalTo("Decision with id or name 'foo' does not exist for customer '1'"));
@@ -568,23 +567,49 @@ public class DecisionManagerTest {
         decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest2);
         decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest3);
 
-        List<Decision> decisions = decisionManager.listDecisions(customerIdResolver.getCustomerId());
-        assertThat(decisions, hasSize(3));
+        ListResult<Decision> decisions = decisionManager.listDecisions(customerIdResolver.getCustomerId(), 0, 100);
+        assertThat(decisions.getTotal(), equalTo(3L));
+        assertThat(decisions.getSize(), equalTo(3L));
 
-        Decision found = decisions.get(0);
+        Decision found = decisions.getItems().get(0);
         assertThat(found.getName(), equalTo(apiRequest2.getName()));
         assertThat(found.getCurrentVersion().getConfiguration(), is(anEmptyMap()));
         assertThat(found.getCurrentVersion().getTags().containsKey("tagKey"), is(true));
 
-        found = decisions.get(1);
+        found = decisions.getItems().get(1);
         assertThat(found.getName(), equalTo(apiRequest.getName()));
         assertThat(found.getCurrentVersion().getConfiguration().containsKey("configKey"), is(true));
         assertThat(found.getCurrentVersion().getTags(), is(anEmptyMap()));
 
-        found = decisions.get(2);
+        found = decisions.getItems().get(2);
         assertThat(found.getName(), equalTo(apiRequest3.getName()));
         assertThat(found.getCurrentVersion().getConfiguration(), is(anEmptyMap()));
         assertThat(found.getCurrentVersion().getTags(), is(anEmptyMap()));
+    }
+
+    @TestTransaction
+    @Test
+    public void listDecisions_withPaging() {
+
+        createStorageRequest();
+
+        DecisionRequest apiRequest = createApiRequest();
+        DecisionRequest apiRequest2 = createApiRequest();
+        apiRequest2.setName("another-decision");
+
+        DecisionRequest apiRequest3 = createApiRequest();
+        apiRequest3.setName("yet-another-decision");
+
+        decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
+        decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest2);
+        decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest3);
+
+        ListResult<Decision> decisions = decisionManager.listDecisions(customerIdResolver.getCustomerId(), 2, 1);
+        assertThat(decisions.getTotal(), equalTo(3L));
+        assertThat(decisions.getSize(), equalTo(1L));
+
+        Decision found = decisions.getItems().get(0);
+        assertThat(found.getName(), equalTo(apiRequest3.getName()));
     }
 
     @TestTransaction
@@ -604,7 +629,7 @@ public class DecisionManagerTest {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
 
         assertThrows(NoSuchDecisionVersionException.class, () -> {
-            decisionManager.setCurrentVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion() + 1l);
+            decisionManager.setCurrentVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion() + 1L);
         });
     }
 
@@ -642,7 +667,7 @@ public class DecisionManagerTest {
 
         decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
 
-        DecisionVersion firstVersion = decisionManager.getVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), 1l);
+        DecisionVersion firstVersion = decisionManager.getVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), 1L);
         assertThat(firstVersion.getStatus(), equalTo(DecisionVersionStatus.READY));
 
         assertThrows(DecisionLifecycleException.class, () -> decisionManager.setCurrentVersion(customerIdResolver.getCustomerId(), firstVersion.getDecision().getId(), firstVersion.getVersion()));
@@ -670,7 +695,7 @@ public class DecisionManagerTest {
         decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiRequest);
         decisionVersion = decisionManager.deployed(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());
 
-        DecisionVersion firstVersion = decisionManager.getVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), 1l);
+        DecisionVersion firstVersion = decisionManager.getVersion(customerIdResolver.getCustomerId(), decisionVersion.getDecision().getId(), 1L);
         assertThat(firstVersion.getStatus(), equalTo(DecisionVersionStatus.READY));
 
         DecisionVersion newVersion = decisionManager.setCurrentVersion(customerIdResolver.getCustomerId(), firstVersion.getDecision().getId(), firstVersion.getVersion());

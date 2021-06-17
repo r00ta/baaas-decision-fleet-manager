@@ -37,6 +37,6 @@ public class DefaultControlPlaneSelector implements ClusterControlPlaneSelector 
     }
 
     public ClusterControlPlane selectControlPlaneForDeployment(Decision decision) {
-        return controlPlaneDAO.findOne();
+        return controlPlaneDAO.findById(ClusterControlPlaneDAO.DEFAULT_CCP_ID);
     }
 }

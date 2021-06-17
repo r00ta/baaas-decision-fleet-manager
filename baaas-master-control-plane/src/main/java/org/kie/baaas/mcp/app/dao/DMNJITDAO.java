@@ -17,6 +17,7 @@ package org.kie.baaas.mcp.app.dao;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.Objects;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -26,6 +27,9 @@ import javax.transaction.Transactional;
 import org.kie.baaas.mcp.api.DMNJIT;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+import org.kie.baaas.mcp.app.model.ListResult;
+
+import static java.util.stream.Collectors.toList;
 
 @ApplicationScoped
 public class DMNJITDAO {
@@ -39,20 +43,20 @@ public class DMNJITDAO {
     }
 
     @Transactional
-    public DMNJIT findOne() {
+    public ListResult<DMNJIT> listAll(int page, int size) {
+        ListResult<ClusterControlPlane> fleetShards = controlPlaneDAO.listAll(page, size);
+        List<DMNJIT> jits = fleetShards.getItems().stream().map(this::createJitForShard).collect(toList());
+        return new ListResult<>(jits, fleetShards.getPage(), fleetShards.getTotal());
+    }
 
-        ClusterControlPlane clusterControlPlane = controlPlaneDAO.findOne();
-        if (clusterControlPlane == null) {
-            throw new MasterControlPlaneException("There are zero registered Cluster Control Planes. Unable to retrieve DMN JIT details.");
-        }
-
+    private DMNJIT createJitForShard(ClusterControlPlane fleetShard) {
         try {
-            URL dmnJitUrl = new URL(clusterControlPlane.getDmnJitUrl());
+            URL dmnJitUrl = new URL(fleetShard.getDmnJitUrl());
             DMNJIT dmnjit = new DMNJIT();
             dmnjit.setUrl(dmnJitUrl);
             return dmnjit;
         } catch (MalformedURLException e) {
-            throw new MasterControlPlaneException("The DMN JIT URL '" + clusterControlPlane.getDmnJitUrl() + "' is malformed.", e);
+            throw new MasterControlPlaneException("The DMN JIT URL '" + fleetShard.getDmnJitUrl() + "' is malformed.", e);
         }
     }
 }

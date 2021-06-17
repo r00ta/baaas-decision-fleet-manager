@@ -35,7 +35,7 @@ public class DBMigrationTest {
     @Test
     public void flyway_migrate() {
 
-        ClusterControlPlane clusterControlPlane = controlPlaneDAO.findOne();
+        ClusterControlPlane clusterControlPlane = controlPlaneDAO.findById(ClusterControlPlaneDAO.DEFAULT_CCP_ID);
         assertThat(clusterControlPlane.getDmnJitUrl(), equalTo("https://baaas-dmn-jit-baaas-dmn-jit-demo.apps.kogito-cloud.automation.rhmw.io/jitdmn"));
         assertThat(clusterControlPlane.getKubernetesApiUrl(), equalTo("https://kubernetes.default.svc"));
     }

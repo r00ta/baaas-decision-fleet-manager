@@ -250,7 +250,9 @@ public class WebhookResourceTest {
                 .then()
                 .statusCode(200)
                 .extract().as(WebhookResponseList.class);
-        assertEquals(1, webhooks.getItems().size());
+        assertEquals(1L, webhooks.getSize());
+        assertEquals(1L, webhooks.getTotal());
+        assertEquals(0L, webhooks.getPage());
         WebhookResponse webhook0 = webhooks.getItems().get(0);
         assertEquals("test-builtin-webhook", webhook0.getId()); // taken from test data
         assertEquals("http://localhost:8080/test-builtin-webhook", webhook0.getUrl().toString());

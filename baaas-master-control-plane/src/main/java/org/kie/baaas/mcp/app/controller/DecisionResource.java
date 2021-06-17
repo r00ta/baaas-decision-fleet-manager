@@ -16,18 +16,21 @@
 package org.kie.baaas.mcp.app.controller;
 
 import java.io.ByteArrayOutputStream;
-import java.util.List;
 
 import javax.inject.Inject;
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
@@ -41,11 +44,19 @@ import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
+import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.Objects.requireNonNull;
+import static org.kie.baaas.mcp.app.controller.APIConstants.PAGE;
+import static org.kie.baaas.mcp.app.controller.APIConstants.PAGE_DEFAULT;
+import static org.kie.baaas.mcp.app.controller.APIConstants.PAGE_MIN;
+import static org.kie.baaas.mcp.app.controller.APIConstants.SIZE;
+import static org.kie.baaas.mcp.app.controller.APIConstants.SIZE_DEFAULT;
+import static org.kie.baaas.mcp.app.controller.APIConstants.SIZE_MAX;
+import static org.kie.baaas.mcp.app.controller.APIConstants.SIZE_MIN;
 
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -114,10 +125,6 @@ public class DecisionResource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response getDecisionVersionDMN(@PathParam("id") String id, @PathParam("version") long version) {
 
-        // TODO HHH000104: firstResult/maxResults specified with collection fetch; applying in memory!
-        // happens when trying to fetch a decision that does not exist. it might be preventing the exception to be thrown
-        // on readDMN method.
-
         // TODO returns a formatted xml file.
 
         String customerId = customerIdResolver.getCustomerId();
@@ -166,21 +173,22 @@ public class DecisionResource {
 
     @GET
     @Path("{id}/versions")
-    public Response listDecisionVersions(@PathParam("id") String id) {
+    public Response listDecisionVersions(@PathParam("id") String id, @DefaultValue(PAGE_DEFAULT) @Min(PAGE_MIN) @QueryParam(PAGE) int page,
+            @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) @QueryParam(SIZE) int size) {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Listing all versions for Decision with id or name '{}' for customer '{}'...", id, customerId);
-        List<DecisionVersion> versions = decisionLifecycle.listDecisionVersions(customerId, id);
+        ListResult<DecisionVersion> versions = decisionLifecycle.listDecisionVersions(customerId, id, page, size);
         DecisionResponseList responseList = decisionMapper.mapVersionsToDecisionResponseList(versions);
         return Response.ok(responseList).build();
     }
 
     @GET
-    public Response listDecisions() {
+    public Response listDecisions(@DefaultValue(PAGE_DEFAULT) @Min(PAGE_MIN) @QueryParam(PAGE) int page, @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) @QueryParam(SIZE) int size) {
 
         String customerId = customerIdResolver.getCustomerId();
         LOGGER.info("Listing all Decisions for customer with id '{}...'", customerId);
-        List<Decision> decisions = decisionLifecycle.listDecisions(customerId);
+        ListResult<Decision> decisions = decisionLifecycle.listDecisions(customerId, page, size);
         DecisionResponseList responseList = decisionMapper.mapToDecisionResponseList(decisions);
         return Response.ok(responseList).build();
     }

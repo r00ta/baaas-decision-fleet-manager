@@ -15,46 +15,43 @@
 
 package org.kie.baaas.mcp.app.controller;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.mcp.api.DMNJIT;
 import org.kie.baaas.mcp.api.DMNJITList;
-import org.kie.baaas.mcp.app.dao.DMNJITDAO;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
+
+import io.quarkus.test.junit.QuarkusTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@QuarkusTest
 public class DMNJITResourceTest {
 
-    @Mock
-    private DMNJITDAO dmnjitdao;
+    @Inject
+    MasterControlPlaneConfig config;
 
-    @Mock
-    private DMNJIT dmnjit;
-
-    @InjectMocks
-    private DMNJITResource dmnjitResource;
+    @Inject
+    DMNJITResource dmnjitResource;
 
     @Test
     public void listDmnJits() {
 
-        when(dmnjitdao.findOne()).thenReturn(dmnjit);
-
-        Response response = dmnjitResource.listDmnJits();
+        Response response = dmnjitResource.listDmnJits(0, 100);
         assertThat(response, is(notNullValue()));
         assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
 
         DMNJITList dmnjitList = response.readEntity(DMNJITList.class);
-        assertThat(dmnjitList.getItems(), contains(dmnjit));
+        assertThat(dmnjitList.getPage(), equalTo(0L));
+        assertThat(dmnjitList.getSize(), equalTo(1L));
+        assertThat(dmnjitList.getTotal(), equalTo(1L));
+
+        DMNJIT dmnjit = dmnjitList.getItems().get(0);
+        assertThat(dmnjit.getUrl().toExternalForm(), equalTo(config.getCcpDmnJitUrl()));
     }
 }

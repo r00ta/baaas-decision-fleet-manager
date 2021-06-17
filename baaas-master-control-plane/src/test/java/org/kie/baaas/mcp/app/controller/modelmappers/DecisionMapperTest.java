@@ -20,6 +20,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,7 @@ import org.kie.baaas.mcp.api.decisions.DecisionResponseList;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
+import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
 import org.mockito.InjectMocks;
@@ -39,7 +41,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -49,9 +50,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class DecisionMapperTest {
 
-    private static final String DECISION_VERSION_HREF = "http://decision.version.redhat.com";
+    private static final String DECISION_VERSION_HREF = "https://decision.version.redhat.com";
 
-    private static final String DECISION_VERSION_DMN_HREF = "http://decision.version.dmn.redhat.com";
+    private static final String DECISION_VERSION_DMN_HREF = "https://decision.version.dmn.redhat.com";
 
     @Mock
     private HrefGenerator hrefGenerator;
@@ -155,9 +156,14 @@ public class DecisionMapperTest {
         DecisionVersion version2 = createDecisionVersion(decision);
         version2.setVersion(2l);
 
-        DecisionResponseList responseList = decisionMapper.mapVersionsToDecisionResponseList(asList(version, version2));
+        List<DecisionVersion> versions = asList(version, version2);
+        ListResult<DecisionVersion> listResult = new ListResult<>(versions, 46L, 47L);
+
+        DecisionResponseList responseList = decisionMapper.mapVersionsToDecisionResponseList(listResult);
         assertThat(responseList, is(notNullValue()));
-        assertThat(responseList.getItems(), hasSize(2));
+        assertThat(responseList.getSize(), equalTo(2L));
+        assertThat(responseList.getPage(), equalTo(46L));
+        assertThat(responseList.getTotal(), equalTo(47L));
 
         assertDecisionResponse(responseList.getItems().get(0), decision, version2, false);
         assertDecisionResponse(responseList.getItems().get(1), decision, version, false);
@@ -188,9 +194,14 @@ public class DecisionMapperTest {
         decisionVersion2.setSubmittedAt(latest);
         decision2.setCurrentVersion(decisionVersion2);
 
-        DecisionResponseList responseList = decisionMapper.mapToDecisionResponseList(asList(decision, decision2));
+        List<Decision> decisions = asList(decision, decision2);
+        ListResult<Decision> listResult = new ListResult<>(decisions, 46L, 47L);
+
+        DecisionResponseList responseList = decisionMapper.mapToDecisionResponseList(listResult);
         assertThat(responseList, is(notNullValue()));
-        assertThat(responseList.getItems(), hasSize(2));
+        assertThat(responseList.getSize(), equalTo(2L));
+        assertThat(responseList.getPage(), equalTo(46L));
+        assertThat(responseList.getTotal(), equalTo(47L));
 
         assertDecisionResponse(responseList.getItems().get(0), decision2, decisionVersion2, false);
         assertDecisionResponse(responseList.getItems().get(1), decision, decisionVersion, false);

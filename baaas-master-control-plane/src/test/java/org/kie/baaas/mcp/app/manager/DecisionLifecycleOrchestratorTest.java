@@ -78,6 +78,7 @@ public class DecisionLifecycleOrchestratorTest {
     private ClusterControlPlaneClientFactory clientFactory;
 
     @Mock
+    @SuppressWarnings("unused")
     private ListenerManager listenerManager;
 
     @Mock

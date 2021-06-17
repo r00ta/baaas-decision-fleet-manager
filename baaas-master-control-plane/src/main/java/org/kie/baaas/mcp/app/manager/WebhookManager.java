@@ -15,6 +15,7 @@ import org.eclipse.microprofile.context.ManagedExecutor;
 import org.kie.baaas.mcp.api.webhook.WebhookRegistrationRequest;
 import org.kie.baaas.mcp.app.dao.WebhookDAO;
 import org.kie.baaas.mcp.app.listener.ListenerManager;
+import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.webhook.Webhook;
 import org.kie.baaas.mcp.app.webhook.AlreadyExistingWebhookException;
 import org.kie.baaas.mcp.app.webhook.NotFoundWebhookException;
@@ -65,6 +66,10 @@ public class WebhookManager {
 
     public List<Webhook> listAll() {
         return webhookDAO.listAll();
+    }
+
+    public ListResult<Webhook> listAll(int page, int size) {
+        return webhookDAO.listAll(page, size);
     }
 
     public Webhook registerWebhook(WebhookRegistrationRequest webhookReq) {

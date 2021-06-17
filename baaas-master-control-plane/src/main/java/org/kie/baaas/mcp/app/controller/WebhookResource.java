@@ -21,25 +21,40 @@ import java.util.stream.Collectors;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import org.kie.baaas.mcp.api.webhook.WebhookRegistrationRequest;
 import org.kie.baaas.mcp.api.webhook.WebhookResponse;
 import org.kie.baaas.mcp.api.webhook.WebhookResponseList;
 import org.kie.baaas.mcp.app.manager.WebhookManager;
+import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.webhook.Webhook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.kie.baaas.mcp.app.controller.APIConstants.PAGE;
+import static org.kie.baaas.mcp.app.controller.APIConstants.PAGE_DEFAULT;
+import static org.kie.baaas.mcp.app.controller.APIConstants.PAGE_MIN;
+import static org.kie.baaas.mcp.app.controller.APIConstants.SIZE;
+import static org.kie.baaas.mcp.app.controller.APIConstants.SIZE_DEFAULT;
+import static org.kie.baaas.mcp.app.controller.APIConstants.SIZE_MAX;
+import static org.kie.baaas.mcp.app.controller.APIConstants.SIZE_MIN;
+
 @Path("/webhooks")
 @ApplicationScoped
 public class WebhookResource {
+
     private final Logger LOG = LoggerFactory.getLogger(WebhookResource.class);
+
     private final WebhookManager webhookManager;
 
     @Inject
@@ -68,10 +83,14 @@ public class WebhookResource {
     }
 
     @GET
-    public Response getWebooks() {
-        List<WebhookResponse> webhooks = webhookManager.listAll().stream().map(e -> WebhookResponse.from(e.getId(), e.getUrl())).collect(Collectors.toList());
+    public Response getWebooks(@QueryParam(PAGE) @Min(PAGE_MIN) @DefaultValue(PAGE_DEFAULT) int page, @QueryParam(SIZE) @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) int size) {
+        ListResult<Webhook> listResult = webhookManager.listAll(page, size);
+        List<WebhookResponse> webhooks = listResult.getItems().stream().map(e -> WebhookResponse.from(e.getId(), e.getUrl())).collect(Collectors.toList());
         WebhookResponseList result = new WebhookResponseList();
         result.setItems(webhooks);
+        result.setPage(listResult.getPage());
+        result.setSize(listResult.getSize());
+        result.setTotal(listResult.getTotal());
         return Response.ok().entity(result).build();
     }
 }

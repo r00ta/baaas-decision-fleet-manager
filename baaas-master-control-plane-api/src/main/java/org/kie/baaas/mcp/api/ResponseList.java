@@ -15,40 +15,43 @@
 
 package org.kie.baaas.mcp.api;
 
-import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-        "page",
-        "size",
-        "total",
-        "kind",
-        "items"
-})
 @RegisterForReflection
-public class DMNJITList extends ResponseList {
+public abstract class ResponseList {
 
-    @JsonProperty("kind")
-    private final String kind = "DMNJITList";
+    @JsonProperty("page")
+    private long page;
 
-    @JsonProperty("items")
-    private List<DMNJIT> items;
+    @JsonProperty("size")
+    private long size;
 
-    public String getKind() {
-        return kind;
+    @JsonProperty("total")
+    private long total;
+
+    public long getPage() {
+        return page;
     }
 
-    public List<DMNJIT> getItems() {
-        return items;
+    public void setPage(long page) {
+        this.page = page;
     }
 
-    public void setItems(List<DMNJIT> items) {
-        this.items = items;
+    public long getSize() {
+        return size;
+    }
+
+    public void setSize(long size) {
+        this.size = size;
+    }
+
+    public long getTotal() {
+        return total;
+    }
+
+    public void setTotal(long total) {
+        this.total = total;
     }
 }
