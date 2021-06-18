@@ -19,7 +19,6 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
@@ -28,10 +27,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
  * for eventing.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-        "source",
-        "sink"
-})
 @RegisterForReflection
 public class Kafka {
 

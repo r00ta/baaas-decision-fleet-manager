@@ -107,7 +107,6 @@ public class DecisionMapperTest {
         assertThat(response.getPublishedAt(), equalTo(decisionVersion.getPublishedAt()));
         assertThat(response.getSubmittedAt(), equalTo(decisionVersion.getSubmittedAt()));
         assertThat(response.getVersion(), equalTo(decisionVersion.getVersion()));
-        assertThat(response.getUrl(), equalTo(decisionVersion.getDeployment().getVersionUrl()));
         assertThat(response.getVersionEndpoint(), equalTo(decisionVersion.getDeployment().getVersionUrl()));
         assertThat(response.getResponseModel().getHref(), equalTo(DECISION_VERSION_DMN_HREF));
         assertThat(response.getResponseModel().getMd5(), equalTo(decisionVersion.getDmnMd5()));

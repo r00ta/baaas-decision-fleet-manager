@@ -18,7 +18,6 @@ package org.kie.baaas.mcp.api;
 import java.net.URL;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
@@ -26,10 +25,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
  * Represents instances of the DMN JIT that can be invoked by the user to test their
  * DMN as part of the Decision Authoring lifecycle.
  */
-@JsonPropertyOrder({
-        "kind",
-        "url"
-})
 @RegisterForReflection
 public class DMNJIT {
 
