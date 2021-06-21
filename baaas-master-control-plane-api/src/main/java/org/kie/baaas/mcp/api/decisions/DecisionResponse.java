@@ -21,28 +21,10 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-        "kind",
-        "id",
-        "version",
-        "href",
-        "name",
-        "description",
-        "model",
-        "eventing",
-        "configuration",
-        "tags",
-        "url",
-        "status",
-        "status_message",
-        "submitted_at",
-        "published_at"
-})
 @RegisterForReflection
 public class DecisionResponse extends DecisionBase {
 
@@ -74,10 +56,6 @@ public class DecisionResponse extends DecisionBase {
 
     @JsonProperty("status_message")
     private String statusMessage;
-
-    @Deprecated
-    @JsonProperty("url")
-    private String url;
 
     @JsonProperty("version_endpoint")
     private String versionEndpoint;
@@ -152,14 +130,6 @@ public class DecisionResponse extends DecisionBase {
 
     public void setStatusMessage(String statusMessage) {
         this.statusMessage = statusMessage;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
     }
 
     public String getVersionEndpoint() {

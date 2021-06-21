@@ -22,18 +22,10 @@ import org.kie.baaas.mcp.api.ResponseList;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-        "page",
-        "size",
-        "total",
-        "kind",
-        "items"
-})
 @RegisterForReflection
 public class DecisionResponseList extends ResponseList {
 

@@ -64,7 +64,6 @@ public class DecisionMapper {
             if (DecisionVersionStatus.CURRENT.equals(decisionVersion.getStatus())) {
                 decisionResponse.setCurrentEndpoint(decisionVersion.getDeployment().getCurrentUrl());
             }
-            decisionResponse.setUrl(decisionVersion.getDeployment().getVersionUrl()); // to be removed once the modeler is updated to use versionEndpoint and currentEndpoint
             decisionResponse.setVersionEndpoint(decisionVersion.getDeployment().getVersionUrl());
             decisionResponse.setStatusMessage(decisionVersion.getDeployment().getStatusMessage());
         }
