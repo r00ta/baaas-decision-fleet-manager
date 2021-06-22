@@ -25,7 +25,7 @@ import org.kie.baaas.mcp.app.vault.Secret;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.openshift.cloud.api.kas.DefaultApi;
+import com.openshift.cloud.api.kas.SecurityApi;
 import com.openshift.cloud.api.kas.invoker.ApiException;
 import com.openshift.cloud.api.kas.invoker.auth.HttpBearerAuth;
 import com.openshift.cloud.api.kas.models.ServiceAccount;
@@ -47,9 +47,9 @@ public class ManagedServicesClient {
     ManagedServicesConfig config;
 
     public Secret createOrReplaceServiceAccount(String saName) {
-        var defaultApi = getDefaultApi();
+        var api = getApi();
         try {
-            Optional<ServiceAccountListItem> expected = defaultApi.listServiceAccounts()
+            Optional<ServiceAccountListItem> expected = api.getServiceAccounts()
                     .getItems()
                     .stream()
                     .filter(s -> s.getName().equals(saName))
@@ -57,16 +57,16 @@ public class ManagedServicesClient {
             ServiceAccount sa;
             if (expected.isPresent()) {
                 LOGGER.debug("ServiceAccount {} exists, need to reset the credentials", saName);
-                sa = defaultApi.resetServiceAccountCreds(expected.get().getId());
+                sa = api.resetServiceAccountCreds(expected.get().getId());
             } else {
-                ServiceAccountRequest req = new ServiceAccountRequest();
+                var req = new ServiceAccountRequest();
                 req.name(saName);
                 req.description("DaaS Managed Service Account " + saName);
                 LOGGER.debug("ServiceAccount {} does not exist, need to create it.", saName);
-                sa = defaultApi.createServiceAccount(req);
+                sa = api.createServiceAccount(req);
             }
             return new Secret().setId(sa.getName())
-                    .value(CLIENT_ID, sa.getClientID())
+                    .value(CLIENT_ID, sa.getClientId())
                     .value(CLIENT_SECRET, sa.getClientSecret());
         } catch (ApiException e) {
             LOGGER.error("Unable to createOrReplace ServiceAccount {}", saName, e);
@@ -74,10 +74,10 @@ public class ManagedServicesClient {
         }
     }
 
-    private DefaultApi getDefaultApi() {
+    private SecurityApi getApi() {
         HttpBearerAuth bearer = (HttpBearerAuth) config.getClient().getAuthentication("Bearer");
         bearer.setBearerToken(token.getRawToken());
-        return new DefaultApi(config.getClient());
+        return new SecurityApi(config.getClient());
     }
 
 }

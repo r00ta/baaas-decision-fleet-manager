@@ -44,14 +44,6 @@ public class MasterControlPlaneConfig {
     @ConfigProperty(name = "baaas.ccp.namespace")
     String ccpNamespace;
 
-    @NotBlank
-    @ConfigProperty(name = "baaas.kafka.bootstrap-urls")
-    String kafkaBootstrapServers;
-
-    @NotBlank
-    @ConfigProperty(name = "baaas.kafka.secret-name")
-    String kafkaSecretName;
-
     @Inject
     @ConfigProperty(name = "baaas.mcp.s3.bucket.name")
     String bucketName;
@@ -74,14 +66,6 @@ public class MasterControlPlaneConfig {
 
     public String getCcpNamespace() {
         return ccpNamespace;
-    }
-
-    public String getKafkaBootstrapServers() {
-        return this.kafkaBootstrapServers;
-    }
-
-    public String getKafkaSecretName() {
-        return kafkaSecretName;
     }
 
     public String getBucketName() {

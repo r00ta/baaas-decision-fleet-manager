@@ -42,7 +42,7 @@ import javax.persistence.Table;
 import javax.persistence.Version;
 
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
-import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
+import org.kie.baaas.mcp.app.model.eventing.KafkaConfig;
 
 /**
  * Encapsulates a version of a Decision.
@@ -121,9 +121,10 @@ public class DecisionVersion {
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(name = "sourceTopic", column = @Column(name = "kafka_source_topic", updatable = false)),
-            @AttributeOverride(name = "sinkTopic", column = @Column(name = "kafka_sink_topic", updatable = false))
+            @AttributeOverride(name = "sinkTopic", column = @Column(name = "kafka_sink_topic", updatable = false)),
+            @AttributeOverride(name = "bootstrapServers", column = @Column(name = "kafka_bootstrap_servers", updatable = false))
     })
-    private KafkaTopics kafkaTopics;
+    private KafkaConfig kafkaConfig;
 
     @Embedded
     @AttributeOverrides({
@@ -144,12 +145,12 @@ public class DecisionVersion {
         this.deployment = deployment;
     }
 
-    public KafkaTopics getKafkaTopics() {
-        return kafkaTopics;
+    public KafkaConfig getKafkaConfig() {
+        return kafkaConfig;
     }
 
-    public void setKafkaTopics(KafkaTopics kafkaTopics) {
-        this.kafkaTopics = kafkaTopics;
+    public void setKafkaConfig(KafkaConfig kafkaConfig) {
+        this.kafkaConfig = kafkaConfig;
     }
 
     public String getId() {

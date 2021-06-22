@@ -38,7 +38,7 @@ import static org.junit.Assert.fail;
 
 public class WireMockManagedServices implements QuarkusTestResourceLifecycleManager {
 
-    private static final WireMockServer MOCK_SERVER = new WireMockServer(options().dynamicPort());;
+    private static final WireMockServer MOCK_SERVER = new WireMockServer(options().dynamicPort());
 
     ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
@@ -46,22 +46,22 @@ public class WireMockManagedServices implements QuarkusTestResourceLifecycleMana
     public Map<String, String> start() {
         MOCK_SERVER.start();
 
-        MOCK_SERVER.stubFor(get(urlEqualTo("/api/managed-services-api/v1/serviceaccounts"))
+        MOCK_SERVER.stubFor(get(urlEqualTo("/api/kafkas_mgmt/v1/service_accounts"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON)
                         .withBody(getSAList())));
 
-        MOCK_SERVER.stubFor(post(urlEqualTo("/api/managed-services-api/v1/serviceaccounts"))
+        MOCK_SERVER.stubFor(post(urlEqualTo("/api/kafkas_mgmt/v1/service_accounts"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON)
                         .withBody(getSA("foo"))));
 
-        MOCK_SERVER.stubFor(post(urlEqualTo("/api/managed-services-api/v1/serviceaccounts/id-5/reset-credentials"))
+        MOCK_SERVER.stubFor(post(urlEqualTo("/api/kafkas_mgmt/v1/service_accounts/id-5/reset_credentials"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", MediaType.APPLICATION_JSON)
                         .withBody(getSA("5"))));
 
-        MOCK_SERVER.stubFor(post(urlEqualTo("/api/managed-services-api/v1/serviceaccounts/id-9/reset-credentials"))
+        MOCK_SERVER.stubFor(post(urlEqualTo("/api/kafkas_mgmt/v1/service_accounts/id-9/reset_credentials"))
                 .willReturn(aResponse()
                         .withStatus(500)));
 
@@ -70,9 +70,7 @@ public class WireMockManagedServices implements QuarkusTestResourceLifecycleMana
 
     @Override
     public void stop() {
-        if (MOCK_SERVER != null) {
-            MOCK_SERVER.stop();
-        }
+        MOCK_SERVER.stop();
     }
 
     private String getSAList() {
@@ -96,7 +94,7 @@ public class WireMockManagedServices implements QuarkusTestResourceLifecycleMana
         sa.setDescription("description-" + id);
         sa.setCreatedAt(ZonedDateTime.now().toOffsetDateTime());
         sa.setOwner("owner-" + id);
-        sa.setClientID("client-" + id);
+        sa.setClientId("client-" + id);
         sa.setClientSecret("secret-" + id);
         return serialize(sa);
 

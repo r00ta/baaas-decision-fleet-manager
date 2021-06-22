@@ -33,7 +33,7 @@ import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
 import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
-import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
+import org.kie.baaas.mcp.app.model.eventing.KafkaConfig;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -135,16 +135,18 @@ public class DecisionMapperTest {
         Decision decision = createDecision("my-first-decision");
         DecisionVersion decisionVersion = createDecisionVersion(decision);
 
-        KafkaTopics topics = new KafkaTopics();
-        topics.setSinkTopic("sink-topic");
-        topics.setSourceTopic("source-topic");
-        decisionVersion.setKafkaTopics(topics);
+        KafkaConfig kafkaConfig = new KafkaConfig();
+        kafkaConfig.setSinkTopic("sink-topic");
+        kafkaConfig.setSourceTopic("source-topic");
+        kafkaConfig.setBootstrapServers("example:9002");
+        decisionVersion.setKafkaConfig(kafkaConfig);
 
         DecisionResponse response = decisionMapper.mapVersionToDecisionResponse(decisionVersion);
         assertDecisionResponse(response, decision, decisionVersion, true);
 
-        assertThat(response.getEventing().getKafka().getSink(), equalTo(topics.getSinkTopic()));
-        assertThat(response.getEventing().getKafka().getSource(), equalTo(topics.getSourceTopic()));
+        assertThat(response.getEventing().getKafka().getSink(), equalTo(kafkaConfig.getSinkTopic()));
+        assertThat(response.getEventing().getKafka().getSource(), equalTo(kafkaConfig.getSourceTopic()));
+        assertThat(response.getEventing().getKafka().getBootstrapServers(), equalTo(kafkaConfig.getBootstrapServers()));
     }
 
     @Test

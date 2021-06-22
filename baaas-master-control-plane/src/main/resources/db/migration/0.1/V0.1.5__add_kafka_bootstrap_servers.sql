@@ -1,0 +1,1 @@
+ALTER TABLE DECISION_VERSION ADD kafka_bootstrap_servers varchar(255) AFTER kafka_sink_topic;

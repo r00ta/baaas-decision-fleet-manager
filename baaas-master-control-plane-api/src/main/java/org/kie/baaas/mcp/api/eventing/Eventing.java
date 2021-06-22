@@ -17,6 +17,8 @@ package org.kie.baaas.mcp.api.eventing;
 
 import java.util.Objects;
 
+import javax.validation.Valid;
+
 import org.kie.baaas.mcp.api.eventing.kafka.Kafka;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,14 +31,13 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 public class Eventing {
 
     @JsonProperty("kafka")
+    @Valid
     private Kafka kafka;
 
-    @JsonProperty("kafka")
     public Kafka getKafka() {
         return kafka;
     }
 
-    @JsonProperty("kafka")
     public void setKafka(Kafka kafka) {
         this.kafka = kafka;
     }

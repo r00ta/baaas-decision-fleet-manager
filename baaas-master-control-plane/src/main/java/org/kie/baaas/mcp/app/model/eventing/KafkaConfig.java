@@ -18,16 +18,22 @@ package org.kie.baaas.mcp.app.model.eventing;
 import java.util.Objects;
 
 import javax.persistence.Embeddable;
+import javax.persistence.Transient;
 
 /**
  * Encapsulates the Kafka Topics that a user can attach to a Decision
  */
 @Embeddable
-public class KafkaTopics {
+public class KafkaConfig {
 
     private String sourceTopic;
 
     private String sinkTopic;
+
+    private String bootstrapServers;
+
+    @Transient
+    private Credential credential;
 
     public String getSourceTopic() {
         return sourceTopic;
@@ -45,20 +51,37 @@ public class KafkaTopics {
         this.sinkTopic = outputTopic;
     }
 
+    public String getBootstrapServers() {
+        return bootstrapServers;
+    }
+
+    public void setBootstrapServers(String bootstrapServers) {
+        this.bootstrapServers = bootstrapServers;
+    }
+
+    public Credential getCredential() {
+        return credential;
+    }
+
+    public void setCredential(Credential credential) {
+        this.credential = credential;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
+        if (this == o)
             return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof KafkaConfig))
             return false;
-        }
-        KafkaTopics that = (KafkaTopics) o;
-        return Objects.equals(sourceTopic, that.sourceTopic) && Objects.equals(sinkTopic, that.sinkTopic);
+        KafkaConfig that = (KafkaConfig) o;
+        return Objects.equals(sourceTopic, that.sourceTopic) &&
+                Objects.equals(sinkTopic, that.sinkTopic) &&
+                Objects.equals(bootstrapServers, that.bootstrapServers) &&
+                Objects.equals(credential, that.credential);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sourceTopic, sinkTopic);
+        return Objects.hash(sourceTopic, sinkTopic, bootstrapServers, credential);
     }
 }

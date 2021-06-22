@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
 import org.kie.baaas.mcp.api.eventing.Eventing;
@@ -32,15 +32,15 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 public abstract class DecisionBase {
 
     @JsonProperty("kind")
-    @NotEmpty(message = "Kind cannot be blank")
+    @NotBlank(message = "Kind cannot be blank")
     @Pattern(regexp = "Decision")
     private String kind;
 
-    @NotEmpty
+    @NotBlank
     @JsonProperty("name")
     private String name;
 
-    @NotEmpty
+    @NotBlank
     @JsonProperty("description")
     private String description;
 

@@ -20,8 +20,8 @@ import java.util.Collection;
 
 import org.kie.baaas.dfs.api.DecisionRequest;
 import org.kie.baaas.dfs.api.DecisionRequestSpec;
-import org.kie.baaas.dfs.api.DecisionVersionSpec;
-import org.kie.baaas.dfs.api.Kafka;
+import org.kie.baaas.dfs.api.KafkaCredential;
+import org.kie.baaas.dfs.api.KafkaRequest;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
@@ -90,25 +90,22 @@ public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClie
         ObjectMeta objectMeta = new ObjectMeta();
         objectMeta.setName(getDecisionRequestName(decisionVersion));
 
-        DecisionVersionSpec decisionVersionSpec = new DecisionVersionSpec();
-        decisionVersionSpec.setVersion(String.valueOf(decisionVersion.getVersion()));
-        decisionVersionSpec.setSource(URI.create(decisionVersion.getDmnLocation()));
-
-        if (decisionVersion.getKafkaTopics() != null) {
-            Kafka kafka = new Kafka();
-            kafka.setInputTopic(decisionVersion.getKafkaTopics().getSourceTopic());
-            kafka.setOutputTopic(decisionVersion.getKafkaTopics().getSinkTopic());
-            // The kafka cluster in-use is hard-coded for the demo. The user can only vary the topics that they want to use.
-            kafka.setBootstrapServers(config.getKafkaBootstrapServers());
-            kafka.setSecretName(config.getKafkaSecretName());
-            decisionVersionSpec.setKafka(kafka);
-        }
-
         DecisionRequestSpec decisionRequestSpec = new DecisionRequestSpec();
-        decisionRequestSpec.setDefinition(decisionVersionSpec);
         decisionRequestSpec.setName(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName()).toLowerCase());
+        decisionRequestSpec.setSource(URI.create(decisionVersion.getDmnLocation()));
+        decisionRequestSpec.setVersion(String.valueOf(decisionVersion.getVersion()));
         decisionRequestSpec.setCustomerId(decisionVersion.getDecision().getCustomerId());
         decisionRequestSpec.setWebhooks(createCallbackUrl(decisionVersion));
+
+        if (decisionVersion.getKafkaConfig() != null) {
+            decisionRequestSpec.setKafka(new KafkaRequest()
+                    .setInputTopic(decisionVersion.getKafkaConfig().getSourceTopic())
+                    .setOutputTopic(decisionVersion.getKafkaConfig().getSinkTopic())
+                    .setCredential(new KafkaCredential()
+                            .setClientId(decisionVersion.getKafkaConfig().getCredential().getClientId())
+                            .setClientSecret(decisionVersion.getKafkaConfig().getCredential().getClientSecret()))
+                    .setBootstrapServers(decisionVersion.getKafkaConfig().getBootstrapServers()));
+        }
 
         DecisionRequest decisionRequest = new DecisionRequest();
         decisionRequest.setMetadata(objectMeta);

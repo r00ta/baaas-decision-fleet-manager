@@ -36,11 +36,15 @@ import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
+import org.kie.baaas.mcp.app.model.eventing.Credential;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.kie.baaas.mcp.app.vault.Secret;
 import org.kie.baaas.mcp.app.vault.VaultService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.kie.baaas.mcp.app.managedservices.ManagedServicesClient.CLIENT_ID;
+import static org.kie.baaas.mcp.app.managedservices.ManagedServicesClient.CLIENT_SECRET;
 
 /**
  * This class orchestrates a number of internal components to manage the lifecycle of a Decision.
@@ -121,12 +125,16 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     @Override
     public DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest) {
         listenerManager.notifyListeners(() -> new BeforeCreateOrUpdateVersionEvent(decisionRequest));
-        createCustomerSecret(customerId, decisionRequest);
         // TODO - chicken and egg problem here.  The DecisionVersion requires information about the DMN
         // storage location, but the storage requires the DecisionVersion. We therefore have the write
         // to storage happening within the DecisionManager implementation. Ideally the write should happen
         // outside of this as we don't want to write to remote resources within a transaction boundary.
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerId, decisionRequest);
+
+        if (decisionVersion.getKafkaConfig() != null) {
+            Credential credential = getCustomerCredential(customerId, decisionRequest);
+            decisionVersion.getKafkaConfig().setCredential(credential);
+        }
         return requestDeployment(customerId, decisionVersion);
     }
 
@@ -197,13 +205,26 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         return decisionVersion;
     }
 
-    private void createCustomerSecret(String customerId, DecisionRequest decisionRequest) {
+    private Credential getCustomerCredential(String customerId, DecisionRequest decisionRequest) {
         if (decisionRequest.getEventing() != null) {
             String secretName = String.format(CREDENTIALS_NAME, customerId);
-            if (vaultService.get(secretName) == null) {
-                Secret secret = managedServicesClient.createOrReplaceServiceAccount(secretName);
+            Secret secret = vaultService.get(secretName);
+            if (secret == null) {
+                secret = managedServicesClient.createOrReplaceServiceAccount(secretName);
                 vaultService.create(secret);
             }
+            return toCredential(secret);
         }
+        return null;
+    }
+
+    private Credential toCredential(Secret secret) {
+        if (secret == null || secret.getValues() == null) {
+            return null;
+        }
+        return new Credential()
+                .setClientId(secret.getValues().get(CLIENT_ID))
+                .setClientSecret(secret.getValues().get(CLIENT_SECRET));
+
     }
 }

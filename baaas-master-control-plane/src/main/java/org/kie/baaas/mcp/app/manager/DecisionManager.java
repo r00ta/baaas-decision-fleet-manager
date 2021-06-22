@@ -26,7 +26,7 @@ import javax.inject.Inject;
 import javax.transaction.Transactional;
 
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
-import org.kie.baaas.mcp.api.eventing.kafka.Kafka;
+import org.kie.baaas.mcp.api.eventing.Eventing;
 import org.kie.baaas.mcp.app.dao.DecisionDAO;
 import org.kie.baaas.mcp.app.dao.DecisionVersionDAO;
 import org.kie.baaas.mcp.app.model.Decision;
@@ -34,7 +34,7 @@ import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
 import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
-import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
+import org.kie.baaas.mcp.app.model.eventing.KafkaConfig;
 import org.kie.baaas.mcp.app.storage.DMNStorageRequest;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.slf4j.Logger;
@@ -179,12 +179,13 @@ public class DecisionManager implements DecisionLifecycle {
         decisionVersion.setTags(decisionRequest.getTags());
 
         if (decisionRequest.getEventing() != null) {
-            Kafka kafka = decisionRequest.getEventing().getKafka();
-            if (kafka != null) {
-                KafkaTopics topics = new KafkaTopics();
-                topics.setSourceTopic(kafka.getSource());
-                topics.setSinkTopic(kafka.getSink());
-                decisionVersion.setKafkaTopics(topics);
+            Eventing eventing = decisionRequest.getEventing();
+            if (eventing != null && eventing.getKafka() != null) {
+                KafkaConfig kafkaCfg = new KafkaConfig();
+                kafkaCfg.setSourceTopic(eventing.getKafka().getSource());
+                kafkaCfg.setSinkTopic(eventing.getKafka().getSink());
+                kafkaCfg.setBootstrapServers(eventing.getKafka().getBootstrapServers());
+                decisionVersion.setKafkaConfig(kafkaCfg);
             }
         }
 
