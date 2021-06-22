@@ -35,7 +35,7 @@ import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
 import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
-import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
+import org.kie.baaas.mcp.app.model.eventing.KafkaConfig;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 import org.kie.baaas.mcp.app.storage.DMNStorageRequest;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
@@ -103,20 +103,20 @@ public class DecisionManagerTest {
     public void createNewVersion_withKafka() {
         DMNStorageRequest request = createStorageRequest();
 
-        Kafka kafka = new Kafka();
-        kafka.setSink("my-sink");
-        kafka.setSource("my-source");
-
         Eventing eventing = new Eventing();
-        eventing.setKafka(kafka);
+        eventing.setKafka(new Kafka());
+        eventing.getKafka().setSink("my-sink");
+        eventing.getKafka().setSource("my-source");
+        eventing.getKafka().setBootstrapServers("example:9002");
 
         DecisionRequest apiResponse = createApiRequest();
         apiResponse.setEventing(eventing);
 
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerIdResolver.getCustomerId(), apiResponse);
-        KafkaTopics kafkaTopics = decisionVersion.getKafkaTopics();
-        assertThat(kafkaTopics.getSinkTopic(), equalTo(kafka.getSink()));
-        assertThat(kafkaTopics.getSourceTopic(), equalTo(kafka.getSource()));
+        KafkaConfig kafkaConfig = decisionVersion.getKafkaConfig();
+        assertThat(kafkaConfig.getSinkTopic(), equalTo(eventing.getKafka().getSink()));
+        assertThat(kafkaConfig.getSourceTopic(), equalTo(eventing.getKafka().getSource()));
+        assertThat(kafkaConfig.getBootstrapServers(), equalTo(eventing.getKafka().getBootstrapServers()));
         assertThat(decisionVersion.getDmnLocation(), equalTo(request.getProviderUrl()));
         assertThat(decisionVersion.getDmnMd5(), equalTo(request.getMd5Hash()));
 

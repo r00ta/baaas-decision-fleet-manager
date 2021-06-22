@@ -47,7 +47,7 @@ services:
 
   managed-services:
     # https://github.com/ruromero/dummy-managed-services
-    image: quay.io/ruben/dummy-managed-services:latest
+    image: quay.io/ruben/dummy-managed-services:0.2.0
     container_name: baaas-managed-services
     ports:
       - "9001:9001"

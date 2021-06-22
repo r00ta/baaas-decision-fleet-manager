@@ -17,6 +17,8 @@ package org.kie.baaas.mcp.api.eventing.kafka;
 
 import java.util.Objects;
 
+import javax.validation.constraints.NotBlank;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -35,45 +37,62 @@ public class Kafka {
      * Decision input
      */
     @JsonProperty("source")
+    @NotBlank
     private String source;
     /**
      * The output sink that identifies a Kafka Stream to be used for
      * Decision Output
      */
     @JsonProperty("sink")
+    @NotBlank
     private String sink;
+
+    @JsonProperty("bootstrap_servers")
+    @NotBlank
+    private String bootstrapServers;
 
     public String getSource() {
         return source;
     }
 
-    public void setSource(String source) {
+    public Kafka setSource(String source) {
         this.source = source;
+        return this;
     }
 
     public String getSink() {
         return sink;
     }
 
-    public void setSink(String sink) {
+    public Kafka setSink(String sink) {
         this.sink = sink;
+        return this;
+    }
+
+    public String getBootstrapServers() {
+        return bootstrapServers;
+    }
+
+    public Kafka setBootstrapServers(String bootstrapServers) {
+        this.bootstrapServers = bootstrapServers;
+        return this;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
+        if (this == o)
             return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof Kafka))
             return false;
-        }
         Kafka kafka = (Kafka) o;
-        return source.equals(kafka.source) && sink.equals(kafka.sink);
+        return Objects.equals(source, kafka.source) &&
+                Objects.equals(sink, kafka.sink) &&
+                Objects.equals(bootstrapServers, kafka.bootstrapServers);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(source, sink);
+        return Objects.hash(source, sink, bootstrapServers);
     }
 
     @Override
@@ -81,6 +100,7 @@ public class Kafka {
         return "Kafka{" +
                 "source='" + source + '\'' +
                 ", sink='" + sink + '\'' +
+                ", bootstrapServers='" + bootstrapServers + '\'' +
                 '}';
     }
 }

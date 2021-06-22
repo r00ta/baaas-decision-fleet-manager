@@ -29,7 +29,8 @@ import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
-import org.kie.baaas.mcp.app.model.eventing.KafkaTopics;
+import org.kie.baaas.mcp.app.model.eventing.Credential;
+import org.kie.baaas.mcp.app.model.eventing.KafkaConfig;
 import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 
 import io.fabric8.kubernetes.api.model.Namespace;
@@ -100,10 +101,14 @@ public class DefaultClusterControlPlaneClientTest {
         decisionVersion.setDmnLocation("s3://baaas-dmn-bucket/customers/1/my-first-decision/1/dmn.xml");
 
         if (addKafka) {
-            KafkaTopics kafkaTopics = new KafkaTopics();
-            kafkaTopics.setSourceTopic("kafka-source");
-            kafkaTopics.setSinkTopic("kafka-sink");
-            decisionVersion.setKafkaTopics(kafkaTopics);
+            KafkaConfig kafkaConfig = new KafkaConfig();
+            kafkaConfig.setSourceTopic("kafka-source");
+            kafkaConfig.setSinkTopic("kafka-sink");
+            kafkaConfig.setBootstrapServers("my-kafka:9002");
+            kafkaConfig.setCredential(new Credential()
+                    .setClientId("the-id")
+                    .setClientSecret("the-secret"));
+            decisionVersion.setKafkaConfig(kafkaConfig);
         }
 
         return decisionVersion;
@@ -131,9 +136,9 @@ public class DefaultClusterControlPlaneClientTest {
         assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName())));
 
-        assertThat(payload.getSpec().getDefinition().getVersion(), equalTo(String.valueOf(decisionVersion.getVersion())));
-        assertThat(payload.getSpec().getDefinition().getSource(), equalTo(URI.create(decisionVersion.getDmnLocation())));
-        assertThat(payload.getSpec().getDefinition().getKafka(), is(nullValue()));
+        assertThat(payload.getSpec().getVersion(), equalTo(String.valueOf(decisionVersion.getVersion())));
+        assertThat(payload.getSpec().getSource(), equalTo(URI.create(decisionVersion.getDmnLocation())));
+        assertThat(payload.getSpec().getKafka(), is(nullValue()));
 
         Collection<URI> webhooks = payload.getSpec().getWebhooks();
         assertThat(webhooks, hasSize(1));
@@ -157,9 +162,9 @@ public class DefaultClusterControlPlaneClientTest {
         assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName()).toLowerCase()));
 
-        assertThat(payload.getSpec().getDefinition().getVersion(), equalTo(String.valueOf(decisionVersion.getVersion())));
-        assertThat(payload.getSpec().getDefinition().getSource(), equalTo(URI.create(decisionVersion.getDmnLocation())));
-        assertThat(payload.getSpec().getDefinition().getKafka(), is(nullValue()));
+        assertThat(payload.getSpec().getVersion(), equalTo(String.valueOf(decisionVersion.getVersion())));
+        assertThat(payload.getSpec().getSource(), equalTo(URI.create(decisionVersion.getDmnLocation())));
+        assertThat(payload.getSpec().getKafka(), is(nullValue()));
 
         Collection<URI> webhooks = payload.getSpec().getWebhooks();
         assertThat(webhooks, hasSize(1));
@@ -182,12 +187,16 @@ public class DefaultClusterControlPlaneClientTest {
         assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName())));
 
-        assertThat(payload.getSpec().getDefinition().getVersion(), equalTo(String.valueOf(decisionVersion.getVersion())));
-        assertThat(payload.getSpec().getDefinition().getSource(), equalTo(URI.create(decisionVersion.getDmnLocation())));
-        assertThat(payload.getSpec().getDefinition().getKafka().getInputTopic(), equalTo(decisionVersion.getKafkaTopics().getSourceTopic()));
-        assertThat(payload.getSpec().getDefinition().getKafka().getOutputTopic(), equalTo(decisionVersion.getKafkaTopics().getSinkTopic()));
-        assertThat(payload.getSpec().getDefinition().getKafka().getBootstrapServers(), equalTo(config.getKafkaBootstrapServers()));
-        assertThat(payload.getSpec().getDefinition().getKafka().getSecretName(), equalTo(config.getKafkaSecretName()));
+        assertThat(payload.getSpec().getVersion(), equalTo(String.valueOf(decisionVersion.getVersion())));
+        assertThat(payload.getSpec().getSource(), equalTo(URI.create(decisionVersion.getDmnLocation())));
+        assertThat(payload.getSpec().getKafka().getInputTopic(), equalTo(decisionVersion.getKafkaConfig().getSourceTopic()));
+        assertThat(payload.getSpec().getKafka().getOutputTopic(), equalTo(decisionVersion.getKafkaConfig().getSinkTopic()));
+        assertThat(payload.getSpec().getKafka().getCredential().getClientId(),
+                equalTo(decisionVersion.getKafkaConfig().getCredential().getClientId()));
+        assertThat(payload.getSpec().getKafka().getCredential().getClientSecret(),
+                equalTo(decisionVersion.getKafkaConfig().getCredential().getClientSecret()));
+        assertThat(payload.getSpec().getKafka().getBootstrapServers(),
+                equalTo(decisionVersion.getKafkaConfig().getBootstrapServers()));
 
         Collection<URI> webhooks = payload.getSpec().getWebhooks();
         assertThat(webhooks, hasSize(1));

@@ -79,8 +79,8 @@ class ManagedServicesClientTest {
         assertThat(secret.getValues().get(CLIENT_ID), is("client-foo"));
         assertThat(secret.getValues().get(CLIENT_SECRET), is("secret-foo"));
         verify(token, times(1)).getRawToken();
-        wireMock.verifyThat(1, getRequestedFor(urlEqualTo("/api/managed-services-api/v1/serviceaccounts")));
-        wireMock.verifyThat(1, postRequestedFor(urlEqualTo("/api/managed-services-api/v1/serviceaccounts")));
+        wireMock.verifyThat(1, getRequestedFor(urlEqualTo("/api/kafkas_mgmt/v1/service_accounts")));
+        wireMock.verifyThat(1, postRequestedFor(urlEqualTo("/api/kafkas_mgmt/v1/service_accounts")));
     }
 
     @Test
@@ -93,8 +93,8 @@ class ManagedServicesClientTest {
         assertThat(secret.getValues().get(CLIENT_ID), is("client-5"));
         assertThat(secret.getValues().get(CLIENT_SECRET), is("secret-5"));
         verify(token, times(1)).getRawToken();
-        wireMock.verifyThat(1, getRequestedFor(urlEqualTo("/api/managed-services-api/v1/serviceaccounts")));
-        wireMock.verifyThat(1, postRequestedFor(urlEqualTo("/api/managed-services-api/v1/serviceaccounts/id-5/reset-credentials")));
+        wireMock.verifyThat(1, getRequestedFor(urlEqualTo("/api/kafkas_mgmt/v1/service_accounts")));
+        wireMock.verifyThat(1, postRequestedFor(urlEqualTo("/api/kafkas_mgmt/v1/service_accounts/id-5/reset_credentials")));
     }
 
     @Test
@@ -103,7 +103,7 @@ class ManagedServicesClientTest {
                 () -> client.createOrReplaceServiceAccount("name-9"),
                 "Unable to createOrReplace Service Account: name-9");
 
-        wireMock.verifyThat(1, getRequestedFor(urlEqualTo("/api/managed-services-api/v1/serviceaccounts")));
-        wireMock.verifyThat(1, postRequestedFor(urlEqualTo("/api/managed-services-api/v1/serviceaccounts/id-9/reset-credentials")));
+        wireMock.verifyThat(1, getRequestedFor(urlEqualTo("/api/kafkas_mgmt/v1/service_accounts")));
+        wireMock.verifyThat(1, postRequestedFor(urlEqualTo("/api/kafkas_mgmt/v1/service_accounts/id-9/reset_credentials")));
     }
 }

@@ -77,14 +77,13 @@ public class DecisionMapper {
         responseModel.setHref(hrefGenerator.generateDecisionDMNHref(decisionVersion));
         decisionResponse.setResponseModel(responseModel);
 
-        if (decisionVersion.getKafkaTopics() != null) {
-
-            Kafka kafka = new Kafka();
-            kafka.setSink(decisionVersion.getKafkaTopics().getSinkTopic());
-            kafka.setSource(decisionVersion.getKafkaTopics().getSourceTopic());
-
+        if (decisionVersion.getKafkaConfig() != null) {
             Eventing eventing = new Eventing();
-            eventing.setKafka(kafka);
+            eventing.setKafka(new Kafka());
+            eventing.getKafka().setSink(decisionVersion.getKafkaConfig().getSinkTopic());
+            eventing.getKafka().setSource(decisionVersion.getKafkaConfig().getSourceTopic());
+            eventing.getKafka().setBootstrapServers(decisionVersion.getKafkaConfig().getBootstrapServers());
+            // Credentials deliberately omitted
             decisionResponse.setEventing(eventing);
         }
 

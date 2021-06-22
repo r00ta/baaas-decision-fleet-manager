@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.eventing.Eventing;
+import org.kie.baaas.mcp.api.eventing.kafka.Kafka;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
 import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
@@ -32,6 +33,7 @@ import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
+import org.kie.baaas.mcp.app.model.eventing.KafkaConfig;
 import org.kie.baaas.mcp.app.storage.DecisionDMNStorage;
 import org.kie.baaas.mcp.app.vault.Secret;
 import org.kie.baaas.mcp.app.vault.VaultService;
@@ -118,8 +120,11 @@ public class DecisionLifecycleOrchestratorTest {
         DecisionVersion decisionVersion = mock(DecisionVersion.class);
         Decision decision = mock(Decision.class);
 
-        when(request.getEventing()).thenReturn(new Eventing());
+        Eventing eventing = new Eventing();
+        eventing.setKafka(new Kafka());
+        when(request.getEventing()).thenReturn(eventing);
         when(decisionVersion.getDecision()).thenReturn(decision);
+        when(decisionVersion.getKafkaConfig()).thenReturn(new KafkaConfig());
         when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
         when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
         when(clientFactory.createClientFor(clusterControlPlane)).thenReturn(client);
@@ -142,7 +147,13 @@ public class DecisionLifecycleOrchestratorTest {
         String saName = "daas-" + customerId + "-credentials";
         DecisionRequest request = mock(DecisionRequest.class);
 
-        when(request.getEventing()).thenReturn(new Eventing());
+        DecisionVersion decisionVersion = mock(DecisionVersion.class);
+
+        Eventing eventing = new Eventing();
+        eventing.setKafka(new Kafka());
+        when(request.getEventing()).thenReturn(eventing);
+        when(decisionVersion.getKafkaConfig()).thenReturn(new KafkaConfig());
+        when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
         when(managedServicesClient.createOrReplaceServiceAccount(anyString()))
                 .thenThrow(new ManagedServicesException("some error", new ApiException("api error")));
 
@@ -165,8 +176,11 @@ public class DecisionLifecycleOrchestratorTest {
         Decision decision = mock(Decision.class);
         when(decision.getId()).thenReturn(decisionId);
 
-        when(request.getEventing()).thenReturn(new Eventing());
+        Eventing eventing = new Eventing();
+        eventing.setKafka(new Kafka());
+        when(request.getEventing()).thenReturn(eventing);
         when(decisionVersion.getDecision()).thenReturn(decision);
+        when(decisionVersion.getKafkaConfig()).thenReturn(new KafkaConfig());
         when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
         when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
         when(clientFactory.createClientFor(clusterControlPlane)).thenReturn(client);
