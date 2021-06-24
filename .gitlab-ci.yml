@@ -1,0 +1,85 @@
+---
+variables:
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=/maven/.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  OUTPUT_CONTAINER_NAME: "quay.io/rblake/baaas-master-control-plane:$CI_COMMIT_SHA"
+
+stages:
+  - build
+  - test
+  - native-compile
+  - build-and-push-container
+
+include:
+  - local: '.cd-allowlist.yml'
+
+.cache-definition: &cache-definition
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - baaas-master-control-plane-api/target
+      - baaas-master-control-plane/target
+
+build:
+  <<: *cache-definition
+  image: quay.io/rblake/baaas-maven-kogito-s2i:035ee68167c1b553019b988af24d68622f70df4e
+  stage: build
+  script:
+    - "/usr/share/maven/bin/mvn compile -s .gitlab-ci-settings.xml -Pvalidate-formatting,github"
+  tags:
+    - baaas
+  only:
+    refs:
+      - main@baaas/baaas-master-control-plane
+      - merge_requests@baaas/baaas-master-control-plane
+
+test:
+  <<: *cache-definition
+  image: quay.io/rblake/baaas-maven-kogito-s2i:035ee68167c1b553019b988af24d68622f70df4e
+  stage: test
+  script:
+    - "/usr/share/maven/bin/mvn test -s .gitlab-ci-settings.xml"
+  artifacts:
+    expire_in: 1 week
+    reports:
+      junit:
+        - baaas-master-control-plane-api/target/surefire-reports/TEST-*.xml
+        - baaas-master-control-plane/target/surefire-reports/TEST-*.xml
+  tags:
+    - baaas
+  only:
+    refs:
+      - main@baaas/baaas-master-control-plane
+      - merge_requests@baaas/baaas-master-control-plane
+
+native-compile:
+  <<: *cache-definition
+  image: quay.io/rblake/baaas-maven-kogito-s2i:035ee68167c1b553019b988af24d68622f70df4e
+  stage: native-compile
+  script:
+    - "/usr/share/maven/bin/mvn package -s .gitlab-ci-settings.xml -Pnative,github -Dmaven.test.skip=true"
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - baaas-master-control-plane/target/*-runner
+  tags:
+    - baaas
+  only:
+    refs:
+      - main@baaas/baaas-master-control-plane
+      - merge_requests@baaas/baaas-master-control-plane
+
+build-and-push-container:
+  image: docker:19.03.12
+  stage: build-and-push-container
+  before_script:
+    - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login quay.io --username $CONTAINER_REGISTRY_USER --password-stdin
+  script:
+    - "docker build -f baaas-master-control-plane/src/main/docker/Dockerfile.native -t $OUTPUT_CONTAINER_NAME baaas-master-control-plane/"
+    - "docker push $OUTPUT_CONTAINER_NAME"
+  after_script:
+    - "docker image rm -f $OUTPUT_CONTAINER_NAME"
+  tags:
+    - baaas
+  only:
+    refs:
+      - main@baaas/baaas-master-control-plane

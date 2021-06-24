@@ -1,0 +1,1 @@
+ALTER TABLE WEBHOOK ADD customer_id varchar(255);
