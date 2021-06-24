@@ -1,0 +1,8 @@
+{
+  "kind": "Decision",
+  "name": "testing",
+  "description": "my-testing-decision",
+  "model" :{
+    "dmn": "<xml></xml>"
+  }
+}

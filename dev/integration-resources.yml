@@ -1,0 +1,268 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: baaas-fleetshard
+spec:
+  finalizers:
+    - kubernetes
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: decisionrequests.operator.baaas
+spec:
+  group: operator.baaas
+  names:
+    kind: DecisionRequest
+    listKind: DecisionRequestList
+    plural: decisionrequests
+    singular: decisionrequest
+    categories:
+      - all
+      - baaas
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Admission
+          type: string
+          description: Admission status
+          jsonPath: .status.state
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            status:
+              type: object
+              properties:
+                versionRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    version:
+                      type: string
+                state:
+                  type: string
+                reason:
+                  type: string
+                message:
+                  type: string
+            spec:
+              type: object
+              required:
+                - customerId
+                - name
+                - definition
+              properties:
+                customerId:
+                  type: string
+                name:
+                  type: string
+                definition:
+                  type: object
+                  required:
+                    - version
+                    - source
+                  properties:
+                    version:
+                      type: string
+                    source:
+                      type: string
+                    kafka:
+                      type: object
+                      required:
+                        - bootstrapServers
+                        - secretName
+                      properties:
+                        bootstrapServers:
+                          type: string
+                        secretName:
+                          type: string
+                        inputTopic:
+                          type: string
+                        outputTopic:
+                          type: string
+                    env:
+                      type: object
+                webhooks:
+                  type: array
+                  items:
+                    type: string
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: decisionversions.operator.baaas
+spec:
+  group: operator.baaas
+  names:
+    kind: DecisionVersion
+    listKind: DecisionVersionList
+    plural: decisionversions
+    singular: decisionversion
+    categories:
+      - all
+      - baaas
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Ready
+          type: string
+          description: Ready
+          jsonPath: .status.conditions[?(@.type=='Ready')].status
+        - name: Build
+          type: string
+          description: Build status
+          jsonPath: .status.conditions[?(@.type=='Build')].reason
+        - name: Service
+          type: string
+          description: Kogito Service status
+          jsonPath: .status.conditions[?(@.type=='Service')].reason
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            status:
+              type: object
+              properties:
+                pipelineRef:
+                  type: string
+                imageRef:
+                  type: string
+                kogitoServiceRef:
+                  type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      lastTransitionTime:
+                        type: string
+                      message:
+                        type: string
+                      reason:
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                      - status
+                      - type
+            spec:
+              type: object
+              required:
+                - version
+                - source
+              properties:
+                version:
+                  type: string
+                source:
+                  type: string
+                kafka:
+                  type: object
+                  required:
+                    - bootstrapServers
+                    - secretName
+                  properties:
+                    bootstrapServers:
+                      type: string
+                    secretName:
+                      type: string
+                    inputTopic:
+                      type: string
+                    outputTopic:
+                      type: string
+                env:
+                  type: object
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: decisions.operator.baaas
+spec:
+  group: operator.baaas
+  names:
+    kind: Decision
+    listKind: DecisionList
+    plural: decisions
+    singular: decision
+    categories:
+      - all
+      - baaas
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Version
+          type: string
+          description: Current decision revision
+          jsonPath: .status.versionId
+        - name: Endpoint
+          type: string
+          description: Decision endpoint
+          jsonPath: .status.endpoint
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            status:
+              type: object
+              properties:
+                endpoint:
+                  type: string
+                versionId:
+                  type: string
+            spec:
+              type: object
+              required:
+                - definition
+              properties:
+                definition:
+                  type: object
+                  required:
+                    - version
+                    - source
+                  properties:
+                    version:
+                      type: string
+                    source:
+                      type: string
+                    kafka:
+                      type: object
+                      required:
+                        - bootstrapServers
+                        - secretName
+                      properties:
+                        bootstrapServers:
+                          type: string
+                        secretName:
+                          type: string
+                        inputTopic:
+                          type: string
+                        outputTopic:
+                          type: string
+                    env:
+                      type: object
+                webhooks:
+                  type: array
+                  items:
+                    type: string

@@ -1,0 +1,16 @@
+org/kie/baaas/mcp/api/decisions/DecisionResponse.class
+org/kie/baaas/mcp/api/DMNJIT.class
+org/kie/baaas/mcp/api/webhook/WebhookRegistrationRequest.class
+org/kie/baaas/mcp/validators/xml/BasicXMLValidator.class
+org/kie/baaas/mcp/api/webhook/WebhookResponse.class
+org/kie/baaas/mcp/api/eventing/Eventing.class
+org/kie/baaas/mcp/api/webhook/WebhookResponseList.class
+org/kie/baaas/mcp/api/decisions/DecisionRequest.class
+org/kie/baaas/mcp/api/eventing/kafka/Kafka.class
+org/kie/baaas/mcp/api/decisions/DecisionBase.class
+org/kie/baaas/mcp/api/ResponseList.class
+org/kie/baaas/mcp/api/decisions/DecisionResponseList.class
+org/kie/baaas/mcp/api/decisions/Model.class
+org/kie/baaas/mcp/api/decisions/ResponseModel.class
+org/kie/baaas/mcp/validators/xml/BasicXML.class
+org/kie/baaas/mcp/api/DMNJITList.class

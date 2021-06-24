@@ -1,0 +1,16 @@
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/ResponseList.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/webhook/WebhookResponseList.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/decisions/DecisionResponse.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/webhook/WebhookResponse.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/validators/xml/BasicXMLValidator.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/decisions/DecisionRequest.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/decisions/DecisionResponseList.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/DMNJIT.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/eventing/kafka/Kafka.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/decisions/Model.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/DMNJITList.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/decisions/DecisionBase.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/decisions/ResponseModel.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/webhook/WebhookRegistrationRequest.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/validators/xml/BasicXML.java
+/home/jrota/vagrant/bionic64/baaas-master-control-plane/baaas-master-control-plane-api/src/main/java/org/kie/baaas/mcp/api/eventing/Eventing.java

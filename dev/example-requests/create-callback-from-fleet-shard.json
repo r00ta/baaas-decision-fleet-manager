@@ -1,0 +1,9 @@
+{
+  "customer": 1,
+  "decision": "f9c3e7c9-1255-4839-b849-941143d5c53c", #replace with the id of your decision
+  "version": "1", #replace with the version of your decision
+  "phase": "CURRENT", #can be either 'CURRENT' or 'FAILED'
+  "endpoint": "https://foo.com",
+  "namespace": "baaas-1",
+  "version_resource": "1"
+}
