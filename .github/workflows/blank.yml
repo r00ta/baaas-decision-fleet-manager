@@ -19,7 +19,7 @@ on:
         description: 'test' 
 
 env:
-  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=/maven/.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
   OUTPUT_CONTAINER_NAME: "quay.io/rblake/baaas-master-control-plane:$GITHUB_SHA"
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
