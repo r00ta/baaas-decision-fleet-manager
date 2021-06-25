@@ -11,6 +11,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.kie.baaas.mcp.api.webhook.WebhookRegistrationRequest;
 import org.kie.baaas.mcp.app.dao.WebhookDAO;
@@ -40,6 +41,11 @@ public class WebhookManager {
     private final MeterRegistry meterRegistry;
     private final ObjectMapper objectMapper;
 
+    @ConfigProperty(name = "baaas.webhook.delivery-retries", defaultValue = "3")
+    Integer MAX_RETRY;
+    @ConfigProperty(name = "baaas.webhook.delivery-timeout", defaultValue = "10")
+    Integer TIMEOUT;
+
     @Inject
     public WebhookManager(WebhookDAO webhookDAO, ListenerManager listenerManager, ManagedExecutor executorService, MeterRegistry meterRegistry, ObjectMapper objectMapper) {
         Objects.requireNonNull(webhookDAO, "webhookDAO cannot be null");
@@ -60,7 +66,7 @@ public class WebhookManager {
         List<Webhook> listAll = listAll();
         LOG.info("init() with {}", listAll);
         for (Webhook e : listAll) {
-            listenerManager.addListener(new WebhookListener(e, executorService, meterRegistry, objectMapper));
+            listenerManager.addListener(new WebhookListener(e, executorService, meterRegistry, objectMapper, MAX_RETRY, TIMEOUT));
         }
     }
 
@@ -80,7 +86,7 @@ public class WebhookManager {
         }
         Webhook webhook = new Webhook();
         webhook.setUrl(webhookReq.getUrl());
-        listenerManager.addListener(new WebhookListener(webhook, executorService, meterRegistry, objectMapper));
+        listenerManager.addListener(new WebhookListener(webhook, executorService, meterRegistry, objectMapper, MAX_RETRY, TIMEOUT));
         webhookDAO.persist(webhook);
         LOG.info("Persisted new Webhook with id '{}' for URL '{}'", webhook.getId(), webhook.getUrl());
         return webhook;
