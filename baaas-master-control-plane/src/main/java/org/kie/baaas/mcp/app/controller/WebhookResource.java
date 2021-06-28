@@ -32,14 +32,22 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
+import org.eclipse.microprofile.openapi.annotations.enums.SecuritySchemeType;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityScheme;
+import org.eclipse.microprofile.openapi.annotations.security.SecuritySchemes;
 import org.kie.baaas.mcp.api.webhook.WebhookRegistrationRequest;
 import org.kie.baaas.mcp.api.webhook.WebhookResponse;
 import org.kie.baaas.mcp.api.webhook.WebhookResponseList;
 import org.kie.baaas.mcp.app.manager.WebhookManager;
 import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.webhook.Webhook;
+import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.quarkus.security.Authenticated;
+import io.quarkus.security.identity.SecurityIdentity;
 
 import static org.kie.baaas.mcp.app.controller.APIConstants.PAGE;
 import static org.kie.baaas.mcp.app.controller.APIConstants.PAGE_DEFAULT;
@@ -51,11 +59,23 @@ import static org.kie.baaas.mcp.app.controller.APIConstants.SIZE_MIN;
 
 @Path("/webhooks")
 @ApplicationScoped
+@SecuritySchemes(value = {
+        @SecurityScheme(securitySchemeName = "bearer",
+                type = SecuritySchemeType.HTTP,
+                scheme = "Bearer")
+})
+@SecurityRequirement(name = "bearer")
 public class WebhookResource {
 
     private final Logger LOG = LoggerFactory.getLogger(WebhookResource.class);
 
     private final WebhookManager webhookManager;
+
+    @Inject
+    CustomerIdResolver customerIdResolver;
+
+    @Inject
+    SecurityIdentity identity;
 
     @Inject
     public WebhookResource(WebhookManager listenerManager) {
@@ -64,9 +84,12 @@ public class WebhookResource {
     }
 
     @POST
+    @Authenticated
     public Response registerWebhook(WebhookRegistrationRequest webhookReq) {
         LOG.debug("registerWebhook {}", webhookReq);
-        Webhook webhook = webhookManager.registerWebhook(webhookReq);
+
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        Webhook webhook = webhookManager.registerWebhook(customerId, webhookReq);
         WebhookResponse result = WebhookResponse.from(webhook.getId(), webhookReq.getUrl());
         return Response.ok().entity(result).build();
     }
@@ -76,15 +99,20 @@ public class WebhookResource {
      */
     @DELETE
     @Path("{lookupRef}")
+    @Authenticated
     public Response unregisterForWebhook(@PathParam("lookupRef") String lookupRef) {
         LOG.debug("unregisterForWebhook {}", lookupRef);
-        webhookManager.unregisterForWebhook(lookupRef);
+
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        webhookManager.unregisterForWebhook(customerId, lookupRef);
         return Response.ok().build();
     }
 
     @GET
+    @Authenticated
     public Response getWebooks(@QueryParam(PAGE) @Min(PAGE_MIN) @DefaultValue(PAGE_DEFAULT) int page, @QueryParam(SIZE) @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) int size) {
-        ListResult<Webhook> listResult = webhookManager.listAll(page, size);
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        ListResult<Webhook> listResult = webhookManager.listCustomerWebhooks(customerId, page, size);
         List<WebhookResponse> webhooks = listResult.getItems().stream().map(e -> WebhookResponse.from(e.getId(), e.getUrl())).collect(Collectors.toList());
         WebhookResponseList result = new WebhookResponseList();
         result.setItems(webhooks);

@@ -40,17 +40,22 @@ import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.vault.VaultService;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
 
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.oidc.server.OidcWiremockTestResource;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.getAllScenarios;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
@@ -60,12 +65,16 @@ import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.kie.baaas.mcp.app.TestConstants.DEFAULT_CUSTOMER_ID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verify;
 
 @QuarkusTest
 @QuarkusTestResource(OidcWiremockTestResource.class)
 public class WebhookResourceTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(WebhookResourceTest.class);
 
     @InjectMock
     ClusterControlPlaneClientFactory clientFactory;
@@ -89,6 +98,13 @@ public class WebhookResourceTest {
     VaultService vaultService;
 
     private static WireMockServer wireMockServer;
+    private static final String SCENARIO_TIMEOUT = "timeout";
+    private static final String TIMEOUT_STATE_1 = "timeout1";
+    private static final String TIMEOUT_STATE_2 = "end";
+    private static final String SCENARIO_RETRY = "retry";
+    private static final String RETRY_STATE_1 = "retry1";
+    private static final String RETRY_STATE_2 = "retry2";
+    private static final String RETRY_STATE_3 = "retry3";
 
     @BeforeAll
     public static void init() {
@@ -111,6 +127,47 @@ public class WebhookResourceTest {
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"response\":\"ok from mywebhook2\"}")));
+
+        // retry scenarios
+        stubFor(post(urlEqualTo("/timeout-once-webhook"))
+                .inScenario(SCENARIO_TIMEOUT)
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"response\":\"ok\"}")
+                        .withFixedDelay(12_000))
+                .willSetStateTo(TIMEOUT_STATE_1));
+        stubFor(post(urlEqualTo("/timeout-once-webhook"))
+                .inScenario(SCENARIO_TIMEOUT)
+                .whenScenarioStateIs(TIMEOUT_STATE_1)
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"response\":\"ok\"}"))
+                .willSetStateTo(TIMEOUT_STATE_2));
+
+        stubFor(post(urlEqualTo("/nonoyes-webhook"))
+                .inScenario(SCENARIO_RETRY)
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withBody("error.")
+                        .withFixedDelay(2_000))
+                .willSetStateTo(RETRY_STATE_1));
+        stubFor(post(urlEqualTo("/nonoyes-webhook"))
+                .inScenario(SCENARIO_RETRY)
+                .whenScenarioStateIs(RETRY_STATE_1)
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withBody("error, again.")
+                        .withFixedDelay(2_000))
+                .willSetStateTo(RETRY_STATE_2));
+        stubFor(post(urlEqualTo("/nonoyes-webhook"))
+                .inScenario(SCENARIO_RETRY)
+                .whenScenarioStateIs(RETRY_STATE_2)
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"response\":\"ok\"}"))
+                .willSetStateTo(RETRY_STATE_3));
     }
 
     @BeforeEach
@@ -126,6 +183,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testBasic() throws Exception {
         WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
         String webhook1url = wireMockServer.baseUrl() + "/mywebhook";
@@ -220,6 +278,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testNotFoundWebhook() {
         given()
                 .when()
@@ -229,6 +288,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testAlreadyExistingWebhook() throws Exception {
         WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
         String webhook1url = "http://localhost:8080/test-builtin-webhook"; // taken from test data
@@ -243,6 +303,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testListWebhooks() {
         WebhookResponseList webhooks = given()
                 .when()
@@ -259,6 +320,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testMetrics() throws Exception {
         WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
         String webhook1url = wireMockServer.baseUrl() + "/mywebhook";
@@ -297,6 +359,79 @@ public class WebhookResourceTest {
         assertTrue(qMetrics.contains("daaas_webhook_success"));
 
         // unregister webhook #1 via URL.
+        given()
+                .when()
+                .delete("/webhooks/{path}", webhook1url)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
+    public void testTimeoutThenOK() throws Exception {
+        LOG.warn("⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽ This test scenario will take a little more time to complete, as expected (max 20s) ⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽");
+        WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
+        String webhook1url = wireMockServer.baseUrl() + "/timeout-once-webhook";
+        webhook.setUrl(new URL(webhook1url));
+        given()
+                .body(webhook)
+                .contentType(ContentType.JSON)
+                .when()
+                .post("/webhooks")
+                .then()
+                .statusCode(200);
+
+        DecisionVersion decisionVersion = new DecisionVersion();
+        Mockito.when(decisionManager.createOrUpdateVersion(any(), any())).thenReturn(decisionVersion);
+        Mockito.when(controlPlaneSelector.selectControlPlaneForDeployment(any())).thenReturn(null);
+        ClusterControlPlaneClient clientMock = Mockito.mock(ClusterControlPlaneClient.class);
+        Mockito.when(clientFactory.createClientFor(any())).thenReturn(clientMock);
+        DecisionRequest decisionRequest = new DecisionRequest();
+        decisionRequest.setDescription("Mocked DecisionRequest");
+        decisionLifeCycleOrchestrator.createOrUpdateVersion("myCustomer", decisionRequest);
+
+        await().atMost(20, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(2, postRequestedFor(urlEqualTo("/timeout-once-webhook"))));
+        assertEquals(TIMEOUT_STATE_2, getAllScenarios().stream().filter(s -> s.getName().equals(SCENARIO_TIMEOUT)).findFirst().get().getState());
+
+        // unregister webhook via URL.
+        given()
+                .when()
+                .delete("/webhooks/{path}", webhook1url)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
+    public void testNoNoYes() throws Exception {
+        WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
+        String webhook1url = wireMockServer.baseUrl() + "/nonoyes-webhook";
+        webhook.setUrl(new URL(webhook1url));
+        given()
+                .body(webhook)
+                .contentType(ContentType.JSON)
+                .when()
+                .post("/webhooks")
+                .then()
+                .statusCode(200);
+
+        DecisionVersion decisionVersion = new DecisionVersion();
+        Mockito.when(decisionManager.createOrUpdateVersion(any(), any())).thenReturn(decisionVersion);
+        Mockito.when(controlPlaneSelector.selectControlPlaneForDeployment(any())).thenReturn(null);
+        ClusterControlPlaneClient clientMock = Mockito.mock(ClusterControlPlaneClient.class);
+        Mockito.when(clientFactory.createClientFor(any())).thenReturn(clientMock);
+        DecisionRequest decisionRequest = new DecisionRequest();
+        decisionRequest.setDescription("Mocked DecisionRequest");
+        decisionLifeCycleOrchestrator.createOrUpdateVersion("myCustomer", decisionRequest);
+
+        await().atMost(10, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> verify(3, postRequestedFor(urlEqualTo("/nonoyes-webhook"))));
+        assertEquals(RETRY_STATE_3, getAllScenarios().stream().filter(s -> s.getName().equals(SCENARIO_RETRY)).findFirst().get().getState());
+
+        // unregister webhook via URL.
         given()
                 .when()
                 .delete("/webhooks/{path}", webhook1url)

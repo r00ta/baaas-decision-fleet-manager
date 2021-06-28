@@ -11,6 +11,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.context.ManagedExecutor;
 import org.kie.baaas.mcp.api.webhook.WebhookRegistrationRequest;
 import org.kie.baaas.mcp.app.dao.WebhookDAO;
@@ -40,6 +41,11 @@ public class WebhookManager {
     private final MeterRegistry meterRegistry;
     private final ObjectMapper objectMapper;
 
+    @ConfigProperty(name = "baaas.webhook.delivery-retries", defaultValue = "3")
+    Integer MAX_RETRY;
+    @ConfigProperty(name = "baaas.webhook.delivery-timeout", defaultValue = "10")
+    Integer TIMEOUT;
+
     @Inject
     public WebhookManager(WebhookDAO webhookDAO, ListenerManager listenerManager, ManagedExecutor executorService, MeterRegistry meterRegistry, ObjectMapper objectMapper) {
         Objects.requireNonNull(webhookDAO, "webhookDAO cannot be null");
@@ -60,7 +66,7 @@ public class WebhookManager {
         List<Webhook> listAll = listAll();
         LOG.info("init() with {}", listAll);
         for (Webhook e : listAll) {
-            listenerManager.addListener(new WebhookListener(e, executorService, meterRegistry, objectMapper));
+            listenerManager.addListener(new WebhookListener(e, executorService, meterRegistry, objectMapper, MAX_RETRY, TIMEOUT));
         }
     }
 
@@ -68,19 +74,18 @@ public class WebhookManager {
         return webhookDAO.listAll();
     }
 
-    public ListResult<Webhook> listAll(int page, int size) {
-        return webhookDAO.listAll(page, size);
+    public ListResult<Webhook> listCustomerWebhooks(String customerId, int page, int size) {
+        return webhookDAO.findByCustomer(customerId, page, size);
     }
 
-    public Webhook registerWebhook(WebhookRegistrationRequest webhookReq) {
+    public Webhook registerWebhook(String customerId, WebhookRegistrationRequest webhookReq) {
         LOG.debug("registerWebhook {}", webhookReq);
-        List<Webhook> alreadyExisting = webhookDAO.list("url", webhookReq.getUrl());
+        List<Webhook> alreadyExisting = webhookDAO.findByCustomerIdAndUrl(customerId, webhookReq.getUrl());
         if (alreadyExisting.size() > 0) {
             throw new AlreadyExistingWebhookException("The webhook is already existing: " + alreadyExisting);
         }
-        Webhook webhook = new Webhook();
-        webhook.setUrl(webhookReq.getUrl());
-        listenerManager.addListener(new WebhookListener(webhook, executorService, meterRegistry, objectMapper));
+        Webhook webhook = new Webhook(customerId, webhookReq.getUrl());
+        listenerManager.addListener(new WebhookListener(webhook, executorService, meterRegistry, objectMapper, MAX_RETRY, TIMEOUT));
         webhookDAO.persist(webhook);
         LOG.info("Persisted new Webhook with id '{}' for URL '{}'", webhook.getId(), webhook.getUrl());
         return webhook;
@@ -89,10 +94,11 @@ public class WebhookManager {
     /**
      * support the same semantics as on the /decisions resources where a GET or DELETE works with the <id> parameter set to either the URL or id of the webhook
      */
-    public void unregisterForWebhook(String lookupRef) {
+    public void unregisterForWebhook(String customerId, String lookupRef) {
         LOG.info("unregisterForWebhook {}", lookupRef);
         boolean anyDeleted = false;
-        List<Webhook> listById = webhookDAO.list("id", lookupRef);
+
+        List<Webhook> listById = webhookDAO.findByCustomerIdAndWebhookId(customerId, lookupRef);
         for (Webhook e : listById) {
             webhookDAO.delete(e);
             anyDeleted = true;
@@ -100,7 +106,7 @@ public class WebhookManager {
         }
         try {
             URL urlRef = new URL(lookupRef);
-            List<Webhook> findByUrlOrId = webhookDAO.list("url", urlRef);
+            List<Webhook> findByUrlOrId = webhookDAO.findByCustomerIdAndUrl(customerId, urlRef);
             for (Webhook e : findByUrlOrId) {
                 webhookDAO.delete(e);
                 anyDeleted = true;

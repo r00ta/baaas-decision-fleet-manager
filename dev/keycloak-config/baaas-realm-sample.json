@@ -38,7 +38,7 @@
         "cloud-services": [
           "user"
         ],
-        "baaas-mcp": [
+        "baaas-fs": [
           "user"
         ]
       }
@@ -47,12 +47,12 @@
   "roles": {
     "realm": [],
     "client": {
-      "baaas-mcp": [
+      "baaas-fs": [
         {
           "name": "user",
           "composite": false,
           "clientRole": true,
-          "containerId": "baaas-mcp"
+          "containerId": "baaas-fs"
         }
       ],
       "cloud-services": [
@@ -73,16 +73,19 @@
   "clients": [
     {
       "id": "e1bc1111-69ba-4bf2-b342-189e1c2a98ef",
-      "clientId": "baaas-mcp",
+      "clientId": "baaas-fs",
       "surrogateAuthRequired": false,
       "enabled": true,
       "standardFlowEnabled": true,
       "alwaysDisplayInConsole": false,
       "directAccessGrantsEnabled": true,
+      "publicClient": true,
       "clientAuthenticatorType": "client-secret",
-      "secret": "secret",
       "redirectUris": [
-        "http://localhost:8080/*"
+        "*"
+      ],
+      "webOrigins": [
+        "*"
       ],
       "bearerOnly": false,
       "protocol": "openid-connect"
@@ -95,7 +98,13 @@
       "directAccessGrantsEnabled": true,
       "fullScopeAllowed": true,
       "clientAuthenticatorType": "client-secret",
-      "secret": "secret",
+      "publicClient": true,
+      "redirectUris": [
+        "*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
       "bearerOnly": true
     }
   ],

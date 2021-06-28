@@ -28,6 +28,7 @@ import io.quarkus.test.junit.QuarkusTest;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.kie.baaas.mcp.app.TestConstants.DEFAULT_CUSTOMER_ID;
 
 @QuarkusTest
 public class WebhookDAOTest {
@@ -43,7 +44,7 @@ public class WebhookDAOTest {
 
         webhookDAO.persist(w, w2);
 
-        ListResult<Webhook> webhookListResult = webhookDAO.listAll(0, 100);
+        ListResult<Webhook> webhookListResult = webhookDAO.findByCustomer(DEFAULT_CUSTOMER_ID, 0, 100);
         assertThat(webhookListResult.getPage(), equalTo(0L));
         assertThat(webhookListResult.getSize(), equalTo(3L));
         assertThat(webhookListResult.getTotal(), equalTo(3L));
@@ -57,7 +58,7 @@ public class WebhookDAOTest {
 
         webhookDAO.persist(w, w2);
 
-        ListResult<Webhook> webhookListResult = webhookDAO.listAll(0, 2);
+        ListResult<Webhook> webhookListResult = webhookDAO.findByCustomer(DEFAULT_CUSTOMER_ID, 0, 2);
         assertThat(webhookListResult.getPage(), equalTo(0L));
         assertThat(webhookListResult.getSize(), equalTo(2L));
         assertThat(webhookListResult.getTotal(), equalTo(3L));
@@ -74,7 +75,7 @@ public class WebhookDAOTest {
 
         webhookDAO.persist(w, w2);
 
-        ListResult<Webhook> webhookListResult = webhookDAO.listAll(1, 2);
+        ListResult<Webhook> webhookListResult = webhookDAO.findByCustomer(DEFAULT_CUSTOMER_ID, 1, 2);
         assertThat(webhookListResult.getPage(), equalTo(1L));
         assertThat(webhookListResult.getSize(), equalTo(1L));
         assertThat(webhookListResult.getTotal(), equalTo(3L));
@@ -85,6 +86,7 @@ public class WebhookDAOTest {
         Webhook w = new Webhook();
         try {
             w.setUrl(new URL(url));
+            w.setCustomerId(DEFAULT_CUSTOMER_ID);
         } catch (Exception e) {
             throw new RuntimeException("Failed to create Webhook with URL '" + url + "'", e);
         }

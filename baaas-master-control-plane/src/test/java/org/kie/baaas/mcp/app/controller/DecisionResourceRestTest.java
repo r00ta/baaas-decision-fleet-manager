@@ -20,7 +20,6 @@ import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 
-import org.junit.jupiter.api.Test;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.eventing.Eventing;
 import org.kie.baaas.mcp.api.eventing.kafka.Kafka;
@@ -30,10 +29,12 @@ import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
+import io.quarkus.test.security.TestSecurity;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.kie.baaas.mcp.app.TestConstants.DEFAULT_CUSTOMER_ID;
 
 @QuarkusTest
 class DecisionResourceRestTest {
@@ -45,7 +46,7 @@ class DecisionResourceRestTest {
     @InjectMock
     DecisionMapper decisionMapper;
 
-    @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     void testBasicValidation() {
         DecisionRequest request = new DecisionRequest();
 
@@ -105,7 +106,7 @@ class DecisionResourceRestTest {
 
     }
 
-    @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     void testEventingValidation() {
         DecisionRequest request = new DecisionRequest();
         request.setName("example-request");

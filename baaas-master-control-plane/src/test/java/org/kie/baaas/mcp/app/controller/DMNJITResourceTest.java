@@ -24,11 +24,13 @@ import org.kie.baaas.mcp.api.DMNJITList;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.kie.baaas.mcp.app.TestConstants.DEFAULT_CUSTOMER_ID;
 
 @QuarkusTest
 public class DMNJITResourceTest {
@@ -40,6 +42,7 @@ public class DMNJITResourceTest {
     DMNJITResource dmnjitResource;
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void listDmnJits() {
 
         Response response = dmnjitResource.listDmnJits(0, 100);

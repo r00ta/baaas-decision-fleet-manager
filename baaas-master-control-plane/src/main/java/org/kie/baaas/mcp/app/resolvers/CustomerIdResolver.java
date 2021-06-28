@@ -15,6 +15,8 @@
 
 package org.kie.baaas.mcp.app.resolvers;
 
+import java.security.Principal;
+
 import javax.enterprise.context.ApplicationScoped;
 
 /**
@@ -24,17 +26,12 @@ import javax.enterprise.context.ApplicationScoped;
 public class CustomerIdResolver {
 
     /**
-     * Demo is hard-coded with a single customer with id '1'
-     */
-    private static final String DEFAULT_CUSTOMER_ID = "1";
-
-    /**
      * Returns the customerId for the current Thread of execution.
      *
      * @return - The current customer id
      */
-    public String getCustomerId() {
+    public String getCustomerId(Principal principal) {
         // We only support a single hard-coded customer for the demo.
-        return DEFAULT_CUSTOMER_ID;
+        return principal.getName();
     }
 }

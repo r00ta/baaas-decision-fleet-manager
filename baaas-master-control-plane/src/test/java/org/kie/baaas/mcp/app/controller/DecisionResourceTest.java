@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,52 +33,51 @@ import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.ListResult;
-import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
+import io.quarkus.test.security.TestSecurity;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.kie.baaas.mcp.app.TestConstants.DEFAULT_CUSTOMER_ID;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@QuarkusTest
 @ExtendWith(MockitoExtension.class)
 public class DecisionResourceTest {
 
-    private static final String DEFAULT_CUSTOMER_ID = "customer-id";
+    private static final String DECISION_ID = "id";
 
-    @Mock
-    CustomerIdResolver customerIdResolver;
-
-    @Mock
+    @InjectMock
     DecisionLifecycleOrchestrator decisionLifecycle;
 
-    @Mock
     DecisionVersion decisionVersion;
 
-    @Mock
+    @InjectMock
     DecisionMapper decisionMapper;
 
-    @InjectMocks
-    private DecisionResource decisionResource;
-
-    private DecisionRequest createApiRequest() {
+    private DecisionRequest buildDecisionRequest() {
         Model model = new Model();
         model.setDmn("<xml test=\"123\">foo</xml>");
 
         DecisionRequest request = new DecisionRequest();
+        request.setKind("Decision");
         request.setDescription("The Best Decision Ever");
         request.setName("robs-first-decision");
         request.setModel(model);
         return request;
     }
 
-    private DecisionResponse createApiResponse() {
+    private DecisionResponse buildDecisionResponse() {
         ResponseModel model = new ResponseModel();
         model.setHref("href");
         model.setMd5("md5");
@@ -87,145 +85,169 @@ public class DecisionResourceTest {
         DecisionResponse response = new DecisionResponse();
         response.setDescription("The Best Decision Ever");
         response.setName("robs-first-decision");
-        response.setId("id");
+        response.setId(DECISION_ID);
         response.setResponseModel(model);
         response.setVersion(100L);
         return response;
     }
 
-    @BeforeEach
-    public void beforeEach() {
-        lenient().when(customerIdResolver.getCustomerId()).thenReturn(DEFAULT_CUSTOMER_ID);
-    }
-
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     @Disabled("https://issues.redhat.com/browse/BAAAS-156")
     public void rollbackToVersion() {
         DecisionVersion version = mock(DecisionVersion.class);
-        DecisionResponse decisionResponse = mock(DecisionResponse.class);
-        String decisionId = "foo";
+        DecisionResponse decisionResponse = buildDecisionResponse();
         long decisionVersion = 1L;
 
-        Response response = decisionResource.setCurrentVersion(decisionId, decisionVersion);
-
-        when(decisionLifecycle.setCurrentVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
+        when(decisionLifecycle.setCurrentVersion(DEFAULT_CUSTOMER_ID, DECISION_ID, decisionVersion)).thenReturn(version);
         when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
 
-        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+        DecisionResponse decision = RestAssured.given()
+                .put("/decisions/" + DECISION_ID + "/versions/" + decisionVersion)
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .as(DecisionResponse.class);
 
-        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+        assertThat(decision, equalTo(decisionResponse));
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void deleteDecision() {
 
         Decision decision = mock(Decision.class);
-        String decisionId = "foo";
 
-        when(decisionLifecycle.deleteDecision(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(decision);
+        when(decisionLifecycle.deleteDecision(DEFAULT_CUSTOMER_ID, DECISION_ID)).thenReturn(decision);
 
-        Response response = decisionResource.deleteDecision(decisionId);
-        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+        RestAssured.given()
+                .delete("/decisions/" + DECISION_ID)
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode());
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void deleteDecisionVersion() {
         DecisionVersion version = mock(DecisionVersion.class);
-        DecisionResponse decisionResponse = mock(DecisionResponse.class);
-        String decisionId = "foo";
+        DecisionResponse decisionResponse = buildDecisionResponse();
         long decisionVersion = 1L;
 
-        when(decisionLifecycle.deleteVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
+        when(decisionLifecycle.deleteVersion(DEFAULT_CUSTOMER_ID, DECISION_ID, decisionVersion)).thenReturn(version);
         when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
 
-        Response response = decisionResource.deleteDecisionVersion(decisionId, decisionVersion);
-        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+        DecisionResponse decision = RestAssured.given()
+                .delete("/decisions/" + DECISION_ID + "/versions/" + decisionVersion)
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .as(DecisionResponse.class);
 
-        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+        assertThat(decision, equalTo(decisionResponse));
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void getDecisionVersionDMN() {
 
         ByteArrayOutputStream b = new ByteArrayOutputStream();
         b.writeBytes("<xml test=\"123\">foo</xml>".getBytes(StandardCharsets.UTF_8));
 
-        when(decisionLifecycle.getDMN("customer-id", "foo", 1L)).thenReturn(b);
+        long version = 1L;
 
-        Response response = decisionResource.getDecisionVersionDMN("foo", 1L);
-        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
-        assertThat(response.hasEntity(), equalTo(true));
+        when(decisionLifecycle.getDMN(DEFAULT_CUSTOMER_ID, DECISION_ID, version)).thenReturn(b);
+
+        RestAssured.given()
+                .get("/decisions/" + DECISION_ID + "/versions/" + version + "/dmn")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .body(containsString("123"));
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void getDecisionVersion() {
         DecisionVersion version = mock(DecisionVersion.class);
-        DecisionResponse decisionResponse = mock(DecisionResponse.class);
-        String decisionId = "foo";
+        DecisionResponse decisionResponse = buildDecisionResponse();
         long decisionVersion = 1L;
 
-        when(decisionLifecycle.getVersion(DEFAULT_CUSTOMER_ID, decisionId, decisionVersion)).thenReturn(version);
+        when(decisionLifecycle.getVersion(DEFAULT_CUSTOMER_ID, DECISION_ID, decisionVersion)).thenReturn(version);
         when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
 
-        Response response = decisionResource.getDecisionVersion(decisionId, decisionVersion);
-        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+        DecisionResponse decision = RestAssured.given()
+                .get("/decisions/" + DECISION_ID + "/versions/" + decisionVersion)
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .as(DecisionResponse.class);
 
-        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+        assertThat(decision, equalTo(decisionResponse));
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void getBuildingVersion() {
         DecisionVersion version = mock(DecisionVersion.class);
-        DecisionResponse decisionResponse = mock(DecisionResponse.class);
-        String decisionId = "foo";
+        DecisionResponse decisionResponse = buildDecisionResponse();
 
-        when(decisionLifecycle.getBuildingVersion(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(version);
+        when(decisionLifecycle.getBuildingVersion(DEFAULT_CUSTOMER_ID, DECISION_ID)).thenReturn(version);
         when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
 
-        Response response = decisionResource.getBuildingVersion(decisionId);
-        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+        DecisionResponse decision = RestAssured.given()
+                .get("/decisions/" + DECISION_ID + "/building")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .as(DecisionResponse.class);
 
-        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+        assertThat(decision, equalTo(decisionResponse));
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void getDecision() {
         DecisionVersion version = mock(DecisionVersion.class);
-        DecisionResponse decisionResponse = mock(DecisionResponse.class);
-        String decisionId = "foo";
+        DecisionResponse decisionResponse = buildDecisionResponse();
 
-        when(decisionLifecycle.getCurrentVersion(DEFAULT_CUSTOMER_ID, decisionId)).thenReturn(version);
+        when(decisionLifecycle.getCurrentVersion(DEFAULT_CUSTOMER_ID, DECISION_ID)).thenReturn(version);
         when(decisionMapper.mapVersionToDecisionResponse(version)).thenReturn(decisionResponse);
 
-        Response response = decisionResource.getDecision(decisionId);
-        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+        DecisionResponse decision = RestAssured.given()
+                .get("/decisions/" + DECISION_ID)
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .as(DecisionResponse.class);
 
-        assertThat(decisionResponse, equalTo(response.readEntity(DecisionResponse.class)));
+        assertThat(decision, equalTo(decisionResponse));
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void listDecisionVersions() {
 
         ListResult<DecisionVersion> versions = mock(ListResult.class);
         DecisionResponseList responseList = mock(DecisionResponseList.class);
         ArgumentCaptor<ListResult<DecisionVersion>> decisionList = ArgumentCaptor.forClass(ListResult.class);
-
-        String decisionId = "foo";
         int page = 0;
         int size = 100;
 
-        when(decisionLifecycle.listDecisionVersions(DEFAULT_CUSTOMER_ID, decisionId, page, size)).thenReturn(versions);
+        when(decisionLifecycle.listDecisionVersions(DEFAULT_CUSTOMER_ID, DECISION_ID, page, size)).thenReturn(versions);
         when(decisionMapper.mapVersionsToDecisionResponseList(decisionList.capture())).thenReturn(responseList);
 
-        Response response = decisionResource.listDecisionVersions(decisionId, page, size);
-        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+        DecisionResponseList decisions = RestAssured.given()
+                .get("/decisions/" + DECISION_ID + "/versions")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .as(DecisionResponseList.class);
 
-        DecisionResponseList decisions = response.readEntity(DecisionResponseList.class);
-        assertThat(responseList, equalTo(decisions));
-        assertThat(decisionList.getValue(), equalTo(versions));
+        assertThat(responseList.getItems().size(), equalTo(decisions.getItems().size()));
+        assertThat(responseList.getKind(), is(responseList.getKind()));
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void listDecisions() {
 
         ListResult<Decision> listResult = mock(ListResult.class);
@@ -238,30 +260,36 @@ public class DecisionResourceTest {
         when(decisionLifecycle.listDecisions(DEFAULT_CUSTOMER_ID, page, size)).thenReturn(listResult);
         when(decisionMapper.mapToDecisionResponseList(decisionList.capture())).thenReturn(responseList);
 
-        Response response = decisionResource.listDecisions(0, 100);
-        assertThat(response.getStatus(), equalTo(Response.Status.OK.getStatusCode()));
+        DecisionResponseList decisions = RestAssured.given()
+                .get("/decisions")
+                .then()
+                .statusCode(Response.Status.OK.getStatusCode())
+                .extract()
+                .as(DecisionResponseList.class);
 
-        DecisionResponseList decisions = response.readEntity(DecisionResponseList.class);
-        assertThat(responseList, equalTo(decisions));
-        assertThat(decisionList.getValue(), equalTo(listResult));
+        assertThat(responseList.getItems().size(), equalTo(decisions.getItems().size()));
+        assertThat(responseList.getKind(), is(responseList.getKind()));
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void createOrUpdateDecision() {
-        DecisionRequest decisionRequest = createApiRequest();
+        DecisionRequest decisionRequest = buildDecisionRequest();
 
-        lenient().when(decisionLifecycle.createOrUpdateVersion("customer-id", decisionRequest)).thenReturn(decisionVersion);
-        lenient().when(decisionMapper.mapVersionToDecisionResponse(decisionVersion)).thenReturn(createApiResponse());
+        lenient().when(decisionLifecycle.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, decisionRequest)).thenReturn(decisionVersion);
+        lenient().when(decisionMapper.mapVersionToDecisionResponse(decisionVersion)).thenReturn(buildDecisionResponse());
+        DecisionResponse decisionResponse = RestAssured.given()
+                .body(decisionRequest)
+                .contentType(ContentType.JSON)
+                .post("/decisions")
+                .then()
+                .statusCode(Response.Status.CREATED.getStatusCode())
+                .extract()
+                .as(DecisionResponse.class);
 
-        Response response = decisionResource.createOrUpdateDecision(decisionRequest);
-
-        assertThat(response, is(notNullValue()));
-        assertThat(response.getStatus(), equalTo(Response.Status.CREATED.getStatusCode()));
-
-        DecisionResponse decisionResponse = response.readEntity(DecisionResponse.class);
         assertThat(decisionResponse.getResponseModel().getHref(), equalTo("href"));
         assertThat(decisionResponse.getResponseModel().getMd5(), equalTo("md5"));
-        assertThat(decisionResponse.getId(), equalTo("id"));
+        assertThat(decisionResponse.getId(), equalTo(DECISION_ID));
         assertThat(decisionResponse.getVersion(), equalTo(100L));
     }
 }

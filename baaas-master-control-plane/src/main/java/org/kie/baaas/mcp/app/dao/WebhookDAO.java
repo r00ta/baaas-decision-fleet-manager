@@ -1,5 +1,6 @@
 package org.kie.baaas.mcp.app.dao;
 
+import java.net.URL;
 import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -8,11 +9,8 @@ import javax.transaction.Transactional;
 import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.webhook.Webhook;
 
-import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
-import io.quarkus.panache.common.Page;
-
-import static io.quarkus.panache.common.Sort.ascending;
+import io.quarkus.panache.common.Parameters;
 
 /**
  * DAO implementation for working with Webhook Entities.
@@ -21,10 +19,20 @@ import static io.quarkus.panache.common.Sort.ascending;
 @Transactional
 public class WebhookDAO implements PanacheRepository<Webhook> {
 
-    public ListResult<Webhook> listAll(int page, int size) {
-        PanacheQuery<Webhook> pagedQuery = findAll(ascending(Webhook.URL_PARAM)).page(Page.of(page, size));
-        List<Webhook> webhooks = pagedQuery.list();
-        long count = pagedQuery.count();
-        return new ListResult<>(webhooks, page, count);
+    public ListResult<Webhook> findByCustomer(String customerId, int page, int size) {
+        Parameters params = Parameters.with("customerId", customerId);
+        long count = find("#Webhook.byCustomerId", params).count();
+        List<Webhook> webhooks = find("#Webhook.byCustomerId", params).page(page, size).list();
+        return new ListResult<Webhook>(webhooks, page, count);
+    }
+
+    public List<Webhook> findByCustomerIdAndWebhookId(String customerId, String webhookId) {
+        Parameters params = Parameters.with("customerId", customerId).and("id", webhookId);
+        return find("#Webhook.byCustomerIdAndWebhookId", params).list();
+    }
+
+    public List<Webhook> findByCustomerIdAndUrl(String customerId, URL url) {
+        Parameters params = Parameters.with("customerId", customerId).and("url", url);
+        return find("#Webhook.byCustomerIdAndUrl", params).list();
     }
 }
