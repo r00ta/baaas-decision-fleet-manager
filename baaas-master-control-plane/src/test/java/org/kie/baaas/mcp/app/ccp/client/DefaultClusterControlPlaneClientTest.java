@@ -31,7 +31,6 @@ import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.model.eventing.Credential;
 import org.kie.baaas.mcp.app.model.eventing.KafkaConfig;
-import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
@@ -49,6 +48,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.kie.baaas.mcp.app.TestConstants.DEFAULT_CUSTOMER_ID;
 
 @QuarkusTestResource(KubernetesMockServerTestResource.class)
 @QuarkusTest
@@ -62,9 +62,6 @@ public class DefaultClusterControlPlaneClientTest {
 
     @Inject
     KubernetesClient kubernetesClient;
-
-    @Inject
-    CustomerIdResolver customerIdResolver;
 
     @Inject
     ClusterControlPlaneDAO controlPlaneDAO;
@@ -90,7 +87,7 @@ public class DefaultClusterControlPlaneClientTest {
         Decision decision = new Decision();
         decision.setName("my first decision");
         decision.setDescription("An amazing decision");
-        decision.setCustomerId(customerIdResolver.getCustomerId());
+        decision.setCustomerId(DEFAULT_CUSTOMER_ID);
 
         DecisionVersion decisionVersion = new DecisionVersion();
         decision.addVersion(decisionVersion);
@@ -132,8 +129,8 @@ public class DefaultClusterControlPlaneClientTest {
         DecisionRequest payload = responseBuilder.getPayload();
         assertThat(payload, is(notNullValue()));
 
-        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId() + "-1"));
-        assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
+        assertThat(payload.getMetadata().getName(), equalTo(DEFAULT_CUSTOMER_ID + "-" + decisionVersion.getDecision().getId() + "-1"));
+        assertThat(payload.getSpec().getCustomerId(), equalTo(DEFAULT_CUSTOMER_ID));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName())));
 
         assertThat(payload.getSpec().getVersion(), equalTo(String.valueOf(decisionVersion.getVersion())));
@@ -158,8 +155,8 @@ public class DefaultClusterControlPlaneClientTest {
         DecisionRequest payload = responseBuilder.getPayload();
         assertThat(payload, is(notNullValue()));
 
-        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId() + "-1"));
-        assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
+        assertThat(payload.getMetadata().getName(), equalTo(DEFAULT_CUSTOMER_ID + "-" + decisionVersion.getDecision().getId() + "-1"));
+        assertThat(payload.getSpec().getCustomerId(), equalTo(DEFAULT_CUSTOMER_ID));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName()).toLowerCase()));
 
         assertThat(payload.getSpec().getVersion(), equalTo(String.valueOf(decisionVersion.getVersion())));
@@ -183,8 +180,8 @@ public class DefaultClusterControlPlaneClientTest {
         DecisionRequest payload = responseBuilder.getPayload();
         assertThat(payload, is(notNullValue()));
 
-        assertThat(payload.getMetadata().getName(), equalTo("1-" + decisionVersion.getDecision().getId() + "-1"));
-        assertThat(payload.getSpec().getCustomerId(), equalTo(customerIdResolver.getCustomerId()));
+        assertThat(payload.getMetadata().getName(), equalTo(DEFAULT_CUSTOMER_ID + "-" + decisionVersion.getDecision().getId() + "-1"));
+        assertThat(payload.getSpec().getCustomerId(), equalTo(DEFAULT_CUSTOMER_ID));
         assertThat(payload.getSpec().getName(), equalTo(KubernetesResourceUtil.sanitizeName(decisionVersion.getDecision().getName())));
 
         assertThat(payload.getSpec().getVersion(), equalTo(String.valueOf(decisionVersion.getVersion())));

@@ -29,6 +29,8 @@ import org.kie.baaas.mcp.app.resolvers.CustomerIdResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.quarkus.security.identity.SecurityIdentity;
+
 /**
  * Central {@link ExceptionMapper} implementation for handling validation failures for requests
  * to the BAaaS API.
@@ -41,11 +43,14 @@ public class ValidationFailureExceptionMapper implements ExceptionMapper<Constra
     @Inject
     CustomerIdResolver customerIdResolver;
 
+    @Inject
+    SecurityIdentity identity;
+
     @Override
     public Response toResponse(ConstraintViolationException exception) {
 
         Set<ConstraintViolation<?>> violations = exception.getConstraintViolations();
-        String customerId = customerIdResolver.getCustomerId();
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
 
         LOGGER.info("Request for customer id '{}' failed validation.", customerId);
 

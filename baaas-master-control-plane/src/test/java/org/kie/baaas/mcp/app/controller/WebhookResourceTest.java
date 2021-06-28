@@ -50,6 +50,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.oidc.server.OidcWiremockTestResource;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
@@ -64,6 +65,7 @@ import static io.restassured.RestAssured.given;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.kie.baaas.mcp.app.TestConstants.DEFAULT_CUSTOMER_ID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
@@ -181,6 +183,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testBasic() throws Exception {
         WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
         String webhook1url = wireMockServer.baseUrl() + "/mywebhook";
@@ -275,6 +278,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testNotFoundWebhook() {
         given()
                 .when()
@@ -284,6 +288,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testAlreadyExistingWebhook() throws Exception {
         WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
         String webhook1url = "http://localhost:8080/test-builtin-webhook"; // taken from test data
@@ -298,6 +303,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testListWebhooks() {
         WebhookResponseList webhooks = given()
                 .when()
@@ -314,6 +320,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testMetrics() throws Exception {
         WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
         String webhook1url = wireMockServer.baseUrl() + "/mywebhook";
@@ -360,6 +367,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testTimeoutThenOK() throws Exception {
         LOG.warn("⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽ This test scenario will take a little more time to complete, as expected (max 20s) ⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽⎽⎼⎻⎺⎺⎻⎼⎽");
         WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
@@ -396,6 +404,7 @@ public class WebhookResourceTest {
     }
 
     @Test
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     public void testNoNoYes() throws Exception {
         WebhookRegistrationRequest webhook = new WebhookRegistrationRequest();
         String webhook1url = wireMockServer.baseUrl() + "/nonoyes-webhook";

@@ -12,18 +12,8 @@
  *  limitations under the License.
  *
  */
+package org.kie.baaas.mcp.app;
 
-package org.kie.baaas.mcp.app.resolvers;
-
-import org.junit.jupiter.api.Test;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-
-public class CustomerIdResolverTest {
-
-    @Test
-    public void getCustomerId() {
-        assertThat(new CustomerIdResolver().getCustomerId(), equalTo("1"));
-    }
+public class TestConstants {
+    public static final String DEFAULT_CUSTOMER_ID = "customer-id";
 }

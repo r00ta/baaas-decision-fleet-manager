@@ -27,10 +27,16 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.eclipse.microprofile.openapi.annotations.enums.SecuritySchemeType;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
+import org.eclipse.microprofile.openapi.annotations.security.SecurityScheme;
+import org.eclipse.microprofile.openapi.annotations.security.SecuritySchemes;
 import org.kie.baaas.mcp.api.DMNJIT;
 import org.kie.baaas.mcp.api.DMNJITList;
 import org.kie.baaas.mcp.app.dao.DMNJITDAO;
 import org.kie.baaas.mcp.app.model.ListResult;
+
+import io.quarkus.security.Authenticated;
 
 import static java.util.Objects.requireNonNull;
 import static org.kie.baaas.mcp.app.controller.APIConstants.PAGE;
@@ -43,6 +49,12 @@ import static org.kie.baaas.mcp.app.controller.APIConstants.SIZE_MIN;
 
 @Path("/decisions/jit")
 @ApplicationScoped
+@SecuritySchemes(value = {
+        @SecurityScheme(securitySchemeName = "bearer",
+                type = SecuritySchemeType.HTTP,
+                scheme = "Bearer")
+})
+@SecurityRequirement(name = "bearer")
 public class DMNJITResource {
 
     private DMNJITDAO dmnjitdao;
@@ -55,6 +67,7 @@ public class DMNJITResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Authenticated
     public Response listDmnJits(@DefaultValue(PAGE_DEFAULT) @Min(PAGE_MIN) @QueryParam(PAGE) int page, @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) @QueryParam(SIZE) int size) {
         ListResult<DMNJIT> dmnjitListResult = dmnjitdao.listAll(page, size);
         DMNJITList dmnjitList = new DMNJITList();
