@@ -38,7 +38,7 @@
         "cloud-services": [
           "user"
         ],
-        "baaas-fs": [
+        "baaas-fm": [
           "user"
         ]
       }
@@ -47,12 +47,12 @@
   "roles": {
     "realm": [],
     "client": {
-      "baaas-fs": [
+      "baaas-fm": [
         {
           "name": "user",
           "composite": false,
           "clientRole": true,
-          "containerId": "baaas-fs"
+          "containerId": "baaas-fm"
         }
       ],
       "cloud-services": [
@@ -73,7 +73,7 @@
   "clients": [
     {
       "id": "e1bc1111-69ba-4bf2-b342-189e1c2a98ef",
-      "clientId": "baaas-fs",
+      "clientId": "baaas-fm",
       "surrogateAuthRequired": false,
       "enabled": true,
       "standardFlowEnabled": true,
