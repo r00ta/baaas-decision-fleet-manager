@@ -48,10 +48,6 @@ public class MasterControlPlaneConfig {
     @ConfigProperty(name = "baaas.mcp.s3.bucket.name")
     String bucketName;
 
-    @Inject
-    @ConfigProperty(name = "quarkus.s3.endpoint-override")
-    String s3Endpoint;
-
     public String getApiBaseUrl() {
         return apiBaseUrl;
     }
@@ -70,9 +66,5 @@ public class MasterControlPlaneConfig {
 
     public String getBucketName() {
         return bucketName;
-    }
-
-    public String getS3Endpoint() {
-        return s3Endpoint;
     }
 }

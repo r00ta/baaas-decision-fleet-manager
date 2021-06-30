@@ -1,16 +1,12 @@
 {
   "kind": "Decision",
-  "name": "testing",
+  "name": "test-eventing",
   "description": "my-testing-decision",
   "eventing": {
     "kafka": {
       "source": "thesource",
       "sink": "thesink",
-      "bootstrap_servers": "http://3d3827a7-ed53-42a2-9b07-f7550bf03518:9092",
-      "credential": {
-        "client_id": "svc-acc-1695115454",
-        "client_secret": "06227de2-7777-455c-be12-c27f8f9a0719"
-      }
+      "bootstrap_servers": "http://3d3827a7-ed53-42a2-9b07-f7550bf03518:9092"
     }
   },
   "model" :{

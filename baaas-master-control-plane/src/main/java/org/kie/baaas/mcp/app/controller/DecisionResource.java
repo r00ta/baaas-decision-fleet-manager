@@ -218,4 +218,5 @@ public class DecisionResource {
         DecisionResponse decisionResponse = decisionMapper.mapVersionToDecisionResponse(decisionVersion);
         return Response.status(Response.Status.CREATED).entity(decisionResponse).build();
     }
+
 }
