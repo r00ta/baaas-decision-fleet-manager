@@ -68,7 +68,24 @@ native-compile:
       - main@baaas/baaas-master-control-plane
       - merge_requests@baaas/baaas-master-control-plane
 
-build-and-push-container:
+build-and-push-container-jvm:
+  <<: *cache-definition
+  image: docker:19.03.12
+  stage: build-and-push-container
+  before_script:
+    - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login quay.io --username $CONTAINER_REGISTRY_USER --password-stdin
+  script:
+    - "docker build -f baaas-master-control-plane/src/main/docker/Dockerfile.jvm -t $OUTPUT_CONTAINER_NAME-jvm baaas-master-control-plane/"
+    - "docker push $OUTPUT_CONTAINER_NAME-jvm"
+  after_script:
+    - "docker image rm -f $OUTPUT_CONTAINER_NAME-jvm"
+  tags:
+    - baaas
+  only:
+    refs:
+      - main@baaas/baaas-master-control-plane
+
+build-and-push-container-native:
   image: docker:19.03.12
   stage: build-and-push-container
   before_script:
