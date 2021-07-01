@@ -13,12 +13,22 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp;
+package org.kie.baaas.mcp.app.dfs;
 
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 
-public interface ClusterControlPlaneSelector {
+/**
+ * Interface for implementations that determine to which Fleet Shard a Decision
+ * should be deployed.
+ */
+public interface DecisionFleetShardSelector {
 
-    ClusterControlPlane selectControlPlaneForDeployment(Decision decision);
+    /**
+     * Selects which FleetShard should receive the deployment for the specified Decision
+     * 
+     * @param decision - The Decision that is being deployed
+     * @return - The FleetShard that the Decision should be deployed to
+     */
+    DecisionFleetShard selectFleetShardForDeployment(Decision decision);
 }

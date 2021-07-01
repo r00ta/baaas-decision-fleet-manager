@@ -30,10 +30,10 @@ import org.kie.baaas.mcp.api.decisions.DecisionResponse;
 import org.kie.baaas.mcp.api.webhook.WebhookRegistrationRequest;
 import org.kie.baaas.mcp.api.webhook.WebhookResponse;
 import org.kie.baaas.mcp.api.webhook.WebhookResponseList;
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
-import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
 import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
+import org.kie.baaas.mcp.app.dfs.DecisionFleetShardClient;
+import org.kie.baaas.mcp.app.dfs.DecisionFleetShardSelector;
+import org.kie.baaas.mcp.app.dfs.client.DecisionFleetShardClientFactory;
 import org.kie.baaas.mcp.app.manager.DecisionLifecycleOrchestrator;
 import org.kie.baaas.mcp.app.manager.DecisionManager;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
@@ -77,10 +77,10 @@ public class WebhookResourceTest {
     private static final Logger LOG = LoggerFactory.getLogger(WebhookResourceTest.class);
 
     @InjectMock
-    ClusterControlPlaneClientFactory clientFactory;
+    DecisionFleetShardClientFactory clientFactory;
 
     @InjectMock
-    ClusterControlPlaneSelector controlPlaneSelector;
+    DecisionFleetShardSelector fleetShardSelector;
 
     @InjectMock
     DecisionManager decisionManager;
@@ -205,8 +205,8 @@ public class WebhookResourceTest {
         DecisionResponse decisionResponse = new DecisionResponse();
         decisionResponse.setSubmittedAt(ZonedDateTime.now());
         Mockito.when(decisionMapper.mapVersionToDecisionResponse(any())).thenReturn(decisionResponse);
-        Mockito.when(controlPlaneSelector.selectControlPlaneForDeployment(any())).thenReturn(null);
-        ClusterControlPlaneClient clientMock = Mockito.mock(ClusterControlPlaneClient.class);
+        Mockito.when(fleetShardSelector.selectFleetShardForDeployment(any())).thenReturn(null);
+        DecisionFleetShardClient clientMock = Mockito.mock(DecisionFleetShardClient.class);
         Mockito.when(clientFactory.createClientFor(any())).thenReturn(clientMock);
         DecisionRequest decisionRequest = new DecisionRequest();
         decisionRequest.setDescription("Mocked DecisionRequest");
@@ -337,8 +337,8 @@ public class WebhookResourceTest {
 
         DecisionVersion decisionVersion = new DecisionVersion();
         Mockito.when(decisionManager.createOrUpdateVersion(any(), any())).thenReturn(decisionVersion);
-        Mockito.when(controlPlaneSelector.selectControlPlaneForDeployment(any())).thenReturn(null);
-        ClusterControlPlaneClient clientMock = Mockito.mock(ClusterControlPlaneClient.class);
+        Mockito.when(fleetShardSelector.selectFleetShardForDeployment(any())).thenReturn(null);
+        DecisionFleetShardClient clientMock = Mockito.mock(DecisionFleetShardClient.class);
         Mockito.when(clientFactory.createClientFor(any())).thenReturn(clientMock);
         DecisionRequest decisionRequest = new DecisionRequest();
         decisionRequest.setDescription("Mocked DecisionRequest");
@@ -383,8 +383,8 @@ public class WebhookResourceTest {
 
         DecisionVersion decisionVersion = new DecisionVersion();
         Mockito.when(decisionManager.createOrUpdateVersion(any(), any())).thenReturn(decisionVersion);
-        Mockito.when(controlPlaneSelector.selectControlPlaneForDeployment(any())).thenReturn(null);
-        ClusterControlPlaneClient clientMock = Mockito.mock(ClusterControlPlaneClient.class);
+        Mockito.when(fleetShardSelector.selectFleetShardForDeployment(any())).thenReturn(null);
+        DecisionFleetShardClient clientMock = Mockito.mock(DecisionFleetShardClient.class);
         Mockito.when(clientFactory.createClientFor(any())).thenReturn(clientMock);
         DecisionRequest decisionRequest = new DecisionRequest();
         decisionRequest.setDescription("Mocked DecisionRequest");
@@ -419,8 +419,8 @@ public class WebhookResourceTest {
 
         DecisionVersion decisionVersion = new DecisionVersion();
         Mockito.when(decisionManager.createOrUpdateVersion(any(), any())).thenReturn(decisionVersion);
-        Mockito.when(controlPlaneSelector.selectControlPlaneForDeployment(any())).thenReturn(null);
-        ClusterControlPlaneClient clientMock = Mockito.mock(ClusterControlPlaneClient.class);
+        Mockito.when(fleetShardSelector.selectFleetShardForDeployment(any())).thenReturn(null);
+        DecisionFleetShardClient clientMock = Mockito.mock(DecisionFleetShardClient.class);
         Mockito.when(clientFactory.createClientFor(any())).thenReturn(clientMock);
         DecisionRequest decisionRequest = new DecisionRequest();
         decisionRequest.setDescription("Mocked DecisionRequest");

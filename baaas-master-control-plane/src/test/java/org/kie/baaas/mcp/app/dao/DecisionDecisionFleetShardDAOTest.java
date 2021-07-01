@@ -19,7 +19,7 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 import org.kie.baaas.mcp.app.model.ListResult;
 
 import io.quarkus.test.TestTransaction;
@@ -31,38 +31,38 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 @QuarkusTest
-public class ClusterControlPlaneDAOTest {
+public class DecisionDecisionFleetShardDAOTest {
 
     @Inject
     MasterControlPlaneConfig controlPlaneConfig;
 
     @Inject
-    ClusterControlPlaneDAO controlPlaneDAO;
+    DecisionFleetShardDAO decisionFleetShardDAO;
 
     @TestTransaction
     @Test
-    public void init_createsNewControlPlane() {
-        ClusterControlPlane fleetShard = controlPlaneDAO.findById(1);
+    public void init_createsNewFleetShard() {
+        DecisionFleetShard fleetShard = decisionFleetShardDAO.findById(1);
         assertFleetShard(fleetShard);
     }
 
     @Test
     @TestTransaction
     public void listAll() {
-        ListResult<ClusterControlPlane> listResult = controlPlaneDAO.listAll(0, 100);
+        ListResult<DecisionFleetShard> listResult = decisionFleetShardDAO.listAll(0, 100);
         assertThat(listResult.getPage(), equalTo(0L));
         assertThat(listResult.getTotal(), equalTo(1L));
         assertThat(listResult.getSize(), equalTo(1L));
 
-        ClusterControlPlane fleetShard = listResult.getItems().get(0);
+        DecisionFleetShard fleetShard = listResult.getItems().get(0);
         assertFleetShard(fleetShard);
     }
 
-    private void assertFleetShard(ClusterControlPlane fleetShard) {
+    private void assertFleetShard(DecisionFleetShard fleetShard) {
         assertThat(fleetShard.getId(), equalTo(1));
         assertThat(fleetShard, is(notNullValue()));
-        assertThat(fleetShard.getKubernetesApiUrl(), equalTo(controlPlaneConfig.getCcpKubernetesApiUrl()));
-        assertThat(fleetShard.getDmnJitUrl(), equalTo(controlPlaneConfig.getCcpDmnJitUrl()));
-        assertThat(fleetShard.getNamespace(), equalTo(controlPlaneConfig.getCcpNamespace()));
+        assertThat(fleetShard.getKubernetesApiUrl(), equalTo(controlPlaneConfig.getDfsKubernetesApiUrl()));
+        assertThat(fleetShard.getDmnJitUrl(), equalTo(controlPlaneConfig.getDfsDmnJitUrl()));
+        assertThat(fleetShard.getNamespace(), equalTo(controlPlaneConfig.getDfsNamespace()));
     }
 }

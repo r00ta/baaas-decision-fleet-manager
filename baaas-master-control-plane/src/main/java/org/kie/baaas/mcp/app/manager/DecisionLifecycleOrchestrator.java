@@ -21,18 +21,18 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
-import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
 import org.kie.baaas.mcp.app.controller.modelmappers.DecisionMapper;
+import org.kie.baaas.mcp.app.dfs.DecisionFleetShardClient;
+import org.kie.baaas.mcp.app.dfs.DecisionFleetShardSelector;
+import org.kie.baaas.mcp.app.dfs.client.DecisionFleetShardClientFactory;
 import org.kie.baaas.mcp.app.event.AfterDeployedEvent;
 import org.kie.baaas.mcp.app.event.AfterFailedEvent;
 import org.kie.baaas.mcp.app.event.BeforeCreateOrUpdateVersionEvent;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.listener.ListenerManager;
 import org.kie.baaas.mcp.app.managedservices.ManagedServicesClient;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.ListResult;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
@@ -57,9 +57,9 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     private static final Logger LOG = LoggerFactory.getLogger(DecisionLifecycleOrchestrator.class);
     private static final String CREDENTIALS_NAME = "daas-%s-credentials";
 
-    private final ClusterControlPlaneClientFactory clientFactory;
+    private final DecisionFleetShardClientFactory clientFactory;
 
-    private final ClusterControlPlaneSelector controlPlaneSelector;
+    private final DecisionFleetShardSelector fleetShardSelector;
 
     private final DecisionManager decisionManager;
 
@@ -74,14 +74,14 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     private final ManagedServicesClient managedServicesClient;
 
     @Inject
-    public DecisionLifecycleOrchestrator(ClusterControlPlaneClientFactory clientFactory, ClusterControlPlaneSelector controlPlaneSelector, DecisionManager decisionManager,
+    public DecisionLifecycleOrchestrator(DecisionFleetShardClientFactory clientFactory, DecisionFleetShardSelector fleetShardSelector, DecisionManager decisionManager,
             DecisionDMNStorage decisionDMNStorage,
             ListenerManager listenerManager,
             DecisionMapper decisionMapper,
             VaultService vaultService,
             ManagedServicesClient managedServicesClient) {
         this.clientFactory = clientFactory;
-        this.controlPlaneSelector = controlPlaneSelector;
+        this.fleetShardSelector = fleetShardSelector;
         this.decisionManager = decisionManager;
         this.decisionDMNStorage = decisionDMNStorage;
         this.listenerManager = listenerManager;
@@ -94,14 +94,14 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     public Decision deleteDecision(String customerId, String decisionNameOrId) {
 
         Decision decision = decisionManager.deleteDecision(customerId, decisionNameOrId);
-        ClusterControlPlaneClient client = getControlPlaneClient(decision);
+        DecisionFleetShardClient client = getFleetShardClient(decision);
         client.delete(decision);
         decisionDMNStorage.deleteDMN(customerId, decision);
         return decision;
     }
 
     private DecisionVersion requestDeployment(String customerId, DecisionVersion decisionVersion) {
-        ClusterControlPlaneClient client = getControlPlaneClient(decisionVersion.getDecision());
+        DecisionFleetShardClient client = getFleetShardClient(decisionVersion.getDecision());
         try {
             client.deploy(decisionVersion);
             return decisionVersion;
@@ -144,9 +144,9 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         return deployment;
     }
 
-    private ClusterControlPlaneClient getControlPlaneClient(Decision decision) {
-        ClusterControlPlane clusterControlPlane = controlPlaneSelector.selectControlPlaneForDeployment(decision);
-        return clientFactory.createClientFor(clusterControlPlane);
+    private DecisionFleetShardClient getFleetShardClient(Decision decision) {
+        DecisionFleetShard fleetShard = fleetShardSelector.selectFleetShardForDeployment(decision);
+        return clientFactory.createClientFor(fleetShard);
     }
 
     @Override
@@ -173,7 +173,7 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     @Override
     public DecisionVersion deleteVersion(String customerId, String decisionIdOrName, long version) {
         DecisionVersion decisionVersion = decisionManager.deleteVersion(customerId, decisionIdOrName, version);
-        ClusterControlPlaneClient client = getControlPlaneClient(decisionVersion.getDecision());
+        DecisionFleetShardClient client = getFleetShardClient(decisionVersion.getDecision());
         client.delete(decisionVersion);
         return decisionVersion;
     }

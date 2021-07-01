@@ -13,7 +13,7 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp.client;
+package org.kie.baaas.mcp.app.dfs.client;
 
 import java.net.URI;
 import java.util.Collection;
@@ -22,11 +22,11 @@ import org.kie.baaas.dfs.api.DecisionRequest;
 import org.kie.baaas.dfs.api.DecisionRequestSpec;
 import org.kie.baaas.dfs.api.KafkaCredential;
 import org.kie.baaas.dfs.api.KafkaRequest;
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
+import org.kie.baaas.mcp.app.dfs.DecisionFleetShardClient;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.slf4j.Logger;
@@ -40,34 +40,29 @@ import io.fabric8.kubernetes.client.utils.KubernetesResourceUtil;
 
 import static java.util.Collections.singleton;
 
-public class DefaultClusterControlPlaneClient implements ClusterControlPlaneClient {
+public class DefaultDecisionFleetShardClient implements DecisionFleetShardClient {
 
     private static final String CALLBACK_URL_SUFFIX = "/callback/decisions/%s/versions/%s";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClusterControlPlaneClient.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDecisionFleetShardClient.class);
 
-    private KubernetesClient kubernetesClient;
+    private final KubernetesClient kubernetesClient;
 
-    private ClusterControlPlane clusterControlPlane;
+    private final DecisionFleetShard fleetShard;
 
-    private MasterControlPlaneConfig config;
+    private final MasterControlPlaneConfig config;
 
-    public DefaultClusterControlPlaneClient(MasterControlPlaneConfig config, KubernetesClient kubernetesClient, ClusterControlPlane clusterControlPlane) {
+    public DefaultDecisionFleetShardClient(MasterControlPlaneConfig config, KubernetesClient kubernetesClient, DecisionFleetShard fleetShard) {
         this.kubernetesClient = kubernetesClient;
-        this.clusterControlPlane = clusterControlPlane;
+        this.fleetShard = fleetShard;
         this.config = config;
-    }
-
-    @Override
-    public ClusterControlPlane getClusterControlPlane() {
-        return clusterControlPlane;
     }
 
     private String getNamespace() {
 
-        Namespace namespace = kubernetesClient.namespaces().withName(clusterControlPlane.getNamespace()).get();
+        Namespace namespace = kubernetesClient.namespaces().withName(fleetShard.getNamespace()).get();
         if (namespace == null) {
-            throw new MasterControlPlaneException("Cannot locate namespace '" + clusterControlPlane.getNamespace() + "' for Cluster Control Plane.");
+            throw new MasterControlPlaneException("Cannot locate namespace '" + fleetShard.getNamespace() + "' for Decision Fleet Shard.");
         }
 
         return namespace.getMetadata().getName();

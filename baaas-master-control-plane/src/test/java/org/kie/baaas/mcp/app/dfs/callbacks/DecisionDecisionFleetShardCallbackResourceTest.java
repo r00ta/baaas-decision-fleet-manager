@@ -13,7 +13,7 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp.callbacks;
+package org.kie.baaas.mcp.app.dfs.callbacks;
 
 import java.net.URI;
 import java.time.ZoneOffset;
@@ -40,13 +40,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-public class ClusterControlPlaneCallbackResourceTest {
+public class DecisionDecisionFleetShardCallbackResourceTest {
 
     @Mock
     private DecisionLifecycleOrchestrator decisionLifecycleOrch;
 
     @InjectMocks
-    private ClusterControlPlaneCallbackResource callbackResource;
+    private DecisionFleetShardCallbackResource callbackResource;
 
     @Captor
     ArgumentCaptor<Deployment> deploymentCap;
@@ -69,7 +69,7 @@ public class ClusterControlPlaneCallbackResourceTest {
 
         Webhook webhook = createWithPhase(Phase.CURRENT);
 
-        callbackResource.processClusterControlPlaneCallback(webhook, webhook.getDecision(), 1l);
+        callbackResource.processCallback(webhook, webhook.getDecision(), 1l);
 
         verify(decisionLifecycleOrch).deployed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
 
@@ -87,7 +87,7 @@ public class ClusterControlPlaneCallbackResourceTest {
         Webhook webhook = createWithPhase(Phase.FAILED);
         webhook.setVersionEndpoint(null);
         webhook.setCurrentEndpoint(null);
-        callbackResource.processClusterControlPlaneCallback(webhook, webhook.getDecision(), 1l);
+        callbackResource.processCallback(webhook, webhook.getDecision(), 1l);
 
         verify(decisionLifecycleOrch).failed(eq(webhook.getCustomer()), eq(webhook.getDecision()), eq(1l), deploymentCap.capture());
 

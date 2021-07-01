@@ -22,7 +22,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
-import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
+import org.kie.baaas.mcp.app.dao.DecisionFleetShardDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,17 +35,17 @@ public class AppLifecycle {
     private final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass().getName());
     private final String componentName = "Master Control Plane";
 
-    private final ClusterControlPlaneDAO controlPlaneDAO;
+    private final DecisionFleetShardDAO decisionFleetShardDAO;
 
     @Inject
-    public AppLifecycle(ClusterControlPlaneDAO controlPlaneDAO) {
-        Objects.requireNonNull(controlPlaneDAO, "controlPlaneDAO cannot be null");
-        this.controlPlaneDAO = controlPlaneDAO;
+    public AppLifecycle(DecisionFleetShardDAO decisionFleetShardDAO) {
+        Objects.requireNonNull(decisionFleetShardDAO, "fleetShardDAO cannot be null");
+        this.decisionFleetShardDAO = decisionFleetShardDAO;
     }
 
     void onStart(@Observes StartupEvent ev) {
         LOGGER.info("{} is starting and will be ready to process requests.", componentName);
-        controlPlaneDAO.init();
+        decisionFleetShardDAO.init();
     }
 
     void onStop(@Observes ShutdownEvent ev) {

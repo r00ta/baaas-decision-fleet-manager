@@ -13,7 +13,7 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp.client;
+package org.kie.baaas.mcp.app.dfs.client;
 
 import java.net.URI;
 import java.util.Collection;
@@ -24,7 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kie.baaas.dfs.api.DecisionRequest;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
-import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
+import org.kie.baaas.mcp.app.dao.DecisionFleetShardDAO;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.DecisionVersionStatus;
@@ -52,7 +52,7 @@ import static org.kie.baaas.mcp.app.TestConstants.DEFAULT_CUSTOMER_ID;
 
 @QuarkusTestResource(KubernetesMockServerTestResource.class)
 @QuarkusTest
-public class DefaultClusterControlPlaneClientTest {
+public class DefaultDecisionDecisionFleetShardClientTest {
 
     @MockServer
     KubernetesMockServer mockServer;
@@ -64,13 +64,13 @@ public class DefaultClusterControlPlaneClientTest {
     KubernetesClient kubernetesClient;
 
     @Inject
-    ClusterControlPlaneDAO controlPlaneDAO;
+    DecisionFleetShardDAO decisionFleetShardDAO;
 
-    private DefaultClusterControlPlaneClient client;
+    private DefaultDecisionFleetShardClient client;
 
     @BeforeEach
     public void before() {
-        client = new DefaultClusterControlPlaneClient(config, kubernetesClient, controlPlaneDAO.findById(ClusterControlPlaneDAO.DEFAULT_CCP_ID));
+        client = new DefaultDecisionFleetShardClient(config, kubernetesClient, decisionFleetShardDAO.findById(DecisionFleetShardDAO.DEFAULT_DFS_ID));
     }
 
     private void createNamespace(String name) {
@@ -78,8 +78,8 @@ public class DefaultClusterControlPlaneClientTest {
         mockServer.expect().get().withPath("/api/v1/namespaces/" + name).andReturn(200, ns).always();
     }
 
-    private void createClusterControlPlaneNamespace() {
-        createNamespace(config.getCcpNamespace());
+    private void createFleetShardNamespace() {
+        createNamespace(config.getDfsNamespace());
     }
 
     private DecisionVersion createDecisionVersion(boolean addKafka) {
@@ -111,17 +111,17 @@ public class DefaultClusterControlPlaneClientTest {
         return decisionVersion;
     }
 
-    private CCPResponseBuilder expectDecisionRequest() {
-        CCPResponseBuilder<DecisionRequest> responseBuilder = new CCPResponseBuilder(DecisionRequest.class);
-        createClusterControlPlaneNamespace();
-        mockServer.expect().post().withPath("/apis/operator.baaas/v1alpha1/namespaces/" + config.getCcpNamespace() + "/decisionrequests").andReply(responseBuilder).once();
+    private FleetShardResponseBuilder expectDecisionRequest() {
+        FleetShardResponseBuilder<DecisionRequest> responseBuilder = new FleetShardResponseBuilder(DecisionRequest.class);
+        createFleetShardNamespace();
+        mockServer.expect().post().withPath("/apis/operator.baaas/v1alpha1/namespaces/" + config.getDfsNamespace() + "/decisionrequests").andReply(responseBuilder).once();
         return responseBuilder;
     }
 
     @Test
     public void deploy() {
 
-        CCPResponseBuilder<DecisionRequest> responseBuilder = expectDecisionRequest();
+        FleetShardResponseBuilder<DecisionRequest> responseBuilder = expectDecisionRequest();
         DecisionVersion decisionVersion = createDecisionVersion(false);
 
         client.deploy(decisionVersion);
@@ -146,7 +146,7 @@ public class DefaultClusterControlPlaneClientTest {
     @Test
     public void deploy_withUpperCaseDecisionName() {
 
-        CCPResponseBuilder<DecisionRequest> responseBuilder = expectDecisionRequest();
+        FleetShardResponseBuilder<DecisionRequest> responseBuilder = expectDecisionRequest();
         DecisionVersion decisionVersion = createDecisionVersion(false);
         decisionVersion.getDecision().setName("My-Decision");
 
@@ -172,7 +172,7 @@ public class DefaultClusterControlPlaneClientTest {
     @Test
     public void deploy_withKafka() {
 
-        CCPResponseBuilder<DecisionRequest> responseBuilder = expectDecisionRequest();
+        FleetShardResponseBuilder<DecisionRequest> responseBuilder = expectDecisionRequest();
         DecisionVersion decisionVersion = createDecisionVersion(true);
 
         client.deploy(decisionVersion);
@@ -235,7 +235,7 @@ public class DefaultClusterControlPlaneClientTest {
         createDeploymentNamespace(deployment);
         createDecisionVersion(deployment);
 
-        CCPResponseBuilder<org.kie.baaas.dfs.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.dfs.api.DecisionVersion.class);
+        FleetShardResponseBuilder<org.kie.baaas.dfs.api.DecisionVersion> deleteResponse = new FleetShardResponseBuilder<>(org.kie.baaas.dfs.api.DecisionVersion.class);
         String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisionversions/" + deployment.getVersionName();
         mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
 
@@ -251,7 +251,7 @@ public class DefaultClusterControlPlaneClientTest {
         Deployment deployment = decisionVersion.getDeployment();
         createDeploymentNamespace(deployment);
 
-        CCPResponseBuilder<org.kie.baaas.dfs.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.dfs.api.DecisionVersion.class);
+        FleetShardResponseBuilder<org.kie.baaas.dfs.api.DecisionVersion> deleteResponse = new FleetShardResponseBuilder<>(org.kie.baaas.dfs.api.DecisionVersion.class);
         String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisionversions/" + deployment.getVersionName();
         mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
 
@@ -268,7 +268,7 @@ public class DefaultClusterControlPlaneClientTest {
         deployment.setName(null);
         deployment.setVersionName(null);
 
-        CCPResponseBuilder<org.kie.baaas.dfs.api.DecisionVersion> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.dfs.api.DecisionVersion.class);
+        FleetShardResponseBuilder<org.kie.baaas.dfs.api.DecisionVersion> deleteResponse = new FleetShardResponseBuilder<>(org.kie.baaas.dfs.api.DecisionVersion.class);
         String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisionversions/" + deployment.getVersionName();
         mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
 
@@ -285,7 +285,7 @@ public class DefaultClusterControlPlaneClientTest {
         createDeploymentNamespace(deployment);
         createDecision(deployment);
 
-        CCPResponseBuilder<org.kie.baaas.dfs.api.Decision> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.dfs.api.Decision.class);
+        FleetShardResponseBuilder<org.kie.baaas.dfs.api.Decision> deleteResponse = new FleetShardResponseBuilder<>(org.kie.baaas.dfs.api.Decision.class);
         String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisions/" + deployment.getName();
         mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
 
@@ -301,7 +301,7 @@ public class DefaultClusterControlPlaneClientTest {
         Deployment deployment = decisionVersion.getDeployment();
         createDeploymentNamespace(deployment);
 
-        CCPResponseBuilder<org.kie.baaas.dfs.api.Decision> deleteResponse = new CCPResponseBuilder<>(org.kie.baaas.dfs.api.Decision.class);
+        FleetShardResponseBuilder<org.kie.baaas.dfs.api.Decision> deleteResponse = new FleetShardResponseBuilder<>(org.kie.baaas.dfs.api.Decision.class);
         String deletePath = "/apis/operator.baaas/v1alpha1/namespaces/" + deployment.getNamespace() + "/decisions/" + deployment.getName();
         mockServer.expect().delete().withPath(deletePath).andReply(deleteResponse).once();
 

@@ -55,6 +55,6 @@ public class DMNJITResourceTest {
         assertThat(dmnjitList.getTotal(), equalTo(1L));
 
         DMNJIT dmnjit = dmnjitList.getItems().get(0);
-        assertThat(dmnjit.getUrl().toExternalForm(), equalTo(config.getCcpDmnJitUrl()));
+        assertThat(dmnjit.getUrl().toExternalForm(), equalTo(config.getDfsDmnJitUrl()));
     }
 }

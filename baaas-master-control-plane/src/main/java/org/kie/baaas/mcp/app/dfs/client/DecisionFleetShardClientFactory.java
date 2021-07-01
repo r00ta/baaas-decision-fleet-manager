@@ -13,14 +13,14 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp.client;
+package org.kie.baaas.mcp.app.dfs.client;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+import org.kie.baaas.mcp.app.dfs.DecisionFleetShardClient;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
@@ -30,24 +30,24 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import static java.util.Objects.requireNonNull;
 
 /**
- * Creates a client to interact with the given ClusterControlPlane.
+ * Creates a client to interact with the given Fleet Shard
  */
 @ApplicationScoped
-public class ClusterControlPlaneClientFactory {
+public class DecisionFleetShardClientFactory {
 
     private final MasterControlPlaneConfig controlPlaneConfig;
 
     @Inject
-    public ClusterControlPlaneClientFactory(MasterControlPlaneConfig config) {
+    public DecisionFleetShardClientFactory(MasterControlPlaneConfig config) {
         requireNonNull(config, "config cannot be null");
         this.controlPlaneConfig = config;
     }
 
-    public ClusterControlPlaneClient createClientFor(ClusterControlPlane clusterControlPlane) {
+    public DecisionFleetShardClient createClientFor(DecisionFleetShard fleetShard) {
 
-        Config config = new ConfigBuilder().withMasterUrl(clusterControlPlane.getKubernetesApiUrl()).build();
+        Config config = new ConfigBuilder().withMasterUrl(fleetShard.getKubernetesApiUrl()).build();
         KubernetesClient client = new DefaultKubernetesClient(config);
 
-        return new DefaultClusterControlPlaneClient(this.controlPlaneConfig, client, clusterControlPlane);
+        return new DefaultDecisionFleetShardClient(this.controlPlaneConfig, client, fleetShard);
     }
 }

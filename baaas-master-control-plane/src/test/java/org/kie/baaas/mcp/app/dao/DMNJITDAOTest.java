@@ -46,6 +46,6 @@ public class DMNJITDAOTest {
         assertThat(listResult.getPage(), equalTo(0L));
 
         DMNJIT dmnjit = listResult.getItems().get(0);
-        assertThat(dmnjit.getUrl().toExternalForm(), equalTo(config.getCcpDmnJitUrl()));
+        assertThat(dmnjit.getUrl().toExternalForm(), equalTo(config.getDfsDmnJitUrl()));
     }
 }

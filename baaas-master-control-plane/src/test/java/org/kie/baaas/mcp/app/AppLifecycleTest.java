@@ -17,7 +17,7 @@ package org.kie.baaas.mcp.app;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
+import org.kie.baaas.mcp.app.dao.DecisionFleetShardDAO;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 public class AppLifecycleTest {
 
     @Mock
-    private ClusterControlPlaneDAO controlPlaneDAO;
+    private DecisionFleetShardDAO decisionFleetShardDAO;
 
     @InjectMocks
     private AppLifecycle appLifecycle;
@@ -38,6 +38,6 @@ public class AppLifecycleTest {
     @Test
     public void onStart() {
         appLifecycle.onStart(new StartupEvent());
-        verify(controlPlaneDAO).init();
+        verify(decisionFleetShardDAO).init();
     }
 }

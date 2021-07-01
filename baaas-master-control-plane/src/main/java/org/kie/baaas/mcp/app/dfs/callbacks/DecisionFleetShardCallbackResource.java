@@ -13,7 +13,7 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp.callbacks;
+package org.kie.baaas.mcp.app.dfs.callbacks;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -34,21 +34,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Receives callbacks from the ClusterControlPlane to update progress on deployment
+ * Receives callbacks from the Fleet Shard to update progress on deployment
  * of a Decision Service.
  */
 @Path("/callback/")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
-public class ClusterControlPlaneCallbackResource {
+public class DecisionFleetShardCallbackResource {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterControlPlaneCallbackResource.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DecisionFleetShardCallbackResource.class);
 
     private final DecisionLifecycleOrchestrator decisionLifecycleOrch;
 
     @Inject
-    public ClusterControlPlaneCallbackResource(DecisionLifecycleOrchestrator decisionLifecycleOrch) {
+    public DecisionFleetShardCallbackResource(DecisionLifecycleOrchestrator decisionLifecycleOrch) {
         this.decisionLifecycleOrch = decisionLifecycleOrch;
     }
 
@@ -69,7 +69,7 @@ public class ClusterControlPlaneCallbackResource {
 
     @POST
     @Path("decisions/{id}/versions/{version}")
-    public Response processClusterControlPlaneCallback(Webhook webhook, @PathParam("id") String decisionIdOrName, @PathParam("version") long version) {
+    public Response processCallback(Webhook webhook, @PathParam("id") String decisionIdOrName, @PathParam("version") long version) {
 
         LOGGER.info("Received callback for decision with idOrName '{}' at version '{}' for customer '{}'. Phase: '{}'", decisionIdOrName, version, webhook.getCustomer(), webhook.getPhase());
 

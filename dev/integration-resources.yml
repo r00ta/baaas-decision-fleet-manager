@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: baaas-fleetshard
+  name: baaas-dfs
 spec:
   finalizers:
     - kubernetes

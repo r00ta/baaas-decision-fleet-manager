@@ -13,7 +13,7 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp.client;
+package org.kie.baaas.mcp.app.dfs.client;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +23,7 @@ import io.fabric8.mockwebserver.utils.ResponseProvider;
 import okhttp3.Headers;
 import okhttp3.mockwebserver.RecordedRequest;
 
-public class CCPResponseBuilder<T> implements ResponseProvider<Object> {
+public class FleetShardResponseBuilder<T> implements ResponseProvider<Object> {
 
     Class<T> clazz;
 
@@ -31,7 +31,7 @@ public class CCPResponseBuilder<T> implements ResponseProvider<Object> {
 
     boolean invoked = false;
 
-    public CCPResponseBuilder(Class<T> clazz) {
+    public FleetShardResponseBuilder(Class<T> clazz) {
         this.clazz = clazz;
     }
 
