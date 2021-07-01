@@ -31,7 +31,6 @@ public class CustomerIdResolver {
      * @return - The current customer id
      */
     public String getCustomerId(Principal principal) {
-        // We only support a single hard-coded customer for the demo.
         return principal.getName();
     }
 }
