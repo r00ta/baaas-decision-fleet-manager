@@ -54,7 +54,7 @@ public class DecisionMapper {
         Decision decision = decisionVersion.getDecision();
 
         DecisionResponse decisionResponse = new DecisionResponse();
-        decisionResponse.setDescription(decision.getDescription());
+        decisionResponse.setDescription(decisionVersion.getDescription());
         decisionResponse.setId(decision.getId());
         decisionResponse.setName(decision.getName());
         decisionResponse.setVersion(decisionVersion.getVersion());

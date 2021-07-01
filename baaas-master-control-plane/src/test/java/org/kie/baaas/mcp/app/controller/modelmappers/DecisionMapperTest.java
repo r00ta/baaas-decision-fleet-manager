@@ -69,7 +69,6 @@ public class DecisionMapperTest {
     private Decision createDecision(String name) {
         Decision decision = new Decision();
         decision.setName(name);
-        decision.setDescription("my-description");
         decision.setCustomerId("1");
         return decision;
     }
@@ -83,6 +82,7 @@ public class DecisionMapperTest {
         decisionVersion.setPublishedAt(ZonedDateTime.now(ZoneOffset.UTC));
         decisionVersion.setDmnLocation("s3://dmn-location");
         decisionVersion.setDmnMd5("md5");
+        decisionVersion.setDescription("my-description");
 
         Map<String, String> config = new HashMap<>();
         config.put("config", "value");
@@ -113,7 +113,7 @@ public class DecisionMapperTest {
         assertThat(response.getHref(), equalTo(DECISION_VERSION_HREF));
         assertThat(response.getConfiguration().containsKey("config"), is(true));
         assertThat(response.getTags().containsKey("tag"), is(true));
-        assertThat(response.getDescription(), equalTo(decision.getDescription()));
+        assertThat(response.getDescription(), equalTo(decisionVersion.getDescription()));
         assertThat(response.getName(), equalTo(decision.getName()));
         if (!hasKafka) {
             assertThat(response.getEventing(), is(nullValue()));

@@ -86,7 +86,6 @@ public class DefaultDecisionDecisionFleetShardClientTest {
 
         Decision decision = new Decision();
         decision.setName("my first decision");
-        decision.setDescription("An amazing decision");
         decision.setCustomerId(DEFAULT_CUSTOMER_ID);
 
         DecisionVersion decisionVersion = new DecisionVersion();
@@ -96,6 +95,7 @@ public class DefaultDecisionDecisionFleetShardClientTest {
         decisionVersion.setVersion(1l);
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
         decisionVersion.setDmnLocation("s3://baaas-dmn-bucket/customers/1/my-first-decision/1/dmn.xml");
+        decisionVersion.setDescription("An amazing decision");
 
         if (addKafka) {
             KafkaConfig kafkaConfig = new KafkaConfig();
