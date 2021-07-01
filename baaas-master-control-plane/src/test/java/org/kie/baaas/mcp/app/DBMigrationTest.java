@@ -18,8 +18,8 @@ package org.kie.baaas.mcp.app;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
-import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+import org.kie.baaas.mcp.app.dao.DecisionFleetShardDAO;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 
 import io.quarkus.test.junit.QuarkusTest;
 
@@ -30,13 +30,13 @@ import static org.hamcrest.Matchers.equalTo;
 public class DBMigrationTest {
 
     @Inject
-    ClusterControlPlaneDAO controlPlaneDAO;
+    DecisionFleetShardDAO decisionFleetShardDAO;
 
     @Test
     public void flyway_migrate() {
 
-        ClusterControlPlane clusterControlPlane = controlPlaneDAO.findById(ClusterControlPlaneDAO.DEFAULT_CCP_ID);
-        assertThat(clusterControlPlane.getDmnJitUrl(), equalTo("https://baaas-dmn-jit-baaas-dmn-jit-demo.apps.kogito-cloud.automation.rhmw.io/jitdmn"));
-        assertThat(clusterControlPlane.getKubernetesApiUrl(), equalTo("https://kubernetes.default.svc"));
+        DecisionFleetShard fleetShard = decisionFleetShardDAO.findById(DecisionFleetShardDAO.DEFAULT_DFS_ID);
+        assertThat(fleetShard.getDmnJitUrl(), equalTo("https://baaas-dmn-jit-baaas-dmn-jit-demo.apps.kogito-cloud.automation.rhmw.io/jitdmn"));
+        assertThat(fleetShard.getKubernetesApiUrl(), equalTo("https://kubernetes.default.svc"));
     }
 }

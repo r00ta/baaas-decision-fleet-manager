@@ -26,7 +26,7 @@ import javax.transaction.Transactional;
 
 import org.kie.baaas.mcp.api.DMNJIT;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 import org.kie.baaas.mcp.app.model.ListResult;
 
 import static java.util.stream.Collectors.toList;
@@ -34,22 +34,22 @@ import static java.util.stream.Collectors.toList;
 @ApplicationScoped
 public class DMNJITDAO {
 
-    private final ClusterControlPlaneDAO controlPlaneDAO;
+    private final DecisionFleetShardDAO decisionFleetShardDAO;
 
     @Inject
-    public DMNJITDAO(ClusterControlPlaneDAO controlPlaneDAO) {
-        Objects.requireNonNull(controlPlaneDAO, "controlPlaneDAO cannot be null.");
-        this.controlPlaneDAO = controlPlaneDAO;
+    public DMNJITDAO(DecisionFleetShardDAO decisionFleetShardDAO) {
+        Objects.requireNonNull(decisionFleetShardDAO, "fleetShardDAO cannot be null.");
+        this.decisionFleetShardDAO = decisionFleetShardDAO;
     }
 
     @Transactional
     public ListResult<DMNJIT> listAll(int page, int size) {
-        ListResult<ClusterControlPlane> fleetShards = controlPlaneDAO.listAll(page, size);
+        ListResult<DecisionFleetShard> fleetShards = decisionFleetShardDAO.listAll(page, size);
         List<DMNJIT> jits = fleetShards.getItems().stream().map(this::createJitForShard).collect(toList());
         return new ListResult<>(jits, fleetShards.getPage(), fleetShards.getTotal());
     }
 
-    private DMNJIT createJitForShard(ClusterControlPlane fleetShard) {
+    private DMNJIT createJitForShard(DecisionFleetShard fleetShard) {
         try {
             URL dmnJitUrl = new URL(fleetShard.getDmnJitUrl());
             DMNJIT dmnjit = new DMNJIT();

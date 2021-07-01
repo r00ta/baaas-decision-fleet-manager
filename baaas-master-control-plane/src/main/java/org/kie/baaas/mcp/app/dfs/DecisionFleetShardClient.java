@@ -13,18 +13,15 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp;
+package org.kie.baaas.mcp.app.dfs;
 
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 
 /**
- * Interface for sending requests to the Cluster Control Plane
+ * Interface for sending requests to the Fleet Shard
  */
-public interface ClusterControlPlaneClient {
-
-    ClusterControlPlane getClusterControlPlane();
+public interface DecisionFleetShardClient {
 
     /**
      * Request deployment of the specific DecisionVersion. This encompasses a new decision,

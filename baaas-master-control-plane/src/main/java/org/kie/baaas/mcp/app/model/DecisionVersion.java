@@ -128,9 +128,9 @@ public class DecisionVersion {
 
     @Embedded
     @AttributeOverrides({
-            @AttributeOverride(name = "namespace", column = @Column(name = "ccp_namespace")),
-            @AttributeOverride(name = "name", column = @Column(name = "ccp_name")),
-            @AttributeOverride(name = "versionName", column = @Column(name = "ccp_version_name")),
+            @AttributeOverride(name = "namespace", column = @Column(name = "dfs_namespace")),
+            @AttributeOverride(name = "name", column = @Column(name = "dfs_name")),
+            @AttributeOverride(name = "versionName", column = @Column(name = "dfs_version_name")),
             @AttributeOverride(name = "versionUrl", column = @Column(name = "version_url")),
             @AttributeOverride(name = "currentUrl", column = @Column(name = "current_url")),
             @AttributeOverride(name = "statusMessage", column = @Column(name = "status_message"))

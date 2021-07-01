@@ -22,15 +22,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.mcp.api.decisions.DecisionRequest;
 import org.kie.baaas.mcp.api.eventing.Eventing;
 import org.kie.baaas.mcp.api.eventing.kafka.Kafka;
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
-import org.kie.baaas.mcp.app.ccp.client.ClusterControlPlaneClientFactory;
+import org.kie.baaas.mcp.app.dfs.DecisionFleetShardClient;
+import org.kie.baaas.mcp.app.dfs.DecisionFleetShardSelector;
+import org.kie.baaas.mcp.app.dfs.client.DecisionFleetShardClientFactory;
 import org.kie.baaas.mcp.app.exceptions.MasterControlPlaneException;
 import org.kie.baaas.mcp.app.listener.ListenerManager;
 import org.kie.baaas.mcp.app.managedservices.ManagedServicesClient;
 import org.kie.baaas.mcp.app.managedservices.ManagedServicesException;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
 import org.kie.baaas.mcp.app.model.Decision;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 import org.kie.baaas.mcp.app.model.DecisionVersion;
 import org.kie.baaas.mcp.app.model.deployment.Deployment;
 import org.kie.baaas.mcp.app.model.eventing.KafkaConfig;
@@ -62,13 +62,13 @@ import static org.mockito.Mockito.when;
 public class DecisionLifecycleOrchestratorTest {
 
     @Mock
-    private ClusterControlPlaneClient client;
+    private DecisionFleetShardClient client;
 
     @Mock
-    private ClusterControlPlaneSelector selector;
+    private DecisionFleetShardSelector selector;
 
     @Mock
-    private ClusterControlPlane clusterControlPlane;
+    private DecisionFleetShard fleetShard;
 
     @Mock
     private DecisionManager decisionManager;
@@ -77,7 +77,7 @@ public class DecisionLifecycleOrchestratorTest {
     private DecisionDMNStorage decisionDMNStorage;
 
     @Mock
-    private ClusterControlPlaneClientFactory clientFactory;
+    private DecisionFleetShardClientFactory clientFactory;
 
     @Mock
     @SuppressWarnings("unused")
@@ -101,8 +101,8 @@ public class DecisionLifecycleOrchestratorTest {
 
         when(decisionVersion.getDecision()).thenReturn(decision);
         when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
-        when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
-        when(clientFactory.createClientFor(clusterControlPlane)).thenReturn(client);
+        when(selector.selectFleetShardForDeployment(decision)).thenReturn(fleetShard);
+        when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
 
         DecisionVersion created = orchestrator.createOrUpdateVersion(customerId, request);
         assertThat(created, is(notNullValue()));
@@ -126,8 +126,8 @@ public class DecisionLifecycleOrchestratorTest {
         when(decisionVersion.getDecision()).thenReturn(decision);
         when(decisionVersion.getKafkaConfig()).thenReturn(new KafkaConfig());
         when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
-        when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
-        when(clientFactory.createClientFor(clusterControlPlane)).thenReturn(client);
+        when(selector.selectFleetShardForDeployment(decision)).thenReturn(fleetShard);
+        when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
         Secret secret = new Secret().setId(saName).setValues(Map.of(ManagedServicesClient.CLIENT_ID, "foo", ManagedServicesClient.CLIENT_SECRET, "bar"));
         when(managedServicesClient.createOrReplaceServiceAccount(saName)).thenReturn(secret);
 
@@ -182,8 +182,8 @@ public class DecisionLifecycleOrchestratorTest {
         when(decisionVersion.getDecision()).thenReturn(decision);
         when(decisionVersion.getKafkaConfig()).thenReturn(new KafkaConfig());
         when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
-        when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
-        when(clientFactory.createClientFor(clusterControlPlane)).thenReturn(client);
+        when(selector.selectFleetShardForDeployment(decision)).thenReturn(fleetShard);
+        when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
         when(vaultService.get(anyString())).thenReturn(new Secret());
         doThrow(new RuntimeException("Nope!")).when(client).deploy(decisionVersion);
 
@@ -203,8 +203,8 @@ public class DecisionLifecycleOrchestratorTest {
         Decision decision = mock(Decision.class);
 
         when(decisionManager.deleteDecision(customerId, decisionName)).thenReturn(decision);
-        when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
-        when(clientFactory.createClientFor(clusterControlPlane)).thenReturn(client);
+        when(selector.selectFleetShardForDeployment(decision)).thenReturn(fleetShard);
+        when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
 
         Decision deleted = orchestrator.deleteDecision(customerId, decisionName);
         assertThat(deleted, is(notNullValue()));
@@ -225,8 +225,8 @@ public class DecisionLifecycleOrchestratorTest {
         when(decisionVersion.getDecision()).thenReturn(decision);
 
         when(decisionManager.deleteVersion(customerId, decisionName, version)).thenReturn(decisionVersion);
-        when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
-        when(clientFactory.createClientFor(clusterControlPlane)).thenReturn(client);
+        when(selector.selectFleetShardForDeployment(decision)).thenReturn(fleetShard);
+        when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
 
         DecisionVersion deleted = orchestrator.deleteVersion(customerId, decisionName, version);
         assertThat(deleted, is(notNullValue()));
@@ -246,8 +246,8 @@ public class DecisionLifecycleOrchestratorTest {
         when(decisionVersion.getDecision()).thenReturn(decision);
 
         when(decisionManager.setCurrentVersion(customerId, decisionName, version)).thenReturn(decisionVersion);
-        when(selector.selectControlPlaneForDeployment(decision)).thenReturn(clusterControlPlane);
-        when(clientFactory.createClientFor(clusterControlPlane)).thenReturn(client);
+        when(selector.selectFleetShardForDeployment(decision)).thenReturn(fleetShard);
+        when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
 
         DecisionVersion rollback = orchestrator.setCurrentVersion(customerId, decisionName, version);
         assertThat(rollback, is(notNullValue()));

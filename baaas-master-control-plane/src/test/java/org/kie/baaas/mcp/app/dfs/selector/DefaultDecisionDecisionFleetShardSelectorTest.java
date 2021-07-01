@@ -13,14 +13,14 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp.selector;
+package org.kie.baaas.mcp.app.dfs.selector;
 
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
-import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+import org.kie.baaas.mcp.app.dao.DecisionFleetShardDAO;
 import org.kie.baaas.mcp.app.model.Decision;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 import org.mockito.Mock;
 
 import io.quarkus.test.junit.QuarkusTest;
@@ -31,19 +31,19 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 @QuarkusTest
-public class DefaultControlPlaneSelectorTest {
+public class DefaultDecisionDecisionFleetShardSelectorTest {
 
     @Mock
     private Decision decision;
 
     @Inject
-    DefaultControlPlaneSelector selector;
+    DefaultDecisionFleetShardSelector selector;
 
     @Test
-    public void selectControlPlaneForDeployment() {
+    public void selectFleetShardForDeployment() {
 
-        ClusterControlPlane planeForDeployment = selector.selectControlPlaneForDeployment(decision);
+        DecisionFleetShard planeForDeployment = selector.selectFleetShardForDeployment(decision);
         assertThat(planeForDeployment, is(notNullValue()));
-        assertThat(planeForDeployment.getId(), equalTo(ClusterControlPlaneDAO.DEFAULT_CCP_ID));
+        assertThat(planeForDeployment.getId(), equalTo(DecisionFleetShardDAO.DEFAULT_DFS_ID));
     }
 }

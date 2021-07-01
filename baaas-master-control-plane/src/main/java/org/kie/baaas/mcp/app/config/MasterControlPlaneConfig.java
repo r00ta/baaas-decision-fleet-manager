@@ -33,16 +33,16 @@ public class MasterControlPlaneConfig {
     String apiBaseUrl;
 
     @NotBlank
-    @ConfigProperty(name = "baaas.ccp.urls.dmn-jit")
-    String ccpDmnJitUrl;
+    @ConfigProperty(name = "baaas.dfs.urls.dmn-jit")
+    String dfsDmnJitUrl;
 
     @NotBlank
-    @ConfigProperty(name = "baaas.ccp.urls.k8s-api")
-    String ccpKubernetesApiUrl;
+    @ConfigProperty(name = "baaas.dfs.urls.k8s-api")
+    String dfsKubernetesApiUrl;
 
     @NotBlank
-    @ConfigProperty(name = "baaas.ccp.namespace")
-    String ccpNamespace;
+    @ConfigProperty(name = "baaas.dfs.namespace")
+    String dfsNamespace;
 
     @Inject
     @ConfigProperty(name = "baaas.mcp.s3.bucket.name")
@@ -52,16 +52,16 @@ public class MasterControlPlaneConfig {
         return apiBaseUrl;
     }
 
-    public String getCcpDmnJitUrl() {
-        return ccpDmnJitUrl;
+    public String getDfsDmnJitUrl() {
+        return dfsDmnJitUrl;
     }
 
-    public String getCcpKubernetesApiUrl() {
-        return ccpKubernetesApiUrl;
+    public String getDfsKubernetesApiUrl() {
+        return dfsKubernetesApiUrl;
     }
 
-    public String getCcpNamespace() {
-        return ccpNamespace;
+    public String getDfsNamespace() {
+        return dfsNamespace;
     }
 
     public String getBucketName() {

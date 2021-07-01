@@ -24,12 +24,12 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 /**
- * Models an instance of a registered Cluster Control Plane that the Master Control Plane
+ * Models an instance of a registered Fleet Shard that the Fleet Manager
  * can use for deployment of Decisions.
  */
 @Entity
-@Table(name = "CLUSTER_CONTROL_PLANE")
-public class ClusterControlPlane {
+@Table(name = "DECISION_FLEET_SHARD")
+public class DecisionFleetShard {
 
     public static final String DMN_JIT_URL_PARAM = "dmn_jit_url";
 
@@ -88,7 +88,7 @@ public class ClusterControlPlane {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        ClusterControlPlane that = (ClusterControlPlane) o;
+        DecisionFleetShard that = (DecisionFleetShard) o;
         return id == that.id && kubernetesApiUrl.equals(that.kubernetesApiUrl) && dmnJitUrl.equals(that.dmnJitUrl);
     }
 

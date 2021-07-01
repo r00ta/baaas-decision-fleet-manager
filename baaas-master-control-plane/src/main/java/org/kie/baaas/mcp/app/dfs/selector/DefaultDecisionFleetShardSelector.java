@@ -13,30 +13,30 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp.selector;
+package org.kie.baaas.mcp.app.dfs.selector;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneSelector;
-import org.kie.baaas.mcp.app.dao.ClusterControlPlaneDAO;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+import org.kie.baaas.mcp.app.dao.DecisionFleetShardDAO;
+import org.kie.baaas.mcp.app.dfs.DecisionFleetShardSelector;
 import org.kie.baaas.mcp.app.model.Decision;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 
 /**
- * Determines which ClusterControlPlane we will deploy the given Decision to.
+ * Determines which Fleet Shard we will deploy the given Decision to.
  */
 @ApplicationScoped
-public class DefaultControlPlaneSelector implements ClusterControlPlaneSelector {
+public class DefaultDecisionFleetShardSelector implements DecisionFleetShardSelector {
 
-    private final ClusterControlPlaneDAO controlPlaneDAO;
+    private final DecisionFleetShardDAO decisionFleetShardDAO;
 
     @Inject
-    public DefaultControlPlaneSelector(ClusterControlPlaneDAO controlPlaneDAO) {
-        this.controlPlaneDAO = controlPlaneDAO;
+    public DefaultDecisionFleetShardSelector(DecisionFleetShardDAO decisionFleetShardDAO) {
+        this.decisionFleetShardDAO = decisionFleetShardDAO;
     }
 
-    public ClusterControlPlane selectControlPlaneForDeployment(Decision decision) {
-        return controlPlaneDAO.findById(ClusterControlPlaneDAO.DEFAULT_CCP_ID);
+    public DecisionFleetShard selectFleetShardForDeployment(Decision decision) {
+        return decisionFleetShardDAO.findById(DecisionFleetShardDAO.DEFAULT_DFS_ID);
     }
 }

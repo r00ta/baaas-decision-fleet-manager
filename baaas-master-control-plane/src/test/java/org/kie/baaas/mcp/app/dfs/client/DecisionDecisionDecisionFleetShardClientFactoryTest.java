@@ -13,14 +13,14 @@
  *
  */
 
-package org.kie.baaas.mcp.app.ccp.client;
+package org.kie.baaas.mcp.app.dfs.client;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kie.baaas.mcp.app.ccp.ClusterControlPlaneClient;
 import org.kie.baaas.mcp.app.config.MasterControlPlaneConfig;
-import org.kie.baaas.mcp.app.model.ClusterControlPlane;
+import org.kie.baaas.mcp.app.dfs.DecisionFleetShardClient;
+import org.kie.baaas.mcp.app.model.DecisionFleetShard;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -30,27 +30,27 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ClusterControlPlaneClientFactoryTest {
+public class DecisionDecisionDecisionFleetShardClientFactoryTest {
 
     @Mock
-    private ClusterControlPlane ccp;
+    private DecisionFleetShard fleetShard;
 
     @Mock
     private MasterControlPlaneConfig config;
 
-    private ClusterControlPlaneClientFactory factory;
+    private DecisionFleetShardClientFactory factory;
 
     @BeforeEach
     public void before() {
-        factory = new ClusterControlPlaneClientFactory(config);
+        factory = new DecisionFleetShardClientFactory(config);
     }
 
     @Test
     public void createClientFor() {
         String kubeApiUrl = "https://kube.baaas.redhat.com";
-        when(ccp.getKubernetesApiUrl()).thenReturn(kubeApiUrl);
+        when(fleetShard.getKubernetesApiUrl()).thenReturn(kubeApiUrl);
 
-        ClusterControlPlaneClient controlPlaneClient = factory.createClientFor(ccp);
+        DecisionFleetShardClient controlPlaneClient = factory.createClientFor(fleetShard);
         assertThat(controlPlaneClient, is(notNullValue()));
     }
 }
