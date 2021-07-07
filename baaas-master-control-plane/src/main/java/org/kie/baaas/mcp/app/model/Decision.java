@@ -54,10 +54,6 @@ public class Decision {
     @Column(nullable = false, updatable = false)
     private String name;
 
-    @Basic
-    @Column(nullable = false)
-    private String description;
-
     @JoinColumn(name = "current_version_id")
     @OneToOne(optional = false, fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private DecisionVersion currentVersion;
@@ -86,10 +82,6 @@ public class Decision {
         return name;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
     public DecisionVersion getCurrentVersion() {
         return currentVersion;
     }
@@ -108,10 +100,6 @@ public class Decision {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public void setCurrentVersion(DecisionVersion currentVersion) {

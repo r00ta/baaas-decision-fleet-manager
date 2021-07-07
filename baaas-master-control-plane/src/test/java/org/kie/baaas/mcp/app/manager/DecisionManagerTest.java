@@ -131,7 +131,7 @@ public class DecisionManagerTest {
         Decision decision = decisionVersion.getDecision();
 
         assertThat(decision.getName(), equalTo(apiRequest.getName()));
-        assertThat(decision.getDescription(), equalTo(apiRequest.getDescription()));
+        assertThat(decisionVersion.getDescription(), equalTo(apiRequest.getDescription()));
         assertThat(decision.getCustomerId(), equalTo(DEFAULT_CUSTOMER_ID));
 
         assertThat(decisionVersion.getVersion(), equalTo(1L));

@@ -177,6 +177,7 @@ public class DecisionManager implements DecisionLifecycle {
         decisionVersion.setVersion(decisionVersionDAO.getNextVersionId(customerId, decisionRequest.getName()));
         decisionVersion.setConfiguration(decisionRequest.getConfiguration());
         decisionVersion.setTags(decisionRequest.getTags());
+        decisionVersion.setDescription(decisionRequest.getDescription());
 
         if (decisionRequest.getEventing() != null) {
             Eventing eventing = decisionRequest.getEventing();
@@ -196,7 +197,6 @@ public class DecisionManager implements DecisionLifecycle {
         Decision decision = new Decision();
         decision.setCustomerId(customerId);
         decision.setName(decisionRequest.getName());
-        decision.setDescription(decisionRequest.getDescription());
 
         DecisionVersion decisionVersion = createDecisionVersion(customerId, decisionRequest);
         decision.addVersion(decisionVersion);
@@ -216,7 +216,6 @@ public class DecisionManager implements DecisionLifecycle {
 
     private DecisionVersion updateDecision(String customerId, Decision decision, DecisionRequest decisionRequest) {
         checkForExistingLifecycleOperation(decision);
-        decision.setDescription(decisionRequest.getDescription());
 
         DecisionVersion decisionVersion = createDecisionVersion(customerId, decisionRequest);
         decision.addVersion(decisionVersion);

@@ -85,6 +85,10 @@ public class DecisionVersion {
     @Enumerated(EnumType.STRING)
     private DecisionVersionStatus status;
 
+    @Basic
+    @Column(nullable = false)
+    private String description;
+
     @Column(updatable = false, nullable = false)
     private long version;
 
@@ -211,6 +215,14 @@ public class DecisionVersion {
 
     public void setDmnMd5(String dmnMd5) {
         this.dmnMd5 = dmnMd5;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Map<String, String> getTags() {
