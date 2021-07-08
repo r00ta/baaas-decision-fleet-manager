@@ -5,9 +5,9 @@ services:
     image: library/postgres:13.1
     container_name: baaas-postgres
     environment:
-      POSTGRES_USER: mcp
-      POSTGRES_PASSWORD: mcp
-      POSTGRES_DB: baaas-mcp
+      POSTGRES_USER: dfm
+      POSTGRES_PASSWORD: dfm
+      POSTGRES_DB: baaas-dfm
     ports:
       - "5432:5432"
 
