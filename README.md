@@ -85,11 +85,11 @@ This should boot all dependencies. Watch the logs to ensure everything boots OK.
 To verify, once the boot sequence has finished, a `docker ps` should show you something similar to this:
 
 ```shell
-rblake-mac:baaas-master-control-plane robpblake$ docker ps
+rblake-mac:baaas-decision-fleet-manager robpblake$ docker ps
 CONTAINER ID   IMAGE                                                         COMMAND                  CREATED          STATUS          PORTS                                             NAMES
-60a5e4d11f4c   localstack/localstack:0.11.5                                  "docker-entrypoint.sh"   14 minutes ago   Up 14 minutes   4567-4597/tcp, 0.0.0.0:4566->4566/tcp, 8080/tcp   baaas-master-control-plane_s3_1
-c5b920da1d64   quay.io/kiegroup/kogito-jit-runner-nightly:1.2.x-2021-02-03   "/home/kogito/kogito…"   14 minutes ago   Up 14 minutes   0.0.0.0:9000->8080/tcp                            baaas-master-control-plane_jit_1
-8d736a5b1d91   postgres:13.1                                                 "docker-entrypoint.s…"   14 minutes ago   Up 14 minutes   0.0.0.0:5432->5432/tcp                            baaas-master-control-plane_db_1
+60a5e4d11f4c   localstack/localstack:0.11.5                                  "docker-entrypoint.sh"   14 minutes ago   Up 14 minutes   4567-4597/tcp, 0.0.0.0:4566->4566/tcp, 8080/tcp   baaas-decision-fleet-manager_s3_1
+c5b920da1d64   quay.io/kiegroup/kogito-jit-runner-nightly:1.2.x-2021-02-03   "/home/kogito/kogito…"   14 minutes ago   Up 14 minutes   0.0.0.0:9000->8080/tcp                            baaas-decision-fleet-manager_jit_1
+8d736a5b1d91   postgres:13.1                                                 "docker-entrypoint.s…"   14 minutes ago   Up 14 minutes   0.0.0.0:5432->5432/tcp                            baaas-decision-fleet-manager_db_1
 ```
 
 ## Compile the Fleet Manager and launch quarkus:dev
@@ -125,7 +125,7 @@ _In another terminal_, use the following to first compile the Fleet Manager and 
 
 ```shell
 mvn clean install
-cd baaas-master-control-plane
+cd baaas-decision-fleet-manager
 mvn quarkus:dev
 ```
 
@@ -211,18 +211,18 @@ Our Production Database is Postgres. For testing we use H2 in-memory database.
 
 The database for the Fleet Manager is configured with the following ENV variables:
 
-* `BAAAS_MCP_DB_HOST`: hostname of the database
-* `BAAAS_MCP_DB_PORT`: Port of the database (defaults to 5432)
-* `BAAAS_MCP_DB_SCHEMA`: Database schema to use (defaults to baaas-mcp)
-* `BAAAS_MCP_DB_USERNAME`: The username to use to connect to the database
-* `BAAAS_MCP_DB_PASSWORD`: The password to use to connect to the database
+* `BAAAS_DFM_DB_HOST`: hostname of the database
+* `BAAAS_DFM_DB_PORT`: Port of the database (defaults to 5432)
+* `BAAAS_DFM_DB_SCHEMA`: Database schema to use (defaults to baaas-dfm)
+* `BAAAS_DFM_DB_USERNAME`: The username to use to connect to the database
+* `BAAAS_DFM_DB_PASSWORD`: The password to use to connect to the database
 
 ### Table and Column Naming Strategy
 
 We use the following naming strategy when creating database tables:
 
 * Table names must be all `UPPERCASE` with words separated with `_`. Tables names should be in the singular form e.g:
-  * `CLUSTER_CONTROL_PLANE` and not `CLUSTER_CONTROL_PLANES`
+  * `DECISION_FLEET_SHARD` and not `DECISION_FLEET_SHARDS`
 * Column names must be all lowercase with words separated with `_`. Column names should be in the singular form e.g:
   * `kubernetes_api_url` and not `kubernetes_api_urls`
 
@@ -232,7 +232,7 @@ We use [Flyway](https://flywaydb.org) for our database migrations.
 
 Any modification to our database schema __MUST__ be modelled as a Flyway Migration.
 
-Flyway migrations should be written in `SQL` and placed into [this directory](baaas-master-control-plane/src/main/resources/db/migration)
+Flyway migrations should be written in `SQL` and placed into [this directory](baaas-decision-fleet-manager/src/main/resources/db/migration)
 
 Within this directory you will find sub-directories related to major development efforts. For example `0.1`. Over time we will
 create additional sub-directories as new development iterations occur.
@@ -249,7 +249,7 @@ depending on any existing migrations e.g:
 
 ### Testing Migrations
 
-Your migrations can be tested by executing the `org.kie.baaas.mcp.app.DBMigrationTest`. This will apply them to a clean in-memory
+Your migrations can be tested by executing the `org.kie.baaas.dfm.app.DBMigrationTest`. This will apply them to a clean in-memory
 H2 database instance.
 
 ### CI Testing

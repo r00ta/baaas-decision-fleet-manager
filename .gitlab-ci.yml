@@ -1,7 +1,7 @@
 ---
 variables:
   MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=/maven/.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
-  OUTPUT_CONTAINER_NAME: "quay.io/rblake/baaas-master-control-plane:$CI_COMMIT_SHA"
+  OUTPUT_CONTAINER_NAME: "quay.io/rblake/baaas-decision-fleet-manager:$CI_COMMIT_SHA"
 
 stages:
   - build
@@ -16,8 +16,8 @@ include:
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
-      - baaas-master-control-plane-api/target
-      - baaas-master-control-plane/target
+      - baaas-decision-fleet-manager-api/target
+      - baaas-decision-fleet-manager/target
 
 build:
   <<: *cache-definition
@@ -42,8 +42,8 @@ test:
     expire_in: 1 week
     reports:
       junit:
-        - baaas-master-control-plane-api/target/surefire-reports/TEST-*.xml
-        - baaas-master-control-plane/target/surefire-reports/TEST-*.xml
+        - baaas-decision-fleet-manager-api/target/surefire-reports/TEST-*.xml
+        - baaas-decision-fleet-manager/target/surefire-reports/TEST-*.xml
   tags:
     - baaas
   only:
@@ -60,7 +60,7 @@ native-compile:
   artifacts:
     expire_in: 1 week
     paths:
-      - baaas-master-control-plane/target/*-runner
+      - baaas-decision-fleet-manager/target/*-runner
   tags:
     - baaas
   only:
@@ -75,7 +75,7 @@ build-and-push-container-jvm:
   before_script:
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login quay.io --username $CONTAINER_REGISTRY_USER --password-stdin
   script:
-    - "docker build -f baaas-master-control-plane/src/main/docker/Dockerfile.jvm -t $OUTPUT_CONTAINER_NAME-jvm baaas-master-control-plane/"
+    - "docker build -f baaas-decision-fleet-manager/src/main/docker/Dockerfile.jvm -t $OUTPUT_CONTAINER_NAME-jvm baaas-decision-fleet-manager/"
     - "docker push $OUTPUT_CONTAINER_NAME-jvm"
   after_script:
     - "docker image rm -f $OUTPUT_CONTAINER_NAME-jvm"
@@ -91,7 +91,7 @@ build-and-push-container-native:
   before_script:
     - echo "$CONTAINER_REGISTRY_PASSWORD" | docker login quay.io --username $CONTAINER_REGISTRY_USER --password-stdin
   script:
-    - "docker build -f baaas-master-control-plane/src/main/docker/Dockerfile.native -t $OUTPUT_CONTAINER_NAME baaas-master-control-plane/"
+    - "docker build -f baaas-decision-fleet-manager/src/main/docker/Dockerfile.native -t $OUTPUT_CONTAINER_NAME baaas-decision-fleet-manager/"
     - "docker push $OUTPUT_CONTAINER_NAME"
   after_script:
     - "docker image rm -f $OUTPUT_CONTAINER_NAME"
