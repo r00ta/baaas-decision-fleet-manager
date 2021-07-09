@@ -60,38 +60,43 @@ spec:
               required:
                 - customerId
                 - name
-                - definition
+                - version
+                - source
               properties:
                 customerId:
                   type: string
                 name:
                   type: string
-                definition:
+                version:
+                  type: string
+                source:
+                  type: string
+                kafka:
                   type: object
                   required:
-                    - version
-                    - source
+                    - bootstrapServers
+                    - credential
+                    - inputTopic
+                    - outputTopic
                   properties:
-                    version:
+                    bootstrapServers:
                       type: string
-                    source:
-                      type: string
-                    kafka:
+                    credential:
                       type: object
                       required:
-                        - bootstrapServers
-                        - secretName
+                        - clientId
+                        - clientSecret
                       properties:
-                        bootstrapServers:
+                        clientId:
                           type: string
-                        secretName:
+                        clientSecret:
                           type: string
-                        inputTopic:
-                          type: string
-                        outputTopic:
-                          type: string
-                    env:
-                      type: object
+                    inputTopic:
+                      type: string
+                    outputTopic:
+                      type: string
+                env:
+                  type: object
                 webhooks:
                   type: array
                   items:
