@@ -1,5 +1,5 @@
 name: Decision Fleet Manager - CI
-on: [pull_request]
+on: [pull_request_target]
 jobs:
   decision-fleetmanager-build:
     env:
@@ -7,7 +7,7 @@ jobs:
     concurrency:
       group: baaas-dfm-pr-${{ github.head_ref }}
       cancel-in-progress: true
-    timeout-minutes: 30
+    timeout-minutes: 45
     runs-on: ubuntu-latest
     name: Build and Test
     steps:
@@ -28,10 +28,10 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
       - name: Compile and Validate Formating
         shell: bash
-        run: mvn package -Dmaven.test.skip=true -Pvalidate-formatting
+        run: mvn -Dgithub.packages.user=${{ secrets.GH_PACKAGES_USER }} -Dgithub.packages.password=${{ secrets.GH_PACKAGES_PASSWORD }} -s ${{ github.workspace }}/.m2/settings.xml -Dmaven.test.skip=true -Pvalidate-formatting package
       - name: Run Test Suite
         shell: bash
-        run: mvn test
+        run: mvn -Dgithub.packages.user=${{ secrets.GH_PACKAGES_USER }} -Dgithub.packages.password=${{ secrets.GH_PACKAGES_PASSWORD }} -s ${{ github.workspace }}/.m2/settings.xml test
       - name: Publish Test Report
         if: ${{ always() }}
         uses: scacap/action-surefire-report@v1.0.10
@@ -41,6 +41,14 @@ jobs:
           fail_on_test_failures: true
           fail_if_no_tests: false
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Verify Native Compile
-        shell: bash
-        run: mvn package -Pnative -Dmaven.test.skip=true
+#
+#   Native Compile is currently disabled for GitHub. The process was taking > 45 mins without completing, so not viable
+#   within a CI pipeline. My theory is that the default GitHub runner is too memory constrained to execute the process
+#   and ends up swapping to disk too much to make it performant. We would need to try on a dedicated runner with more
+#   memory.
+#
+#   For comparison, on our GitLab runner which had 16G of memory, this process would take ~10 minutes
+#
+#      - name: Verify Native Compile
+#        shell: bash
+#        run: mvn -Dgithub.packages.user=${{ secrets.GH_PACKAGES_USER }} -Dgithub.packages.password=${{ secrets.GH_PACKAGES_PASSWORD }} -s ${{ github.workspace }}/.m2/settings.xml -Pnative -Dmaven.test.skip=true package
