@@ -1,0 +1,61 @@
+name: Decision Fleet Manager
+on:
+  push:
+    branches:
+      - main
+jobs:
+  decision-fleetmanager-build:
+    env:
+      MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+      OUTPUT_CONTAINER_NAME: quay.io/kiegroup/baaas-decision-fleet-manager:${{ github.sha }}
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    name: Publish JARs and Containers
+    steps:
+      - name: Set up GraalVM
+        uses: DeLaGuardo/setup-graalvm@4.0
+        with:
+          graalvm: '21.1.0'
+          java: 'java11'
+      - name: Install native-image Binary
+        shell: bash
+        run: gu install native-image
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cache Maven Packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+      - name: Build JARs
+        shell: bash
+        run: mvn -Dgithub.packages.user=${{ secrets.GH_PACKAGES_USER }} -Dgithub.packages.password=${{ secrets.GH_PACKAGES_PASSWORD }} -s ${{ github.workspace }}/.m2/settings.xml --batch-mode package -Dmaven.test.skip=true -Dcheckstyle.skip
+      - name: Login to Container Registry
+        shell: bash
+        env:
+          CONTAINER_REGISTRY_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+          CONTAINER_REGISTRY_USER: ${{ secrets.CONTAINER_REGISTRY_USER }}
+        run: echo "$CONTAINER_REGISTRY_PASSWORD" | docker login quay.io --username $CONTAINER_REGISTRY_USER --password-stdin
+      - name: Build and Publish JVM Container
+        shell: bash
+        run: |
+          docker build -f baaas-decision-fleet-manager/src/main/docker/Dockerfile.jvm -t $OUTPUT_CONTAINER_NAME-jvm baaas-decision-fleet-manager/
+          docker push $OUTPUT_CONTAINER_NAME-jvm
+          docker image rm -f $OUTPUT_CONTAINER_NAME-jvm
+#
+#   Native Compile is currently disabled for GitHub. The process was taking > 45 mins without completing, so not viable
+#   within a CI pipeline. My theory is that the default GitHub runner is too memory constrained to execute the process
+#   and ends up swapping to disk too much to make it performant. We would need to try on a dedicated runner with more
+#   memory.
+#
+#   For comparison, on our GitLab runner which had 16G of memory, this process would take ~10 minutes
+#
+#      - name: Perform Native Compile
+#        shell: bash
+#        run: mvn package -Pnative -Dmaven.test.skip=true
+#      - name: Build and Publish Native Container
+#        shell: bash
+#        run: |
+#          docker build -f baaas-decision-fleet-manager/src/main/docker/Dockerfile.native -t $OUTPUT_CONTAINER_NAME baaas-decision-fleet-manager/
+#          docker push $OUTPUT_CONTAINER_NAME
+#          docker image rm -f $OUTPUT_CONTAINER_NAME
