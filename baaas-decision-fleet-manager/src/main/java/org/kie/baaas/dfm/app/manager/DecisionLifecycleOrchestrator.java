@@ -21,6 +21,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.kie.baaas.dfm.api.decisions.DecisionRequest;
+import org.kie.baaas.dfm.api.eventing.Eventing;
 import org.kie.baaas.dfm.app.controller.modelmappers.DecisionMapper;
 import org.kie.baaas.dfm.app.dfs.DecisionFleetShardClient;
 import org.kie.baaas.dfm.app.dfs.DecisionFleetShardSelector;
@@ -30,7 +31,8 @@ import org.kie.baaas.dfm.app.event.AfterFailedEvent;
 import org.kie.baaas.dfm.app.event.BeforeCreateOrUpdateVersionEvent;
 import org.kie.baaas.dfm.app.exceptions.DecisionFleetManagerException;
 import org.kie.baaas.dfm.app.listener.ListenerManager;
-import org.kie.baaas.dfm.app.managedservices.ManagedServicesClient;
+import org.kie.baaas.dfm.app.manager.kafkaservice.KafkaServiceNotSupportedException;
+import org.kie.baaas.dfm.app.manager.kafkaservice.KafkaServiceProducer;
 import org.kie.baaas.dfm.app.model.Decision;
 import org.kie.baaas.dfm.app.model.DecisionFleetShard;
 import org.kie.baaas.dfm.app.model.DecisionVersion;
@@ -38,11 +40,6 @@ import org.kie.baaas.dfm.app.model.ListResult;
 import org.kie.baaas.dfm.app.model.deployment.Deployment;
 import org.kie.baaas.dfm.app.model.eventing.Credential;
 import org.kie.baaas.dfm.app.storage.DecisionDMNStorage;
-import org.kie.baaas.dfm.app.vault.Secret;
-import org.kie.baaas.dfm.app.vault.VaultService;
-
-import static org.kie.baaas.dfm.app.managedservices.ManagedServicesClient.CLIENT_ID;
-import static org.kie.baaas.dfm.app.managedservices.ManagedServicesClient.CLIENT_SECRET;
 
 /**
  * This class orchestrates a number of internal components to manage the lifecycle of a Decision.
@@ -51,8 +48,6 @@ import static org.kie.baaas.dfm.app.managedservices.ManagedServicesClient.CLIENT
  */
 @ApplicationScoped
 public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
-
-    private static final String CREDENTIALS_NAME = "daas-%s-credentials";
 
     private final DecisionFleetShardClientFactory clientFactory;
 
@@ -66,25 +61,24 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
 
     private final DecisionMapper decisionMapper;
 
-    private final VaultService vaultService;
+    private final KafkaServiceProducer kafkaServiceProducer;
 
-    private final ManagedServicesClient managedServicesClient;
+    private final KafkaService kafkaService;
 
     @Inject
     public DecisionLifecycleOrchestrator(DecisionFleetShardClientFactory clientFactory, DecisionFleetShardSelector fleetShardSelector, DecisionManager decisionManager,
             DecisionDMNStorage decisionDMNStorage,
             ListenerManager listenerManager,
-            DecisionMapper decisionMapper,
-            VaultService vaultService,
-            ManagedServicesClient managedServicesClient) {
+            DecisionMapper decisionMapper, KafkaService kafkaService,
+            KafkaServiceProducer kafkaServiceProducer) {
         this.clientFactory = clientFactory;
         this.fleetShardSelector = fleetShardSelector;
         this.decisionManager = decisionManager;
         this.decisionDMNStorage = decisionDMNStorage;
         this.listenerManager = listenerManager;
         this.decisionMapper = decisionMapper;
-        this.vaultService = vaultService;
-        this.managedServicesClient = managedServicesClient;
+        this.kafkaService = kafkaService;
+        this.kafkaServiceProducer = kafkaServiceProducer;
     }
 
     @Override
@@ -121,6 +115,11 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
 
     @Override
     public DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest) {
+        Eventing evt = decisionRequest.getEventing();
+        if (evt != null && evt.getKafka() != null && !kafkaServiceProducer.isKafkaServiceDefined()) {
+            throw new KafkaServiceNotSupportedException("Kafka service is not supported in this environment.");
+        }
+
         listenerManager.notifyListeners(() -> new BeforeCreateOrUpdateVersionEvent(decisionRequest));
         // TODO - chicken and egg problem here.  The DecisionVersion requires information about the DMN
         // storage location, but the storage requires the DecisionVersion. We therefore have the write
@@ -129,9 +128,10 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(customerId, decisionRequest);
 
         if (decisionVersion.getKafkaConfig() != null) {
-            Credential credential = getCustomerCredential(customerId, decisionRequest);
+            Credential credential = kafkaService.getCustomerCredential(customerId);
             decisionVersion.getKafkaConfig().setCredential(credential);
         }
+
         return requestDeployment(customerId, decisionVersion);
     }
 
@@ -200,28 +200,5 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         DecisionVersion decisionVersion = decisionManager.deployed(customerId, decisionIdOrName, version, deployment);
         listenerManager.notifyListeners(() -> new AfterDeployedEvent(decisionMapper.mapVersionToDecisionResponse(decisionVersion)));
         return decisionVersion;
-    }
-
-    private Credential getCustomerCredential(String customerId, DecisionRequest decisionRequest) {
-        if (decisionRequest.getEventing() != null) {
-            String secretName = String.format(CREDENTIALS_NAME, customerId);
-            Secret secret = vaultService.get(secretName);
-            if (secret == null) {
-                secret = managedServicesClient.createOrReplaceServiceAccount(secretName);
-                vaultService.create(secret);
-            }
-            return toCredential(secret);
-        }
-        return null;
-    }
-
-    private Credential toCredential(Secret secret) {
-        if (secret == null || secret.getValues() == null) {
-            return null;
-        }
-        return new Credential()
-                .setClientId(secret.getValues().get(CLIENT_ID))
-                .setClientSecret(secret.getValues().get(CLIENT_SECRET));
-
     }
 }

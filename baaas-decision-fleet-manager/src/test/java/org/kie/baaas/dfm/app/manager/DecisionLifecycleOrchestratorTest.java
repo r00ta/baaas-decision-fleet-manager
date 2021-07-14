@@ -15,8 +15,6 @@
 
 package org.kie.baaas.dfm.app.manager;
 
-import java.util.Map;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.baaas.dfm.api.decisions.DecisionRequest;
@@ -29,13 +27,15 @@ import org.kie.baaas.dfm.app.exceptions.DecisionFleetManagerException;
 import org.kie.baaas.dfm.app.listener.ListenerManager;
 import org.kie.baaas.dfm.app.managedservices.ManagedServicesClient;
 import org.kie.baaas.dfm.app.managedservices.ManagedServicesException;
+import org.kie.baaas.dfm.app.manager.kafkaservice.KafkaServiceNotSupportedException;
+import org.kie.baaas.dfm.app.manager.kafkaservice.KafkaServiceProducer;
 import org.kie.baaas.dfm.app.model.Decision;
 import org.kie.baaas.dfm.app.model.DecisionFleetShard;
 import org.kie.baaas.dfm.app.model.DecisionVersion;
 import org.kie.baaas.dfm.app.model.deployment.Deployment;
+import org.kie.baaas.dfm.app.model.eventing.Credential;
 import org.kie.baaas.dfm.app.model.eventing.KafkaConfig;
 import org.kie.baaas.dfm.app.storage.DecisionDMNStorage;
-import org.kie.baaas.dfm.app.vault.Secret;
 import org.kie.baaas.dfm.app.vault.VaultService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -44,19 +44,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.openshift.cloud.api.kas.invoker.ApiException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class DecisionLifecycleOrchestratorTest {
@@ -91,6 +83,12 @@ public class DecisionLifecycleOrchestratorTest {
 
     @InjectMocks
     private DecisionLifecycleOrchestrator orchestrator;
+
+    @Mock
+    KafkaServiceProducer kafkaServiceProducer;
+
+    @Mock
+    KafkaService kafkaService;
 
     @Test
     public void createOrUpdateDecision() {
@@ -128,23 +126,21 @@ public class DecisionLifecycleOrchestratorTest {
         when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
         when(selector.selectFleetShardForDeployment(decision)).thenReturn(fleetShard);
         when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
-        Secret secret = new Secret().setId(saName).setValues(Map.of(ManagedServicesClient.CLIENT_ID, "foo", ManagedServicesClient.CLIENT_SECRET, "bar"));
-        when(managedServicesClient.createOrReplaceServiceAccount(saName)).thenReturn(secret);
+
+        when(kafkaServiceProducer.isKafkaServiceDefined()).thenReturn(true);
+        when(kafkaService.getCustomerCredential(customerId)).thenReturn(new Credential().setClientId("client_id").setClientSecret("client_secret"));
 
         DecisionVersion created = orchestrator.createOrUpdateVersion(customerId, request);
         assertThat(created, is(notNullValue()));
         assertThat(created, equalTo(decisionVersion));
 
         verify(client).deploy(decisionVersion);
-        verify(vaultService, times(1)).get(eq(saName));
-        verify(managedServicesClient, times(1)).createOrReplaceServiceAccount(eq(saName));
-        verify(vaultService, times(1)).create(eq(secret));
+        verify(kafkaService, times(1)).getCustomerCredential(customerId);
     }
 
     @Test
     public void createOrUpdateDecisionErrorCreatingSA() {
         String customerId = "foo";
-        String saName = "daas-" + customerId + "-credentials";
         DecisionRequest request = mock(DecisionRequest.class);
 
         DecisionVersion decisionVersion = mock(DecisionVersion.class);
@@ -154,15 +150,28 @@ public class DecisionLifecycleOrchestratorTest {
         when(request.getEventing()).thenReturn(eventing);
         when(decisionVersion.getKafkaConfig()).thenReturn(new KafkaConfig());
         when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
-        when(managedServicesClient.createOrReplaceServiceAccount(anyString()))
+        when(kafkaServiceProducer.isKafkaServiceDefined()).thenReturn(true);
+        when(kafkaService.getCustomerCredential(anyString()))
                 .thenThrow(new ManagedServicesException("some error", new ApiException("api error")));
 
         assertThrows(ManagedServicesException.class, () -> orchestrator.createOrUpdateVersion(customerId, request));
-
         verifyNoInteractions(client);
-        verify(vaultService, times(1)).get(eq(saName));
-        verify(managedServicesClient, times(1)).createOrReplaceServiceAccount(eq(saName));
-        verify(vaultService, times(0)).create(any(Secret.class));
+    }
+
+    @Test
+    public void createOrUpdateDecision_no_supported_kafka_service() {
+        String customerId = "foo";
+        DecisionRequest request = mock(DecisionRequest.class);
+
+        Eventing eventing = new Eventing();
+        eventing.setKafka(new Kafka());
+        when(request.getEventing()).thenReturn(eventing);
+
+        when(kafkaServiceProducer.isKafkaServiceDefined()).thenReturn(false);
+        assertThrows(KafkaServiceNotSupportedException.class, () -> orchestrator.createOrUpdateVersion(customerId, request));
+        verifyNoInteractions(kafkaService);
+        verifyNoInteractions(listenerManager);
+        verifyNoInteractions(decisionManager);
     }
 
     @Test
@@ -183,8 +192,11 @@ public class DecisionLifecycleOrchestratorTest {
         when(decisionVersion.getKafkaConfig()).thenReturn(new KafkaConfig());
         when(decisionManager.createOrUpdateVersion(customerId, request)).thenReturn(decisionVersion);
         when(selector.selectFleetShardForDeployment(decision)).thenReturn(fleetShard);
+
+        when(kafkaServiceProducer.isKafkaServiceDefined()).thenReturn(true);
         when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
-        when(vaultService.get(anyString())).thenReturn(new Secret());
+        when(kafkaService.getCustomerCredential(customerId)).thenReturn(new Credential().setClientId("client_id").setClientSecret("client_secret"));
+
         doThrow(new RuntimeException("Nope!")).when(client).deploy(decisionVersion);
 
         assertThrows(DecisionFleetManagerException.class, () -> {
@@ -192,7 +204,7 @@ public class DecisionLifecycleOrchestratorTest {
         });
 
         verify(decisionManager).failed(eq(customerId), eq(decisionId), eq(version), any(Deployment.class));
-        verify(vaultService, times(1)).get(eq("daas-" + customerId + "-credentials"));
+        verify(kafkaService, times(1)).getCustomerCredential(eq(customerId));
     }
 
     @Test

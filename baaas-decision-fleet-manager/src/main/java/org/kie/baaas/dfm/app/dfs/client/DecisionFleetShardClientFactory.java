@@ -35,12 +35,12 @@ import static java.util.Objects.requireNonNull;
 @ApplicationScoped
 public class DecisionFleetShardClientFactory {
 
-    private final DecisionFleetManagerConfig controlPlaneConfig;
+    private final DecisionFleetManagerConfig fmConfig;
 
     @Inject
     public DecisionFleetShardClientFactory(DecisionFleetManagerConfig config) {
         requireNonNull(config, "config cannot be null");
-        this.controlPlaneConfig = config;
+        this.fmConfig = config;
     }
 
     public DecisionFleetShardClient createClientFor(DecisionFleetShard fleetShard) {
@@ -48,6 +48,6 @@ public class DecisionFleetShardClientFactory {
         Config config = new ConfigBuilder().withMasterUrl(fleetShard.getKubernetesApiUrl()).build();
         KubernetesClient client = new DefaultKubernetesClient(config);
 
-        return new DefaultDecisionFleetShardClient(this.controlPlaneConfig, client, fleetShard);
+        return new DefaultDecisionFleetShardClient(this.fmConfig, client, fleetShard);
     }
 }
