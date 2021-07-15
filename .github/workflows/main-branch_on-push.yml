@@ -29,7 +29,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
       - name: Build JARs
         shell: bash
-        run: mvn -Dgithub.packages.user=${{ secrets.GH_PACKAGES_USER }} -Dgithub.packages.password=${{ secrets.GH_PACKAGES_PASSWORD }} -s ${{ github.workspace }}/.m2/settings.xml --batch-mode package -Dmaven.test.skip=true -Dcheckstyle.skip
+        run: mvn --batch-mode package -Dmaven.test.skip=true -Dcheckstyle.skip
       - name: Login to Container Registry
         shell: bash
         env:

@@ -95,7 +95,7 @@
             <version>${cloudevents.version}</version>
         </dependency>
         <dependency>
-            <groupId>cloud.redhat.com</groupId>
+            <groupId>com.redhat.cloud</groupId>
             <artifactId>kafka-management-sdk</artifactId>
         </dependency>
 

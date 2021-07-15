@@ -25,7 +25,7 @@
         <wiremock.version>2.27.2</wiremock.version>
         <awaitility.version>4.0.3</awaitility.version>
         <cloudevents.version>2.0.0</cloudevents.version>
-        <managed-services.version>0.2.0</managed-services.version>
+        <managed-services.version>0.3.1</managed-services.version>
 
         <!-- other properties -->
         <maven.compiler.source>11</maven.compiler.source>
@@ -56,7 +56,7 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>cloud.redhat.com</groupId>
+                <groupId>com.redhat.cloud</groupId>
                 <artifactId>kafka-management-sdk</artifactId>
                 <version>${managed-services.version}</version>
             </dependency>
@@ -137,13 +137,6 @@
             <snapshots>
                 <enabled>true</enabled>
                 <updatePolicy>interval:30</updatePolicy>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>redhat-developer</id>
-            <url>https://maven.pkg.github.com/redhat-developer/*</url>
-            <snapshots>
-                <enabled>true</enabled>
             </snapshots>
         </repository>
     </repositories>
