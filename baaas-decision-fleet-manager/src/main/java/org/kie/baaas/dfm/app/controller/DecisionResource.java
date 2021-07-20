@@ -153,7 +153,7 @@ public class DecisionResource {
     @Path("{decisionNameOrId}/versions")
     @Authenticated
     public Response listDecisionVersions(@PathParam("decisionNameOrId") String decisionNameOrId, @DefaultValue(PAGE_DEFAULT) @Min(PAGE_MIN) @QueryParam(PAGE) int page,
-                                         @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) @QueryParam(SIZE) int size) {
+            @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) @QueryParam(SIZE) int size) {
         String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
         LOGGER.info("Listing all versions for Decision with id or name '{}' for customer '{}'...", decisionNameOrId, customerId);
         ListResult<DecisionVersion> versions = decisionLifecycle.listDecisionVersions(customerId, decisionNameOrId, page, size);

@@ -151,7 +151,6 @@ public class DecisionManager implements DecisionLifecycle {
         return updateDecision(customerId, decision, decisionRequest);
     }
 
-
     /**
      * Callback method invoked when we have failed to deploy the specified version of a Decision.
      *
