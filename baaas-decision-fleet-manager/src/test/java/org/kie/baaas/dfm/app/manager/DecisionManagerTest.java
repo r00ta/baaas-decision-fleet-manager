@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kie.baaas.dfm.api.decisions.DecisionRequest;
 import org.kie.baaas.dfm.api.decisions.Model;
@@ -71,6 +72,10 @@ public class DecisionManagerTest {
     @Inject
     DecisionDMNStorage dmnStorage;
 
+    DMNStorageRequest request;
+
+    DecisionRequest apiRequest;
+
     private DecisionRequest createApiRequest() {
 
         Model model = new Model();
@@ -87,6 +92,12 @@ public class DecisionManagerTest {
     public static void beforeAll() {
         S3DMNStorage storage = Mockito.mock(S3DMNStorage.class);
         QuarkusMock.installMockForType(storage, S3DMNStorage.class);
+    }
+
+    @BeforeEach
+    public void setup() {
+        request = createStorageRequest();
+        apiRequest = createApiRequest();
     }
 
     private DMNStorageRequest createStorageRequest() {
@@ -122,9 +133,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void createNewVersion_newDecision() {
-        DMNStorageRequest request = createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         assertThat(decisionVersion, is(notNullValue()));
 
@@ -157,9 +165,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void deployed_withFirstVersionOfDecision() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
 
@@ -177,9 +182,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void failed_withFirstVersionOfDecision() {
-        DMNStorageRequest request = createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
 
@@ -196,9 +198,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void createNewVersion_updateFailsWhenStillCreating() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         apiRequest.setDescription("An updated version!");
@@ -212,9 +211,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void createNewVersion_updateDecision() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
 
@@ -235,9 +231,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void createNewVersion_updateDecisionUpdateSuccess() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
 
@@ -265,9 +258,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void createNewVersion_twoFailures() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
         decisionManager.failed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
@@ -288,9 +278,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void createNewVersion_updateDecisionUpdateFailed() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
         decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
@@ -310,14 +297,23 @@ public class DecisionManagerTest {
 
     @Test
     public void deleteDecision() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
 
         decisionVersion = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
         decisionManager.deleteDecision(decision.getCustomerId(), decision.getName());
+
+        assertThat(decisionDAO.findById(decisionVersion.getId()), is(nullValue()));
+        assertThat(decisionVersionDAO.findById(decisionVersion.getId()), is(nullValue()));
+    }
+
+    @Test
+    public void deleteDecisionById() {
+        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
+        Decision decision = decisionVersion.getDecision();
+
+        decisionVersion = decisionManager.deployed(decision.getCustomerId(), decision.getName(), decisionVersion.getVersion(), createDeployment());
+        decisionManager.deleteDecision(decision.getId());
 
         assertThat(decisionDAO.findById(decisionVersion.getId()), is(nullValue()));
         assertThat(decisionVersionDAO.findById(decisionVersion.getId()), is(nullValue()));
@@ -330,12 +326,16 @@ public class DecisionManagerTest {
         });
     }
 
+    @Test
+    public void deleteDecisionById_decisionDoesNotExist() {
+        assertThrows(NoSuchDecisionException.class, () -> {
+            decisionManager.deleteDecision("foo");
+        });
+    }
+
     @TestTransaction
     @Test
     public void deleteVersion_versionDoesNotExist() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
 
@@ -344,10 +344,16 @@ public class DecisionManagerTest {
 
     @TestTransaction
     @Test
-    public void deleteVersion() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
+    public void deleteVersionById_versionDoesNotExist() {
+        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
+        Decision decision = decisionVersion.getDecision();
 
+        assertThrows(NoSuchDecisionVersionException.class, () -> decisionManager.deleteVersion(decision.getId(), decisionVersion.getVersion() + 1L));
+    }
+
+    @TestTransaction
+    @Test
+    public void deleteVersion() {
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
         decisionManager.deployed(DEFAULT_CUSTOMER_ID, decision.getName(), decisionVersion.getVersion(), createDeployment());
@@ -365,12 +371,29 @@ public class DecisionManagerTest {
         assertThat(deletedVersion.getStatus(), equalTo(DecisionVersionStatus.DELETED));
     }
 
+    @TestTransaction
+    @Test
+    public void deleteVersionById() {
+        DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
+        Decision decision = decisionVersion.getDecision();
+        decisionManager.deployed(DEFAULT_CUSTOMER_ID, decision.getName(), decisionVersion.getVersion(), createDeployment());
+
+        apiRequest.getModel().setDmn("updated dmn!");
+
+        decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
+        decisionVersion = decisionManager.deployed(DEFAULT_CUSTOMER_ID, decision.getName(), decisionVersion.getVersion(), createDeployment());
+        decision = decisionVersion.getDecision();
+
+        assertThat(decision.getCurrentVersion().getVersion(), equalTo(2L));
+        assertThat(decision.getCurrentVersion().getStatus(), equalTo(DecisionVersionStatus.CURRENT));
+
+        DecisionVersion deletedVersion = decisionManager.deleteVersion(decision.getId(), 1L);
+        assertThat(deletedVersion.getStatus(), equalTo(DecisionVersionStatus.DELETED));
+    }
+
     @Test
     @TestTransaction
     public void deleteVersion_versionIsCurrentVersion() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
 
@@ -381,9 +404,6 @@ public class DecisionManagerTest {
     @Test
     @TestTransaction
     public void deleteVersion_canDeleteAFailedVersion() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
-
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         Decision decision = decisionVersion.getDecision();
 
@@ -397,8 +417,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void listDecisionVersions_withDecisionId() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         ListResult<DecisionVersion> versions = decisionManager.listDecisionVersions(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getId(), 0, 100);
@@ -420,8 +438,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void getVersion_versionDoesNotExist() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         assertThrows(NoSuchDecisionVersionException.class, () -> {
@@ -432,8 +448,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void getVersion_byDecisionId() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         DecisionVersion found = decisionManager.getVersion(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getId(), decisionVersion.getVersion());
@@ -443,8 +457,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void getVersion_byDecisionName() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         DecisionVersion found = decisionManager.getVersion(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getName(), decisionVersion.getVersion());
@@ -454,8 +466,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void getCurrentVersion_byDecisionName() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         DecisionVersion found = decisionManager.getCurrentVersion(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getName());
@@ -465,8 +475,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void getCurrentVersion_byDecisionId() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         DecisionVersion found = decisionManager.getCurrentVersion(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getId());
@@ -476,8 +484,6 @@ public class DecisionManagerTest {
     @Test
     @TestTransaction
     public void getBuildingVersion_byDecisionId() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         DecisionVersion found = decisionManager.getBuildingVersion(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getId());
@@ -487,8 +493,6 @@ public class DecisionManagerTest {
     @Test
     @TestTransaction
     public void getBuildingVersion_byDecisionName() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         DecisionVersion found = decisionManager.getBuildingVersion(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getName());
@@ -498,8 +502,6 @@ public class DecisionManagerTest {
     @Test
     @TestTransaction
     public void getBuildingVersion_noBuildingVersion() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
         decisionManager.deployed(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getId(), decisionVersion.getVersion(), createDeployment());
 
@@ -521,8 +523,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void listDecisionVersions_withDecisionName() {
-        createStorageRequest();
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         ListResult<DecisionVersion> versions = decisionManager.listDecisionVersions(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getName(), 0, 100);
@@ -545,8 +545,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void listDecisions() {
-        createStorageRequest();
-
         DecisionRequest apiRequest = createApiRequest();
         DecisionRequest apiRequest2 = createApiRequest();
         apiRequest2.setName("another-decision");
@@ -589,9 +587,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void listDecisions_withPaging() {
-
-        createStorageRequest();
-
         DecisionRequest apiRequest = createApiRequest();
         DecisionRequest apiRequest2 = createApiRequest();
         apiRequest2.setName("another-decision");
@@ -622,9 +617,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void newDecision_decisionVersionDoesNotExist() {
-        createStorageRequest();
-
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         assertThrows(NoSuchDecisionVersionException.class, () -> {
@@ -635,9 +627,6 @@ public class DecisionManagerTest {
     @Test
     @TestTransaction
     public void newDecision_decisionVersionNotInReadyState() {
-        createStorageRequest();
-
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         DecisionVersion deployed = decisionManager.deployed(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());
@@ -648,9 +637,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void newDecision_lifecycleOperationAlreadyInProgress() {
-        createStorageRequest();
-
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         decisionManager.deployed(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());
@@ -675,9 +661,6 @@ public class DecisionManagerTest {
     @TestTransaction
     @Test
     public void newVersion() {
-        createStorageRequest();
-
-        DecisionRequest apiRequest = createApiRequest();
         DecisionVersion decisionVersion = decisionManager.createOrUpdateVersion(DEFAULT_CUSTOMER_ID, apiRequest);
 
         decisionManager.deployed(DEFAULT_CUSTOMER_ID, decisionVersion.getDecision().getName(), decisionVersion.getVersion(), createDeployment());

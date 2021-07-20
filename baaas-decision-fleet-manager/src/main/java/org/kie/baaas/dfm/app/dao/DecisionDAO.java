@@ -30,6 +30,11 @@ import io.quarkus.panache.common.Parameters;
 @Transactional
 public class DecisionDAO implements PanacheRepositoryBase<Decision, String> {
 
+    public Decision findByDecisionId(String id) {
+        Parameters params = Parameters.with("id", id);
+        return find("#Decision.byDecisionId", params).firstResult();
+    }
+
     public Decision findByCustomerAndName(String customerId, String decisionName) {
         Parameters params = Parameters.with("name", decisionName).and("customerId", customerId);
         return find("#Decision.byCustomerIdAndName", params).firstResult();

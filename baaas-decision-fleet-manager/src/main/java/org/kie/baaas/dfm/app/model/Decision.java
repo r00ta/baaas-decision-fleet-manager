@@ -37,7 +37,8 @@ import javax.persistence.Version;
 
 @NamedQueries({
         @NamedQuery(name = "Decision.byCustomerIdAndName", query = "from Decision where customerId=:customerId and name=:name"),
-        @NamedQuery(name = "Decision.byCustomerAndIdOrName", query = "from Decision where customerId=:customerId and name=:idOrName or id=:idOrName")
+        @NamedQuery(name = "Decision.byCustomerAndIdOrName", query = "from Decision where customerId=:customerId and name=:idOrName or id=:idOrName"),
+        @NamedQuery(name = "Decision.byDecisionId", query = "from Decision where id=:id")
 })
 @Entity
 @Table(name = "DECISION")

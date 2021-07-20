@@ -16,6 +16,7 @@
 package org.kie.baaas.dfm.app.manager;
 
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -88,6 +89,16 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     }
 
     @Override
+    public Decision deleteDecision(String id) {
+
+        Decision decision = decisionManager.deleteDecision(id);
+        DecisionFleetShardClient client = getFleetShardClient(decision);
+        client.delete(decision);
+        decisionDMNStorage.deleteDMN(decision.getCustomerId(), decision);
+        return decision;
+    }
+
+    @Override
     public Decision deleteDecision(String customerId, String decisionNameOrId) {
 
         Decision decision = decisionManager.deleteDecision(customerId, decisionNameOrId);
@@ -153,6 +164,11 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     }
 
     @Override
+    public List<Decision> listDecisions() {
+        return decisionManager.listDecisions();
+    }
+
+    @Override
     public ListResult<Decision> listDecisions(String customerId, int page, int pageSize) {
         return decisionManager.listDecisions(customerId, page, pageSize);
     }
@@ -165,6 +181,14 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
     @Override
     public DecisionVersion getVersion(String customerId, String decisionIdOrName, long decisionVersion) {
         return decisionManager.getVersion(customerId, decisionIdOrName, decisionVersion);
+    }
+
+    @Override
+    public DecisionVersion deleteVersion(String decisionId, long version) {
+        DecisionVersion decisionVersion = decisionManager.deleteVersion(decisionId, version);
+        DecisionFleetShardClient client = getFleetShardClient(decisionVersion.getDecision());
+        client.delete(decisionVersion);
+        return decisionVersion;
     }
 
     @Override
