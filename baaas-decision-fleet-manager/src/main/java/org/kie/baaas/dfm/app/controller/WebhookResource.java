@@ -83,6 +83,20 @@ public class WebhookResource {
         this.webhookManager = listenerManager;
     }
 
+    @GET
+    @Authenticated
+    public Response getWebooks(@QueryParam(PAGE) @Min(PAGE_MIN) @DefaultValue(PAGE_DEFAULT) int page, @QueryParam(SIZE) @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) int size) {
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        ListResult<Webhook> listResult = webhookManager.listCustomerWebhooks(customerId, page, size);
+        List<WebhookResponse> webhooks = listResult.getItems().stream().map(e -> WebhookResponse.from(e.getId(), e.getUrl())).collect(Collectors.toList());
+        WebhookResponseList result = new WebhookResponseList();
+        result.setItems(webhooks);
+        result.setPage(listResult.getPage());
+        result.setSize(listResult.getSize());
+        result.setTotal(listResult.getTotal());
+        return Response.ok().entity(result).build();
+    }
+
     @POST
     @Authenticated
     public Response registerWebhook(WebhookRegistrationRequest webhookReq) {
@@ -106,19 +120,5 @@ public class WebhookResource {
         String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
         webhookManager.unregisterForWebhook(customerId, lookupRef);
         return Response.ok().build();
-    }
-
-    @GET
-    @Authenticated
-    public Response getWebooks(@QueryParam(PAGE) @Min(PAGE_MIN) @DefaultValue(PAGE_DEFAULT) int page, @QueryParam(SIZE) @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) int size) {
-        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
-        ListResult<Webhook> listResult = webhookManager.listCustomerWebhooks(customerId, page, size);
-        List<WebhookResponse> webhooks = listResult.getItems().stream().map(e -> WebhookResponse.from(e.getId(), e.getUrl())).collect(Collectors.toList());
-        WebhookResponseList result = new WebhookResponseList();
-        result.setItems(webhooks);
-        result.setPage(listResult.getPage());
-        result.setSize(listResult.getSize());
-        result.setTotal(listResult.getTotal());
-        return Response.ok().entity(result).build();
     }
 }

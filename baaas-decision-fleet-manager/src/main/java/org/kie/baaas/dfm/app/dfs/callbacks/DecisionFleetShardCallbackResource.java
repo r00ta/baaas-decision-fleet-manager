@@ -68,8 +68,8 @@ public class DecisionFleetShardCallbackResource {
     }
 
     @POST
-    @Path("decisions/{id}/versions/{version}")
-    public Response processCallback(Webhook webhook, @PathParam("id") String decisionIdOrName, @PathParam("version") long version) {
+    @Path("decisions/{decisionNameOrId}/versions/{version}")
+    public Response processCallback(Webhook webhook, @PathParam("decisionNameOrId") String decisionIdOrName, @PathParam("version") long version) {
 
         LOGGER.info("Received callback for decision with idOrName '{}' at version '{}' for customer '{}'. Phase: '{}'", decisionIdOrName, version, webhook.getCustomer(), webhook.getPhase());
 

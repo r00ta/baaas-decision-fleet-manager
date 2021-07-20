@@ -98,107 +98,6 @@ public class DecisionResource {
         this.decisionMapper = decisionMapper;
     }
 
-    private Response mapDecisionVersion(DecisionVersion decisionVersion) {
-        DecisionResponse response = decisionMapper.mapVersionToDecisionResponse(decisionVersion);
-        return Response.ok(response).build();
-    }
-
-    @PUT
-    @Path("{id}/versions/{version}")
-    @Authenticated
-    public Response setCurrentVersion(@PathParam("id") String id, @PathParam("version") long version) {
-        return Response.status(400).entity("This endpoint/feature has been temporary disabled. See https://issues.redhat.com/browse/BAAAS-156").build();
-        //        String customerId = customerIdResolver.getCustomerId();
-        //        LOGGER.info("Setting new current version '{}' of Decision with id or name '{}' for customer '{}'...", id, version, customerId);
-        //        DecisionVersion decisionVersion = decisionLifecycle.setCurrentVersion(customerId, id, version);
-        //        return mapDecisionVersion(decisionVersion);
-    }
-
-    @DELETE
-    @Path("{id}")
-    @Authenticated
-    public Response deleteDecision(@PathParam("id") String id) {
-        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
-        LOGGER.info("Deleting decision with id or name '{}' for customer id '{}'...", id, customerId);
-        decisionLifecycle.deleteDecision(customerId, id);
-        return Response.ok().build();
-    }
-
-    @DELETE
-    @Path("{id}/versions/{version}")
-    @Authenticated
-    public Response deleteDecisionVersion(@PathParam("id") String id, @PathParam("version") long version) {
-        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
-        LOGGER.info("Deleting version '{}' of Decision with id or name '{}' for customer '{}'...",
-                version, id, customerId);
-
-        DecisionVersion decisionVersion = decisionLifecycle.deleteVersion(customerId, id, version);
-        return mapDecisionVersion(decisionVersion);
-    }
-
-    @GET
-    @Path("{id}/versions/{version}/dmn")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @Authenticated
-    public Response getDecisionVersionDMN(@PathParam("id") String id, @PathParam("version") long version) {
-        // TODO returns a formatted xml file.
-
-        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
-        LOGGER.info("Requesting Decision version '{}' of with id or name '{}' for customer '{}' to be downloaded...",
-                version, id, customerId);
-
-        ByteArrayOutputStream byteArrayOutputStream = decisionLifecycle.getDMN(customerId, id, version);
-
-        Response.ResponseBuilder response = Response.ok((StreamingOutput) output -> byteArrayOutputStream.writeTo(output));
-        response.header("Content-Disposition", "attachment;filename=" + id + ".xml");
-        response.header("Content-Type", MediaType.APPLICATION_XML);
-
-        return response.build();
-    }
-
-    @GET
-    @Path("{id}/building")
-    @Authenticated
-    public Response getBuildingVersion(@PathParam("id") String decisionIdOrName) {
-        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
-        LOGGER.info("Getting details of BUILDING version of Decision with id or name '{}' for customer '{}'...", decisionIdOrName, customerId);
-
-        DecisionVersion decisionVersion = decisionLifecycle.getBuildingVersion(customerId, decisionIdOrName);
-        return mapDecisionVersion(decisionVersion);
-    }
-
-    @GET
-    @Path("{id}/versions/{version}")
-    @Authenticated
-    public Response getDecisionVersion(@PathParam("id") String id, @PathParam("version") long version) {
-        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
-        LOGGER.info("Getting details of Decision Version '{}' for Decision with id or name '{}' for customer '{}'...", id, version, customerId);
-        DecisionVersion decisionVersion = decisionLifecycle.getVersion(customerId, id, version);
-        return mapDecisionVersion(decisionVersion);
-    }
-
-    @GET
-    @Path("{id}")
-    @Authenticated
-    public Response getDecision(@PathParam("id") String id) {
-        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
-        LOGGER.info("Getting details of '{}' version of Decision with id or name '{}' for customer '{}'...", DecisionVersionStatus.CURRENT, id, customerId);
-        DecisionVersion decisionVersion = decisionLifecycle.getCurrentVersion(customerId, id);
-        return mapDecisionVersion(decisionVersion);
-    }
-
-    @GET
-    @Path("{id}/versions")
-    @Authenticated
-    public Response listDecisionVersions(@PathParam("id") String id, @DefaultValue(PAGE_DEFAULT) @Min(PAGE_MIN) @QueryParam(PAGE) int page,
-            @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) @QueryParam(SIZE) int size) {
-        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
-        LOGGER.info("Listing all versions for Decision with id or name '{}' for customer '{}'...", id, customerId);
-        ListResult<DecisionVersion> versions = decisionLifecycle.listDecisionVersions(customerId, id, page, size);
-        DecisionResponseList responseList = decisionMapper.mapVersionsToDecisionResponseList(versions);
-        return Response.ok(responseList).build();
-    }
-
     @GET
     @Authenticated
     public Response listDecisions(@DefaultValue(PAGE_DEFAULT) @Min(PAGE_MIN) @QueryParam(PAGE) int page, @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) @QueryParam(SIZE) int size) {
@@ -219,4 +118,104 @@ public class DecisionResource {
         return Response.status(Response.Status.CREATED).entity(decisionResponse).build();
     }
 
+    @GET
+    @Path("{decisionNameOrId}")
+    @Authenticated
+    public Response getDecision(@PathParam("decisionNameOrId") String decisionNameOrId) {
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        LOGGER.info("Getting details of '{}' version of Decision with id or name '{}' for customer '{}'...", DecisionVersionStatus.CURRENT, decisionNameOrId, customerId);
+        DecisionVersion decisionVersion = decisionLifecycle.getCurrentVersion(customerId, decisionNameOrId);
+        return mapDecisionVersion(decisionVersion);
+    }
+
+    @DELETE
+    @Path("{decisionNameOrId}")
+    @Authenticated
+    public Response deleteDecision(@PathParam("decisionNameOrId") String decisionNameOrId) {
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        LOGGER.info("Deleting decision with id or name '{}' for customer id '{}'...", decisionNameOrId, customerId);
+        decisionLifecycle.deleteDecision(customerId, decisionNameOrId);
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("{decisionNameOrId}/building")
+    @Authenticated
+    public Response getBuildingVersion(@PathParam("decisionNameOrId") String decisionIdOrName) {
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        LOGGER.info("Getting details of BUILDING version of Decision with id or name '{}' for customer '{}'...", decisionIdOrName, customerId);
+
+        DecisionVersion decisionVersion = decisionLifecycle.getBuildingVersion(customerId, decisionIdOrName);
+        return mapDecisionVersion(decisionVersion);
+    }
+
+    @GET
+    @Path("{decisionNameOrId}/versions")
+    @Authenticated
+    public Response listDecisionVersions(@PathParam("decisionNameOrId") String decisionNameOrId, @DefaultValue(PAGE_DEFAULT) @Min(PAGE_MIN) @QueryParam(PAGE) int page,
+                                         @DefaultValue(SIZE_DEFAULT) @Min(SIZE_MIN) @Max(SIZE_MAX) @QueryParam(SIZE) int size) {
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        LOGGER.info("Listing all versions for Decision with id or name '{}' for customer '{}'...", decisionNameOrId, customerId);
+        ListResult<DecisionVersion> versions = decisionLifecycle.listDecisionVersions(customerId, decisionNameOrId, page, size);
+        DecisionResponseList responseList = decisionMapper.mapVersionsToDecisionResponseList(versions);
+        return Response.ok(responseList).build();
+    }
+
+    @GET
+    @Path("{decisionNameOrId}/versions/{version}")
+    @Authenticated
+    public Response getDecisionVersion(@PathParam("decisionNameOrId") String decisionNameOrId, @PathParam("version") long version) {
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        LOGGER.info("Getting details of Decision Version '{}' for Decision with id or name '{}' for customer '{}'...", decisionNameOrId, version, customerId);
+        DecisionVersion decisionVersion = decisionLifecycle.getVersion(customerId, decisionNameOrId, version);
+        return mapDecisionVersion(decisionVersion);
+    }
+
+    @PUT
+    @Path("{decisionNameOrId}/versions/{version}")
+    @Authenticated
+    public Response setCurrentVersion(@PathParam("decisionNameOrId") String decisionNameOrId, @PathParam("version") long version) {
+        return Response.status(400).entity("This endpoint/feature has been temporary disabled. See https://issues.redhat.com/browse/BAAAS-156").build();
+        //        String customerId = customerIdResolver.getCustomerId();
+        //        LOGGER.info("Setting new current version '{}' of Decision with id or name '{}' for customer '{}'...", id, version, customerId);
+        //        DecisionVersion decisionVersion = decisionLifecycle.setCurrentVersion(customerId, id, version);
+        //        return mapDecisionVersion(decisionVersion);
+    }
+
+    @DELETE
+    @Path("{decisionNameOrId}/versions/{version}")
+    @Authenticated
+    public Response deleteDecisionVersion(@PathParam("decisionNameOrId") String decisionNameOrId, @PathParam("version") long version) {
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        LOGGER.info("Deleting version '{}' of Decision with id or name '{}' for customer '{}'...",
+                version, decisionNameOrId, customerId);
+
+        DecisionVersion decisionVersion = decisionLifecycle.deleteVersion(customerId, decisionNameOrId, version);
+        return mapDecisionVersion(decisionVersion);
+    }
+
+    @GET
+    @Path("{decisionNameOrId}/versions/{version}/dmn")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Authenticated
+    public Response getDecisionVersionDMN(@PathParam("decisionNameOrId") String decisionNameOrId, @PathParam("version") long version) {
+        // TODO returns a formatted xml file.
+
+        String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
+        LOGGER.info("Requesting Decision version '{}' of with id or name '{}' for customer '{}' to be downloaded...",
+                version, decisionNameOrId, customerId);
+
+        ByteArrayOutputStream byteArrayOutputStream = decisionLifecycle.getDMN(customerId, decisionNameOrId, version);
+
+        Response.ResponseBuilder response = Response.ok((StreamingOutput) output -> byteArrayOutputStream.writeTo(output));
+        response.header("Content-Disposition", "attachment;filename=" + decisionNameOrId + ".xml");
+        response.header("Content-Type", MediaType.APPLICATION_XML);
+
+        return response.build();
+    }
+
+    private Response mapDecisionVersion(DecisionVersion decisionVersion) {
+        DecisionResponse response = decisionMapper.mapVersionToDecisionResponse(decisionVersion);
+        return Response.ok(response).build();
+    }
 }
