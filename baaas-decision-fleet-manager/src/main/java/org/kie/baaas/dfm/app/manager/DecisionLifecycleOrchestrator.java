@@ -91,28 +91,6 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         return decision;
     }
 
-    private DecisionVersion requestDeployment(String customerId, DecisionVersion decisionVersion) {
-        DecisionFleetShardClient client = getFleetShardClient(decisionVersion.getDecision());
-        try {
-            client.deploy(decisionVersion);
-            return decisionVersion;
-        } catch (Exception e) {
-            decisionManager.failed(customerId, decisionVersion.getDecision().getId(), decisionVersion.getVersion(), failedToDeploy());
-            throw failedToDeploy(customerId, decisionVersion, e);
-        }
-    }
-
-    private DecisionFleetManagerException failedToDeploy(String customerId, DecisionVersion decisionVersion, Throwable t) {
-        String message = new StringBuilder("Failed to request deployment of Decision with id '")
-                .append(decisionVersion.getDecision().getId())
-                .append("' at version '")
-                .append(decisionVersion.getVersion())
-                .append("' for customer '")
-                .append(customerId)
-                .append("'").toString();
-        return new DecisionFleetManagerException(message, t);
-    }
-
     @Override
     public DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest) {
         Eventing evt = decisionRequest.getEventing();
@@ -133,17 +111,6 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         }
 
         return requestDeployment(customerId, decisionVersion);
-    }
-
-    private Deployment failedToDeploy() {
-        Deployment deployment = new Deployment();
-        deployment.setStatusMessage("Failed to deploy Decision.");
-        return deployment;
-    }
-
-    private DecisionFleetShardClient getFleetShardClient(Decision decision) {
-        DecisionFleetShard fleetShard = fleetShardSelector.selectFleetShardForDeployment(decision);
-        return clientFactory.createClientFor(fleetShard);
     }
 
     @Override
@@ -190,15 +157,72 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         return decisionManager.getDMN(customerId, decisionIdOrName, version);
     }
 
+    @Override
     public DecisionVersion failed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
         DecisionVersion decisionVersion = decisionManager.failed(customerId, decisionIdOrName, version, deployment);
         listenerManager.notifyListeners(() -> new AfterFailedEvent(decisionMapper.mapVersionToDecisionResponse(decisionVersion)));
         return decisionVersion;
     }
 
+    @Override
     public DecisionVersion deployed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
         DecisionVersion decisionVersion = decisionManager.deployed(customerId, decisionIdOrName, version, deployment);
         listenerManager.notifyListeners(() -> new AfterDeployedEvent(decisionMapper.mapVersionToDecisionResponse(decisionVersion)));
         return decisionVersion;
+    }
+
+    private DecisionVersion requestDeployment(String customerId, DecisionVersion decisionVersion) {
+        DecisionFleetShardClient client = getFleetShardClient(decisionVersion.getDecision());
+        try {
+            client.deploy(decisionVersion);
+            return decisionVersion;
+        } catch (Exception e) {
+            decisionManager.failed(customerId, decisionVersion.getDecision().getId(), decisionVersion.getVersion(), failedToDeploy());
+            throw failedToDeploy(customerId, decisionVersion, e);
+        }
+    }
+
+    private DecisionFleetManagerException failedToDeploy(String customerId, DecisionVersion decisionVersion, Throwable t) {
+        String message = new StringBuilder("Failed to request deployment of Decision with id '")
+                .append(decisionVersion.getDecision().getId())
+                .append("' at version '")
+                .append(decisionVersion.getVersion())
+                .append("' for customer '")
+                .append(customerId)
+                .append("'").toString();
+        return new DecisionFleetManagerException(message, t);
+    }
+
+    private Deployment failedToDeploy() {
+        Deployment deployment = new Deployment();
+        deployment.setStatusMessage("Failed to deploy Decision.");
+        return deployment;
+    }
+
+    private DecisionFleetShardClient getFleetShardClient(Decision decision) {
+        DecisionFleetShard fleetShard = fleetShardSelector.selectFleetShardForDeployment(decision);
+        return clientFactory.createClientFor(fleetShard);
+    }
+
+    private Credential getCustomerCredential(String customerId, DecisionRequest decisionRequest) {
+        if (decisionRequest.getEventing() != null) {
+            String secretName = String.format(CREDENTIALS_NAME, customerId);
+            Secret secret = vaultService.get(secretName);
+            if (secret == null) {
+                secret = managedServicesClient.createOrReplaceServiceAccount(secretName);
+                vaultService.create(secret);
+            }
+            return toCredential(secret);
+        }
+        return null;
+    }
+
+    private Credential toCredential(Secret secret) {
+        if (secret == null || secret.getValues() == null) {
+            return null;
+        }
+        return new Credential()
+                .setClientId(secret.getValues().get(CLIENT_ID))
+                .setClientSecret(secret.getValues().get(CLIENT_SECRET));
     }
 }
