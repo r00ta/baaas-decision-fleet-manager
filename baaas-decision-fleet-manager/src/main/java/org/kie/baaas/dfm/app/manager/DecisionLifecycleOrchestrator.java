@@ -203,26 +203,4 @@ public class DecisionLifecycleOrchestrator implements DecisionLifecycle {
         DecisionFleetShard fleetShard = fleetShardSelector.selectFleetShardForDeployment(decision);
         return clientFactory.createClientFor(fleetShard);
     }
-
-    private Credential getCustomerCredential(String customerId, DecisionRequest decisionRequest) {
-        if (decisionRequest.getEventing() != null) {
-            String secretName = String.format(CREDENTIALS_NAME, customerId);
-            Secret secret = vaultService.get(secretName);
-            if (secret == null) {
-                secret = managedServicesClient.createOrReplaceServiceAccount(secretName);
-                vaultService.create(secret);
-            }
-            return toCredential(secret);
-        }
-        return null;
-    }
-
-    private Credential toCredential(Secret secret) {
-        if (secret == null || secret.getValues() == null) {
-            return null;
-        }
-        return new Credential()
-                .setClientId(secret.getValues().get(CLIENT_ID))
-                .setClientSecret(secret.getValues().get(CLIENT_SECRET));
-    }
 }
