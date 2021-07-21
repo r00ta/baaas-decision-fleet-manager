@@ -68,29 +68,6 @@ public class DecisionManager implements DecisionLifecycle {
         this.decisionDMNStorage = decisionDMNStorage;
     }
 
-    /*
-     * Checks to see that we are not already performing a lifecycle operation for this Decision.
-     * Currently we only support sequential lifecycle operations.
-     */
-    private void checkForExistingLifecycleOperation(Decision decision) {
-        if (decision.getNextVersion() != null) {
-            if (DecisionVersionStatus.BUILDING.equals(decision.getNextVersion().getStatus())) {
-                throw new DecisionLifecycleException(
-                        "A lifecycle operation is already in progress for Version '" + decision.getCurrentVersion().getVersion() + "' of Decision '" + decision.getName() + "'");
-            }
-        }
-    }
-
-    private NoSuchDecisionVersionException decisionVersionDoesNotExist(String customerId, String idOrName, long version) {
-        String message = String.format("Version '%s' of Decision with id or name '%s' does not exist for customer '%s", customerId, idOrName, version);
-        throw new NoSuchDecisionVersionException(message);
-    }
-
-    private NoSuchDecisionException decisionDoesNotExist(String customerId, String idOrName) {
-        String message = String.format("Decision with id or name '%s' does not exist for customer '%s'", idOrName, customerId);
-        return new NoSuchDecisionException(message);
-    }
-
     /**
      * Gets the specified version of the decision for the given customer.
      *
@@ -99,6 +76,7 @@ public class DecisionManager implements DecisionLifecycle {
      * @param decisionVersion - The version of the Decision
      * @return - The Decision Version
      */
+    @Override
     public DecisionVersion getVersion(String customerId, String decisionIdOrName, long decisionVersion) {
         return findDecisionVersion(customerId, decisionIdOrName, decisionVersion);
     }
@@ -110,6 +88,7 @@ public class DecisionManager implements DecisionLifecycle {
      * @param decisionIdOrName - the decision id or name
      * @return - The decision version
      */
+    @Override
     public DecisionVersion getCurrentVersion(String customerId, String decisionIdOrName) {
         DecisionVersion decisionVersion = decisionVersionDAO.getCurrentVersion(customerId, decisionIdOrName);
         if (decisionVersion == null) {
@@ -125,6 +104,7 @@ public class DecisionManager implements DecisionLifecycle {
      * @param decisionIdOrName - The decision id or name
      * @return - The list of versions.
      */
+    @Override
     public ListResult<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName, int page, int pageSize) {
 
         ListResult<DecisionVersion> versions = decisionVersionDAO.listByCustomerAndDecisionIdOrName(customerId, decisionIdOrName, page, pageSize);
@@ -140,6 +120,7 @@ public class DecisionManager implements DecisionLifecycle {
      * @param customerId - The customer id to find decisions for
      * @return - The list of decisions for this customer.
      */
+    @Override
     public ListResult<Decision> listDecisions(String customerId, int page, int pageSize) {
         ListResult<DecisionVersion> versions = decisionVersionDAO.listCurrentByCustomerId(customerId, page, pageSize);
         List<Decision> decisions = versions.getItems().stream().map((version) -> version.getDecision()).collect(toList());
@@ -161,12 +142,197 @@ public class DecisionManager implements DecisionLifecycle {
      * @param decisionRequest - The API processed request
      * @return - the updated Decision
      */
+    @Override
     public DecisionVersion createOrUpdateVersion(String customerId, DecisionRequest decisionRequest) {
         Decision decision = decisionDAO.findByCustomerAndName(customerId, decisionRequest.getName());
         if (decision == null) {
             return createDecision(customerId, decisionRequest);
         }
         return updateDecision(customerId, decision, decisionRequest);
+    }
+
+    /**
+     * Callback method invoked when we have failed to deploy the specified version of a Decision.
+     *
+     * @param customerId - The id of the customer that owns the decision
+     * @param decisionIdOrName - The id or the name of the DecisionVersion
+     * @param version - The version of the decision deployed
+     * @param deployment - The deployment for the DecisionVersion
+     * @return - The updated Decision with the result of the failure recorded.
+     */
+    @Override
+    public DecisionVersion failed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
+
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
+        Decision decision = decisionVersion.getDecision();
+        verifyCorrectVersionForCallback(decision, decisionVersion.getVersion(), DecisionVersionStatus.BUILDING);
+        decisionVersion.setDeployment(deployment);
+
+        decisionVersion.setStatus(DecisionVersionStatus.FAILED);
+        decision.setNextVersion(null);
+
+        /*
+         * In the case of multiple failures in a row, make the most recent failure the CURRENT
+         * one.
+         */
+        if (DecisionVersionStatus.FAILED == decision.getCurrentVersion().getStatus()) {
+            if (decision.getCurrentVersion().getVersion() != decisionVersion.getVersion()) {
+                decision.setCurrentVersion(decisionVersion);
+            }
+        }
+
+        LOGGER.info("Marked version '{}' of Decision '{}' as FAILED for customer id '{}", decisionVersion.getVersion(), decision.getName(), customerId);
+
+        return decisionVersion;
+    }
+
+    /**
+     * Callback method invoked when we have deployed the specified version of a Decision.
+     *
+     * @param customerId - The id of the customer that owns the decision
+     * @param decisionIdOrName - The id or the name of the decisionVersion that has been deployed
+     * @param version - The version of the decision deployed
+     * @param deployment - The deployment record.
+     * @return - The updated Decision with the result of the deployment recorded.
+     */
+    @Override
+    public DecisionVersion deployed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
+
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
+        Decision decision = decisionVersion.getDecision();
+        verifyCorrectVersionForCallback(decision, decisionVersion.getVersion(), DecisionVersionStatus.BUILDING);
+
+        decisionVersion.setDeployment(deployment);
+        decisionVersion.setStatus(DecisionVersionStatus.CURRENT);
+        decisionVersion.setPublishedAt(ZonedDateTime.now(ZoneOffset.UTC));
+
+        DecisionVersion currentVersion = decision.getCurrentVersion();
+        if (currentVersion.getVersion() != decisionVersion.getVersion()) {
+            currentVersion.setStatus(DecisionVersionStatus.READY);
+        }
+
+        decision.setCurrentVersion(decisionVersion);
+        decision.setNextVersion(null);
+
+        LOGGER.info("Marked version '{}' of Decision '{}' as CURRENT for customer id '{}", decisionVersion.getVersion(), decision.getName(), customerId);
+
+        return decisionVersion;
+    }
+
+    /**
+     * Begin the process of moving the "current" endpoint to the specified decision version.
+     *
+     * @param customerId - The customer that owns the decision
+     * @param decisionIdOrName - The id or name of the decision
+     * @param version - The version to use in the CURRENT endpoint
+     * @return - The Decision Version we are attempting to use as current one.
+     */
+    @Override
+    public DecisionVersion setCurrentVersion(String customerId, String decisionIdOrName, long version) {
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
+        checkForExistingLifecycleOperation(decisionVersion.getDecision());
+
+        if (!DecisionVersionStatus.READY.equals(decisionVersion.getStatus())) {
+            throw new DecisionLifecycleException(
+                    "Cannot move the current pointer to version '" + version + "' of decision '" + decisionIdOrName + "' as it is in state '" + decisionVersion.getStatus() + "'");
+        }
+
+        decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
+        decisionVersion.getDecision().setNextVersion(decisionVersion);
+        return decisionVersion;
+    }
+
+    /**
+     * Reads the given dmn version and name from associated customerId
+     *
+     * @param customerId - The customer that owns the Decision
+     * @param decisionNameOrId - The name or the id of the decision to be returned
+     * @param version - The version of the decision to be returned
+     * @return - The dmn as String from S3 bucket
+     */
+    @Override
+    public ByteArrayOutputStream getDMN(String customerId, String decisionNameOrId, long version) {
+
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionNameOrId, version);
+        return decisionDMNStorage.readDMN(customerId, decisionVersion);
+    }
+
+    /**
+     * Attempts to delete the specified version of a Decision
+     *
+     * @param customerId - The customer that owns the Decision
+     * @param decisionNameOrId - The name or the id of the Decision to delete the version from
+     * @param version - The version of the Decision to delete.
+     * @return - The deleted version of the Decision.
+     */
+    @Override
+    public DecisionVersion deleteVersion(String customerId, String decisionNameOrId, long version) {
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionNameOrId, version);
+
+        // Can't delete a version whilst it is current
+        if (DecisionVersionStatus.CURRENT == decisionVersion.getStatus()) {
+            throw new DecisionLifecycleException("It is not valid to delete the 'CURRENT' version of Decision '" + decisionNameOrId + "' for customer id '" + customerId + "'");
+        }
+
+        // Deleting a DecisionVersion is a logical delete. They should still appear in history.
+        decisionVersion.setStatus(DecisionVersionStatus.DELETED);
+        return decisionVersion;
+    }
+
+    /**
+     * Deletes the specified decision fully
+     *
+     * @param customerId - The customer that owns the decision
+     * @param decisionNameOrId - The name or the id of the Decision to delete.
+     * @return - The deleted decision.
+     */
+    @Override
+    public Decision deleteDecision(String customerId, String decisionNameOrId) {
+
+        Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionNameOrId);
+        if (decision == null) {
+            throw decisionDoesNotExist(customerId, decisionNameOrId);
+        }
+
+        decisionDAO.delete(decision);
+        LOGGER.info("Deleted Decision with name '{}' and customer id '{}'", decisionNameOrId, customerId);
+        return decision;
+    }
+
+    private DecisionVersion findDecisionVersion(String customerId, String decisionNameOrId, long version) {
+        DecisionVersion decisionVersion = decisionVersionDAO.findByCustomerAndDecisionIdOrName(customerId, decisionNameOrId, version);
+        if (decisionVersion == null) {
+            Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionNameOrId);
+            if (decision == null) {
+                throw decisionDoesNotExist(customerId, decisionNameOrId);
+            } else {
+                throw decisionVersionDoesNotExist(customerId, decisionNameOrId, version);
+            }
+        }
+        return decisionVersion;
+    }
+
+    /*
+     * Checks to see that we are not already performing a lifecycle operation for this Decision.
+     * Currently we only support sequential lifecycle operations.
+     */
+    private void checkForExistingLifecycleOperation(Decision decision) {
+        if (decision.getNextVersion() != null) {
+            if (DecisionVersionStatus.BUILDING.equals(decision.getNextVersion().getStatus())) {
+                throw new DecisionLifecycleException(
+                        "A lifecycle operation is already in progress for Version '" + decision.getCurrentVersion().getVersion() + "' of Decision '" + decision.getName() + "'");
+            }
+        }
+    }
+
+    private NoSuchDecisionVersionException decisionVersionDoesNotExist(String customerId, String idOrName, long version) {
+        String message = String.format("Version '%s' of Decision with id or name '%s' does not exist for customer '%s", customerId, idOrName, version);
+        throw new NoSuchDecisionVersionException(message);
+    }
+
+    private NoSuchDecisionException decisionDoesNotExist(String customerId, String idOrName) {
+        String message = String.format("Decision with id or name '%s' does not exist for customer '%s'", idOrName, customerId);
+        return new NoSuchDecisionException(message);
     }
 
     private DecisionVersion createDecisionVersion(String customerId, DecisionRequest decisionRequest) {
@@ -245,160 +411,5 @@ public class DecisionManager implements DecisionLifecycle {
                     .toString();
             throw new DecisionLifecycleException(message);
         }
-    }
-
-    /**
-     * Callback method invoked when we have failed to deploy the specified version of a Decision.
-     *
-     * @param customerId - The id of the customer that owns the decision
-     * @param decisionIdOrName - The id of the DecisionVersion
-     * @param version - The version of the decision deployed
-     * @param deployment - The deployment for the DecisionVersion
-     * @return - The updated Decision with the result of the failure recorded.
-     */
-    public DecisionVersion failed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
-
-        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
-        Decision decision = decisionVersion.getDecision();
-        verifyCorrectVersionForCallback(decision, decisionVersion.getVersion(), DecisionVersionStatus.BUILDING);
-        decisionVersion.setDeployment(deployment);
-
-        decisionVersion.setStatus(DecisionVersionStatus.FAILED);
-        decision.setNextVersion(null);
-
-        /*
-         * In the case of multiple failures in a row, make the most recent failure the CURRENT
-         * one.
-         */
-        if (DecisionVersionStatus.FAILED == decision.getCurrentVersion().getStatus()) {
-            if (decision.getCurrentVersion().getVersion() != decisionVersion.getVersion()) {
-                decision.setCurrentVersion(decisionVersion);
-            }
-        }
-
-        LOGGER.info("Marked version '{}' of Decision '{}' as FAILED for customer id '{}", decisionVersion.getVersion(), decision.getName(), customerId);
-
-        return decisionVersion;
-    }
-
-    /**
-     * Callback method invoked when we have deployed the specified version of a Decision.
-     *
-     * @param customerId - The id of the customer that owns the decision
-     * @param decisionIdOrName - The id of the decisionVersion that has been deployed
-     * @param version - The version of the decision deployed
-     * @param deployment - The deployment record.
-     * @return - The updated Decision with the result of the deployment recorded.
-     */
-    public DecisionVersion deployed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
-
-        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
-        Decision decision = decisionVersion.getDecision();
-        verifyCorrectVersionForCallback(decision, decisionVersion.getVersion(), DecisionVersionStatus.BUILDING);
-
-        decisionVersion.setDeployment(deployment);
-        decisionVersion.setStatus(DecisionVersionStatus.CURRENT);
-        decisionVersion.setPublishedAt(ZonedDateTime.now(ZoneOffset.UTC));
-
-        DecisionVersion currentVersion = decision.getCurrentVersion();
-        if (currentVersion.getVersion() != decisionVersion.getVersion()) {
-            currentVersion.setStatus(DecisionVersionStatus.READY);
-        }
-
-        decision.setCurrentVersion(decisionVersion);
-        decision.setNextVersion(null);
-
-        LOGGER.info("Marked version '{}' of Decision '{}' as CURRENT for customer id '{}", decisionVersion.getVersion(), decision.getName(), customerId);
-
-        return decisionVersion;
-    }
-
-    /**
-     * Begin the process of moving the "current" endpoint to the specified decision version.
-     *
-     * @param customerId - The customer that owns the decision
-     * @param decisionIdOrName - The id or name of the decision
-     * @param version - The version to use in the CURRENT endpoint
-     * @return - The Decision Version we are attempting to use as current one.
-     */
-    public DecisionVersion setCurrentVersion(String customerId, String decisionIdOrName, long version) {
-        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
-        checkForExistingLifecycleOperation(decisionVersion.getDecision());
-
-        if (!DecisionVersionStatus.READY.equals(decisionVersion.getStatus())) {
-            throw new DecisionLifecycleException(
-                    "Cannot move the current pointer to version '" + version + "' of decision '" + decisionIdOrName + "' as it is in state '" + decisionVersion.getStatus() + "'");
-        }
-
-        decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
-        decisionVersion.getDecision().setNextVersion(decisionVersion);
-        return decisionVersion;
-    }
-
-    /**
-     * Reads the given dmn version and name from associated customerId
-     *
-     * @param customerId - The customer that owns the Decision
-     * @param decisionName - The name of the decision to be returned
-     * @param version - The version of the decision to be returned
-     * @return - The dmn as String from S3 bucket
-     */
-    public ByteArrayOutputStream getDMN(String customerId, String decisionName, long version) {
-
-        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionName, version);
-        return decisionDMNStorage.readDMN(customerId, decisionVersion);
-    }
-
-    /**
-     * Attempts to delete the specified version of a Decision
-     *
-     * @param customerId - The customer that owns the Decision
-     * @param decisionName - The name of the Decision to delete the version from
-     * @param version - The version of the Decision to delete.
-     * @return - The deleted version of the Decision.
-     */
-    public DecisionVersion deleteVersion(String customerId, String decisionName, long version) {
-        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionName, version);
-
-        // Can't delete a version whilst it is current
-        if (DecisionVersionStatus.CURRENT == decisionVersion.getStatus()) {
-            throw new DecisionLifecycleException("It is not valid to delete the 'CURRENT' version of Decision '" + decisionName + "' for customer id '" + customerId + "'");
-        }
-
-        // Deleting a DecisionVersion is a logical delete. They should still appear in history.
-        decisionVersion.setStatus(DecisionVersionStatus.DELETED);
-        return decisionVersion;
-    }
-
-    private DecisionVersion findDecisionVersion(String customerId, String decisionName, long version) {
-        DecisionVersion decisionVersion = decisionVersionDAO.findByCustomerAndDecisionIdOrName(customerId, decisionName, version);
-        if (decisionVersion == null) {
-            Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionName);
-            if (decision == null) {
-                throw decisionDoesNotExist(customerId, decisionName);
-            } else {
-                throw decisionVersionDoesNotExist(customerId, decisionName, version);
-            }
-        }
-        return decisionVersion;
-    }
-
-    /**
-     * Deletes the specified decision fully
-     *
-     * @param customerId - The customer that owns the decision
-     * @param decisionNameOrId - The name of the Decision to delete.
-     * @return - The deleted decision.
-     */
-    public Decision deleteDecision(String customerId, String decisionNameOrId) {
-
-        Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionNameOrId);
-        if (decision == null) {
-            throw decisionDoesNotExist(customerId, decisionNameOrId);
-        }
-
-        decisionDAO.delete(decision);
-        LOGGER.info("Deleted Decision with name '{}' and customer id '{}'", decisionNameOrId, customerId);
-        return decision;
     }
 }
