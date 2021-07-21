@@ -313,7 +313,7 @@ public class DecisionManager implements DecisionLifecycle {
         Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionNameOrId);
         return deleteDecision(decision, customerId, decisionNameOrId);
     }
-  
+
     private DecisionVersion findDecisionVersion(String decisionId, long version) {
         DecisionVersion decisionVersion = decisionVersionDAO.findByDecisionIdAndVersion(decisionId, version);
         return findDecisionVersion(decisionVersion,
@@ -358,19 +358,6 @@ public class DecisionManager implements DecisionLifecycle {
         decisionDAO.delete(decision);
         LOGGER.info("Deleted Decision with name '{}' and customer id '{}'", decisionNameOrId, customerId);
         return decision;
-    }
-
-    private DecisionVersion findDecisionVersion(String customerId, String decisionNameOrId, long version) {
-        DecisionVersion decisionVersion = decisionVersionDAO.findByCustomerAndDecisionIdOrName(customerId, decisionNameOrId, version);
-        if (decisionVersion == null) {
-            Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionNameOrId);
-            if (decision == null) {
-                throw decisionDoesNotExist(customerId, decisionNameOrId);
-            } else {
-                throw decisionVersionDoesNotExist(customerId, decisionNameOrId, version);
-            }
-        }
-        return decisionVersion;
     }
 
     /*
