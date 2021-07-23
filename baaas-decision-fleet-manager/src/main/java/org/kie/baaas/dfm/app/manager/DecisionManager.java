@@ -299,7 +299,7 @@ public class DecisionManager implements DecisionLifecycle {
     @Override
     public Decision deleteDecision(String decisionId) {
         Decision decision = decisionDAO.findById(decisionId);
-        return deleteDecision(decision, decision.getCustomerId(), decisionId);
+        return deleteDecision(decision, decision != null ? decision.getCustomerId() : "<UNKNOWN>", decisionId);
     }
 
     /**
