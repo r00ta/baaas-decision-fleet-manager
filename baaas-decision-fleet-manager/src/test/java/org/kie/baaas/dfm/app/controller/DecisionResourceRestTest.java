@@ -20,6 +20,7 @@ import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 
+import org.junit.jupiter.api.Test;
 import org.kie.baaas.dfm.api.decisions.DecisionRequest;
 import org.kie.baaas.dfm.api.eventing.Eventing;
 import org.kie.baaas.dfm.api.eventing.kafka.Kafka;
@@ -47,6 +48,7 @@ class DecisionResourceRestTest {
     DecisionMapper decisionMapper;
 
     @TestSecurity(user = DEFAULT_CUSTOMER_ID)
+    @Test
     void testBasicValidation() {
         DecisionRequest request = new DecisionRequest();
 
@@ -107,6 +109,7 @@ class DecisionResourceRestTest {
     }
 
     @TestSecurity(user = DEFAULT_CUSTOMER_ID)
+    @Test
     void testEventingValidation() {
         DecisionRequest request = new DecisionRequest();
         request.setName("example-request");

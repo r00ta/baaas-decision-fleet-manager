@@ -45,6 +45,7 @@ import org.kie.baaas.dfm.api.decisions.DecisionResponseList;
 import org.kie.baaas.dfm.app.controller.modelmappers.DecisionMapper;
 import org.kie.baaas.dfm.app.manager.DecisionLifecycle;
 import org.kie.baaas.dfm.app.manager.DecisionLifecycleOrchestrator;
+import org.kie.baaas.dfm.app.manager.validators.WithinDecisionLimits;
 import org.kie.baaas.dfm.app.model.Decision;
 import org.kie.baaas.dfm.app.model.DecisionVersion;
 import org.kie.baaas.dfm.app.model.DecisionVersionStatus;
@@ -110,7 +111,7 @@ public class DecisionResource {
 
     @POST
     @Authenticated
-    public Response createOrUpdateDecision(@Valid DecisionRequest decisionsRequest) {
+    public Response createOrUpdateDecision(@WithinDecisionLimits @Valid DecisionRequest decisionsRequest) {
         String customerId = customerIdResolver.getCustomerId(identity.getPrincipal());
         LOGGER.info("Decision with name '{}' received for processing for customer id '{}'...", decisionsRequest.getName(), customerId);
         DecisionVersion decisionVersion = decisionLifecycle.createOrUpdateVersion(customerId, decisionsRequest);
