@@ -16,6 +16,7 @@
 package org.kie.baaas.dfm.app.manager;
 
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 import org.kie.baaas.dfm.api.decisions.DecisionRequest;
 import org.kie.baaas.dfm.app.model.Decision;
@@ -27,6 +28,14 @@ import org.kie.baaas.dfm.app.model.deployment.Deployment;
  * Core interface for working with the lifecycle of a Decision.
  */
 public interface DecisionLifecycle {
+
+    /**
+     * Delete the specified Decision
+     *
+     * @param decisionNameOrId - The id or name of the Decision
+     * @return - The deleted Decision
+     */
+    Decision deleteDecision(String decisionNameOrId);
 
     /**
      * Delete the specified Decision
@@ -57,6 +66,13 @@ public interface DecisionLifecycle {
     DecisionVersion setCurrentVersion(String customerId, String decisionIdOrName, long version);
 
     /**
+     * List all Decisions
+     *
+     * @return - The List of Decisions
+     */
+    List<Decision> listDecisions();
+
+    /**
      * List all Decisions for the specified Customer
      *
      * @param customerId - The id of the customer that owns the Decisions
@@ -82,6 +98,15 @@ public interface DecisionLifecycle {
      * @return - The DecisionVersion requested
      */
     DecisionVersion getVersion(String customerId, String decisionIdOrName, long version);
+
+    /**
+     * Delete a specific Decision Version
+     *
+     * @param decisionIdOrName - The id or name of the Decision
+     * @param version - The version of the Decision
+     * @return - The deleted DecisionVersion
+     */
+    DecisionVersion deleteVersion(String decisionIdOrName, long version);
 
     /**
      * Delete a specific Decision Version

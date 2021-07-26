@@ -22,6 +22,9 @@
         ],
         "account": [
           "manage-account"
+        ],
+        "baaas-fm": [
+          "admin"
         ]
       }
     },
@@ -50,6 +53,12 @@
       "baaas-fm": [
         {
           "name": "user",
+          "composite": false,
+          "clientRole": true,
+          "containerId": "baaas-fm"
+        },
+        {
+          "name": "admin",
           "composite": false,
           "clientRole": true,
           "containerId": "baaas-fm"

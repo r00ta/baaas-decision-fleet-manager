@@ -215,6 +215,25 @@ public class DecisionLifecycleOrchestratorTest {
     }
 
     @Test
+    public void deleteDecisionById() {
+        String customerId = "foo";
+        String decisionId = "id";
+        Decision decision = new Decision();
+        decision.setCustomerId(customerId);
+
+        when(decisionManager.deleteDecision(decisionId)).thenReturn(decision);
+        when(selector.selectFleetShardForDeployment(decision)).thenReturn(fleetShard);
+        when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
+
+        Decision deleted = orchestrator.deleteDecision(decisionId);
+        assertThat(deleted, is(notNullValue()));
+        assertThat(deleted, equalTo(decision));
+
+        verify(client).delete(decision);
+        verify(decisionDMNStorage).deleteDMN(customerId, deleted);
+    }
+
+    @Test
     public void deleteVersion() {
         String customerId = "foo";
         String decisionName = "bar";
@@ -229,6 +248,28 @@ public class DecisionLifecycleOrchestratorTest {
         when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
 
         DecisionVersion deleted = orchestrator.deleteVersion(customerId, decisionName, version);
+        assertThat(deleted, is(notNullValue()));
+        assertThat(deleted, equalTo(decisionVersion));
+
+        verify(client).delete(decisionVersion);
+    }
+
+    @Test
+    public void deleteVersionById() {
+        String customerId = "foo";
+        String decisionId = "id";
+        long version = 2l;
+
+        DecisionVersion decisionVersion = mock(DecisionVersion.class);
+        Decision decision = new Decision();
+        decision.setCustomerId(customerId);
+        when(decisionVersion.getDecision()).thenReturn(decision);
+
+        when(decisionManager.deleteVersion(decisionId, version)).thenReturn(decisionVersion);
+        when(selector.selectFleetShardForDeployment(decision)).thenReturn(fleetShard);
+        when(clientFactory.createClientFor(fleetShard)).thenReturn(client);
+
+        DecisionVersion deleted = orchestrator.deleteVersion(decisionId, version);
         assertThat(deleted, is(notNullValue()));
         assertThat(deleted, equalTo(decisionVersion));
 

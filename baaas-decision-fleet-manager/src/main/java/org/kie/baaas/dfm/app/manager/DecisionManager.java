@@ -106,12 +106,21 @@ public class DecisionManager implements DecisionLifecycle {
      */
     @Override
     public ListResult<DecisionVersion> listDecisionVersions(String customerId, String decisionIdOrName, int page, int pageSize) {
-
         ListResult<DecisionVersion> versions = decisionVersionDAO.listByCustomerAndDecisionIdOrName(customerId, decisionIdOrName, page, pageSize);
         if (versions.getItems().isEmpty()) {
             throw decisionDoesNotExist(customerId, decisionIdOrName);
         }
         return versions;
+    }
+
+    /**
+     * Lists all the decisions.
+     *
+     * @return - The list of decisions.
+     */
+    public List<Decision> listDecisions() {
+        List<DecisionVersion> versions = decisionVersionDAO.listAll();
+        return versions.stream().map(DecisionVersion::getDecision).collect(toList());
     }
 
     /**
@@ -123,7 +132,7 @@ public class DecisionManager implements DecisionLifecycle {
     @Override
     public ListResult<Decision> listDecisions(String customerId, int page, int pageSize) {
         ListResult<DecisionVersion> versions = decisionVersionDAO.listCurrentByCustomerId(customerId, page, pageSize);
-        List<Decision> decisions = versions.getItems().stream().map((version) -> version.getDecision()).collect(toList());
+        List<Decision> decisions = versions.getItems().stream().map(DecisionVersion::getDecision).collect(toList());
         return new ListResult<>(decisions, versions.getPage(), versions.getTotal());
     }
 
@@ -162,7 +171,6 @@ public class DecisionManager implements DecisionLifecycle {
      */
     @Override
     public DecisionVersion failed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
-
         DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
         Decision decision = decisionVersion.getDecision();
         verifyCorrectVersionForCallback(decision, decisionVersion.getVersion(), DecisionVersionStatus.BUILDING);
@@ -197,7 +205,6 @@ public class DecisionManager implements DecisionLifecycle {
      */
     @Override
     public DecisionVersion deployed(String customerId, String decisionIdOrName, long version, Deployment deployment) {
-
         DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionIdOrName, version);
         Decision decision = decisionVersion.getDecision();
         verifyCorrectVersionForCallback(decision, decisionVersion.getVersion(), DecisionVersionStatus.BUILDING);
@@ -252,9 +259,21 @@ public class DecisionManager implements DecisionLifecycle {
      */
     @Override
     public ByteArrayOutputStream getDMN(String customerId, String decisionNameOrId, long version) {
-
         DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionNameOrId, version);
         return decisionDMNStorage.readDMN(customerId, decisionVersion);
+    }
+
+    /**
+     * Attempts to delete the specified version of a Decision
+     *
+     * @param decisionId - The id of the Decision to delete the version from
+     * @param version - The version of the Decision to delete.
+     * @return - The deleted version of the Decision.
+     */
+    @Override
+    public DecisionVersion deleteVersion(String decisionId, long version) {
+        DecisionVersion decisionVersion = findDecisionVersion(decisionId, version);
+        return deleteDecisionVersion(decisionVersion);
     }
 
     /**
@@ -266,12 +285,52 @@ public class DecisionManager implements DecisionLifecycle {
      * @return - The deleted version of the Decision.
      */
     @Override
-    public DecisionVersion deleteVersion(String customerId, String decisionNameOrId, long version) {
-        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionNameOrId, version);
+    public DecisionVersion deleteVersion(String customerId, String decisionName, long version) {
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionName, version);
+        return deleteDecisionVersion(decisionVersion);
+    }
 
+    /**
+     * Deletes the specified decision fully
+     *
+     * @param decisionId - The id of the Decision to delete.
+     * @return - The deleted decision.
+     */
+    @Override
+    public Decision deleteDecision(String decisionId) {
+        Decision decision = decisionDAO.findById(decisionId);
+        return deleteDecision(decision, decision != null ? decision.getCustomerId() : "<UNKNOWN>", decisionId);
+    }
+
+    /**
+     * Deletes the specified decision fully
+     *
+     * @param customerId - The customer that owns the decision
+     * @param decisionNameOrId - The name of the Decision to delete.
+     * @return - The deleted decision.
+     */
+    public Decision deleteDecision(String customerId, String decisionNameOrId) {
+        Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionNameOrId);
+        return deleteDecision(decision, customerId, decisionNameOrId);
+    }
+
+    private DecisionVersion findDecisionVersion(String decisionId, long version) {
+        DecisionVersion decisionVersion = decisionVersionDAO.findByDecisionIdAndVersion(decisionId, version);
+        return findDecisionVersion(decisionVersion,
+                decisionVersion == null ? null : decisionVersion.getDecision().getCustomerId(),
+                decisionId,
+                version);
+    }
+
+    private DecisionVersion findDecisionVersion(String customerId, String decisionName, long version) {
+        DecisionVersion decisionVersion = decisionVersionDAO.findByCustomerAndDecisionIdOrName(customerId, decisionName, version);
+        return findDecisionVersion(decisionVersion, customerId, decisionName, version);
+    }
+
+    private DecisionVersion deleteDecisionVersion(DecisionVersion decisionVersion) {
         // Can't delete a version whilst it is current
         if (DecisionVersionStatus.CURRENT == decisionVersion.getStatus()) {
-            throw new DecisionLifecycleException("It is not valid to delete the 'CURRENT' version of Decision '" + decisionNameOrId + "' for customer id '" + customerId + "'");
+            throw new DecisionLifecycleException("It is not valid to delete the 'CURRENT' version of Decision '" + decisionVersion.getDecision().getId());
         }
 
         // Deleting a DecisionVersion is a logical delete. They should still appear in history.
@@ -279,28 +338,7 @@ public class DecisionManager implements DecisionLifecycle {
         return decisionVersion;
     }
 
-    /**
-     * Deletes the specified decision fully
-     *
-     * @param customerId - The customer that owns the decision
-     * @param decisionNameOrId - The name or the id of the Decision to delete.
-     * @return - The deleted decision.
-     */
-    @Override
-    public Decision deleteDecision(String customerId, String decisionNameOrId) {
-
-        Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionNameOrId);
-        if (decision == null) {
-            throw decisionDoesNotExist(customerId, decisionNameOrId);
-        }
-
-        decisionDAO.delete(decision);
-        LOGGER.info("Deleted Decision with name '{}' and customer id '{}'", decisionNameOrId, customerId);
-        return decision;
-    }
-
-    private DecisionVersion findDecisionVersion(String customerId, String decisionNameOrId, long version) {
-        DecisionVersion decisionVersion = decisionVersionDAO.findByCustomerAndDecisionIdOrName(customerId, decisionNameOrId, version);
+    private DecisionVersion findDecisionVersion(DecisionVersion decisionVersion, String customerId, String decisionNameOrId, long version) {
         if (decisionVersion == null) {
             Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionNameOrId);
             if (decision == null) {
@@ -310,6 +348,16 @@ public class DecisionManager implements DecisionLifecycle {
             }
         }
         return decisionVersion;
+    }
+
+    private Decision deleteDecision(Decision decision, String customerId, String decisionNameOrId) {
+        if (decision == null) {
+            throw decisionDoesNotExist(customerId, decisionNameOrId);
+        }
+
+        decisionDAO.delete(decision);
+        LOGGER.info("Deleted Decision with name '{}' and customer id '{}'", decisionNameOrId, customerId);
+        return decision;
     }
 
     /*
@@ -336,7 +384,6 @@ public class DecisionManager implements DecisionLifecycle {
     }
 
     private DecisionVersion createDecisionVersion(String customerId, DecisionRequest decisionRequest) {
-
         DecisionVersion decisionVersion = new DecisionVersion();
         decisionVersion.setStatus(DecisionVersionStatus.BUILDING);
         decisionVersion.setSubmittedAt(ZonedDateTime.now(ZoneOffset.UTC));
