@@ -38,6 +38,8 @@ public class DecisionVersionDAO implements PanacheRepositoryBase<DecisionVersion
 
     private static final String CUSTOMER_ID_PARAM = "customerId";
 
+    private static final String ID_PARAM = "id";
+
     private static final String IDS_PARAM = "ids";
 
     private static final String ID_OR_NAME_PARAM = "idOrName";
@@ -65,9 +67,18 @@ public class DecisionVersionDAO implements PanacheRepositoryBase<DecisionVersion
         return find("#DecisionVersion.buildingByCustomerAndDecisionIdOrName", params).firstResult();
     }
 
+    public DecisionVersion findByDecisionIdAndVersion(String id, long decisionVersion) {
+        Parameters params = Parameters.with(ID_PARAM, id).and(VERSION_PARAM, decisionVersion);
+        return find("#DecisionVersion.byDecisionIdAndVersion", params).firstResult();
+    }
+
     public DecisionVersion findByCustomerAndDecisionIdOrName(String customerId, String decisionIdOrName, long decisionVersion) {
         Parameters params = customerIdParams(customerId).and(ID_OR_NAME_PARAM, decisionIdOrName).and(VERSION_PARAM, decisionVersion);
         return find("#DecisionVersion.byCustomerDecisionIdOrNameAndVersion", params).firstResult();
+    }
+
+    public List<DecisionVersion> listAll() {
+        return find("#DecisionVersion.listAll").list();
     }
 
     public ListResult<DecisionVersion> listCurrentByCustomerId(String customerId, int page, int pageSize) {
