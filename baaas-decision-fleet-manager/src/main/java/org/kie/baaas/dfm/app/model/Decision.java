@@ -95,6 +95,10 @@ public class Decision {
         return versions;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public void setCustomerId(String customerId) {
         this.customerId = customerId;
     }
