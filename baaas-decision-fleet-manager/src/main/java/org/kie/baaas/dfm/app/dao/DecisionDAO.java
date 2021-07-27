@@ -16,7 +16,6 @@
 package org.kie.baaas.dfm.app.dao;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 
 import org.kie.baaas.dfm.app.model.Decision;
@@ -42,8 +41,6 @@ public class DecisionDAO implements PanacheRepositoryBase<Decision, String> {
     }
 
     public long getDecisionCountByCustomerId(String customerId) {
-        Parameters params = Parameters.with("customerId", customerId);
-        TypedQuery<Long> namedQuery = getEntityManager().createNamedQuery("Decision.decisionCountByCustomerId", Long.class);
-        return namedQuery.getSingleResult();
+        return getEntityManager().createNamedQuery("Decision.decisionCountByCustomerId", Long.class).setParameter("customerId", customerId).getSingleResult();
     }
 }

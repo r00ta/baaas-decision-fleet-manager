@@ -33,6 +33,7 @@ import org.mockito.Mockito;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
+import io.quarkus.test.security.TestSecurity;
 
 import static org.kie.baaas.dfm.app.TestConstants.DEFAULT_CUSTOMER_ID;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -76,6 +77,7 @@ public class MaxAllowedDecisionValidatorTest {
 
     ConstraintValidatorContext constraintValidatorContext;
 
+    @TestSecurity(user = DEFAULT_CUSTOMER_ID)
     @Test
     void testExceedsAllowedLimit() {
         createStorageRequest();

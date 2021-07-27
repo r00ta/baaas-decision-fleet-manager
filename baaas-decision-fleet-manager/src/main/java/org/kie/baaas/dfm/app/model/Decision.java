@@ -38,7 +38,7 @@ import javax.persistence.Version;
 @NamedQueries({
         @NamedQuery(name = "Decision.byCustomerIdAndName", query = "from Decision where customerId=:customerId and name=:name"),
         @NamedQuery(name = "Decision.byCustomerAndIdOrName", query = "from Decision where customerId=:customerId and name=:idOrName or id=:idOrName"),
-        @NamedQuery(name = "Decision.decisionCountByCustomerId", query = "select count(d.id) from Decision d where d.customerId=customerId")
+        @NamedQuery(name = "Decision.decisionCountByCustomerId", query = "select count(d.id) from Decision d where d.customerId=:customerId")
 })
 @Entity
 @Table(name = "DECISION")

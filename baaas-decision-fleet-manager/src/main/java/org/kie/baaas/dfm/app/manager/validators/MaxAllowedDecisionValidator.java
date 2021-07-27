@@ -60,6 +60,7 @@ public class MaxAllowedDecisionValidator implements ConstraintValidator<WithinDe
             // Decision limits not enforced in this environment. Request is valid
             return true;
         }
+
         long decisionCount = decisionDAO.getDecisionCountByCustomerId(resolver.getCustomerId(identity.getPrincipal()));
         return isDecisionCountWithinLimit(decisionCount);
     }
