@@ -316,8 +316,12 @@ public class DecisionManager implements DecisionLifecycle {
 
     private DecisionVersion findDecisionVersion(String decisionId, long version) {
         DecisionVersion decisionVersion = decisionVersionDAO.findByDecisionIdAndVersion(decisionId, version);
+        if (decisionVersion == null) {
+            throw decisionVersionDoesNotExist("", decisionId, version);
+        }
+
         return findDecisionVersion(decisionVersion,
-                decisionVersion == null ? null : decisionVersion.getDecision().getCustomerId(),
+                decisionVersion.getDecision().getCustomerId(),
                 decisionId,
                 version);
     }
