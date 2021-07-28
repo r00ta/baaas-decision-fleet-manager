@@ -272,8 +272,11 @@ public class DecisionManager implements DecisionLifecycle {
      */
     @Override
     public DecisionVersion deleteVersion(String decisionId, long version) {
-        DecisionVersion decisionVersion = findDecisionVersion(decisionId, version);
-        return deleteDecisionVersion(decisionVersion);
+        Decision decision = decisionDAO.findById(decisionId);
+        if (decision == null) {
+            throw new NoSuchDecisionException("Decision with id '" + decisionId + "' does not exist.");
+        }
+        return deleteVersion(decision.getCustomerId(), decisionId, version);
     }
 
     /**
@@ -285,8 +288,8 @@ public class DecisionManager implements DecisionLifecycle {
      * @return - The deleted version of the Decision.
      */
     @Override
-    public DecisionVersion deleteVersion(String customerId, String decisionName, long version) {
-        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionName, version);
+    public DecisionVersion deleteVersion(String customerId, String decisionNameOrId, long version) {
+        DecisionVersion decisionVersion = findDecisionVersion(customerId, decisionNameOrId, version);
         return deleteDecisionVersion(decisionVersion);
     }
 
@@ -312,18 +315,6 @@ public class DecisionManager implements DecisionLifecycle {
     public Decision deleteDecision(String customerId, String decisionNameOrId) {
         Decision decision = decisionDAO.findByCustomerAndIdOrName(customerId, decisionNameOrId);
         return deleteDecision(decision, customerId, decisionNameOrId);
-    }
-
-    private DecisionVersion findDecisionVersion(String decisionId, long version) {
-        DecisionVersion decisionVersion = decisionVersionDAO.findByDecisionIdAndVersion(decisionId, version);
-        if (decisionVersion == null) {
-            throw decisionVersionDoesNotExist("", decisionId, version);
-        }
-
-        return findDecisionVersion(decisionVersion,
-                decisionVersion.getDecision().getCustomerId(),
-                decisionId,
-                version);
     }
 
     private DecisionVersion findDecisionVersion(String customerId, String decisionName, long version) {

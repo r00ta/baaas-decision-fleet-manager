@@ -65,8 +65,6 @@ import org.kie.baaas.dfm.app.model.eventing.KafkaConfig;
                 query = "select dv from DecisionVersion dv left join fetch dv.tags left join fetch dv.configuration join fetch dv.decision where dv.id=dv.decision.nextVersion.id and dv.decision.customerId=:customerId and (dv.decision.id=:idOrName or dv.decision.name=:idOrName)"),
         @NamedQuery(name = "DecisionVersion.byCustomerDecisionIdOrNameAndVersion",
                 query = "select dv from DecisionVersion dv left join fetch dv.tags left join fetch dv.configuration join fetch dv.decision where dv.version=:version and dv.decision.customerId=:customerId and (dv.decision.id=:idOrName or dv.decision.name=:idOrName)"),
-        @NamedQuery(name = "DecisionVersion.byDecisionIdAndVersion",
-                query = "select dv from DecisionVersion dv left join fetch dv.tags left join fetch dv.configuration join fetch dv.decision where dv.version=:version and dv.decision.id=:id"),
         @NamedQuery(name = "DecisionVersion.listAll",
                 query = "select dv from DecisionVersion dv left join fetch dv.tags left join fetch dv.configuration join fetch dv.decision order by dv.decision.name")
 })
